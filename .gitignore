@@ -1,9 +1,5 @@
-#VSCode items
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+#VSCode
+.vscode/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
