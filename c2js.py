@@ -1,6 +1,7 @@
-import deformatter
+import deformatter as dfrmt
 
 str = "Hello World!"
 
 lowerstr = str.lower()
-print(deformatter.deformat)
+df = dfrmt.Deformat("example.c")
+print(df.lines)
