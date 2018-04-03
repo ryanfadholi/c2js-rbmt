@@ -1,5 +1,3 @@
-import pathlib
-
 class Deformat:
 
     _tempfile_path = "temp/source.txt"
@@ -10,10 +8,6 @@ class Deformat:
         self._readfile()
 
     def _readfile(self):
-        
-        #Create temporary folder; fail silently if it already exists.
-        pathlib.Path("./temp").mkdir(exist_ok=True)
-
         with open(self._filepath, "r") as file_input:
             
             raw_input = file_input.read()
@@ -31,11 +25,8 @@ class Deformat:
         prevline_leftover = ""
 
         for line in self._lines_generator():
-            line = prevline_leftover + line
-            #Determine statement separator
-            stmt_sep = self.determine_statement_end(line)
-            
-            #Extract statements
+            eval_line = str(line).lstrip()
+            pass
 
     def determine_statement_end(self, line):
         line = str(line).lstrip()
