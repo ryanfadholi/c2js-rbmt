@@ -21,14 +21,39 @@ class Deformat:
                 yield line
 
     def _statements_generator(self):
+
+        #TODO: Strip leading whitespace in statements
+        #TODO: Refine rule to correctly separate function/for/if statements
+
         lines = self._lines_generator()
-        prevline_leftover = ""
+        prev_line = ""
 
+        itera = 0
         for line in self._lines_generator():
-            eval_line = str(line).lstrip()
-            pass
+            itera = itera + 1
+            cur_line = prev_line + line
+            while len(cur_line) > 0:
+                cur_sep = self.stmt_sep(cur_line.lstrip()) #Determine separator for current statement
+                print("Current separator:", cur_sep, end="")
+                sep_offset = len(cur_sep) #Determine the offset
+                cut_pos = cur_line.find(cur_sep) + sep_offset #Find the first appearance of the substring
+                print("Line", str(itera), "Pos", str(cut_pos))
+                if cur_line.find(cur_sep) == -1:
+                    break
+                else:
+                    next_stmt, cur_line = cur_line[:cut_pos], cur_line[cut_pos:]
+                    print(len(cur_line))
+                    yield next_stmt
+            
+            prev_line = cur_line
 
-    def determine_statement_end(self, line):
+        if len(prev_line) > 0:
+            yield prev_line
+
+        raise StopIteration 
+
+
+    def stmt_sep(self, line):
         line = str(line).lstrip()
 
         if line.startswith("//") or line.startswith("#"):
