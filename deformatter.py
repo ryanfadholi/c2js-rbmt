@@ -6,13 +6,22 @@ class Deformat:
 
     _tempfile_path = "temp/source.txt"
 
-    #A function template to check if a string started with a substring in the "tokens" list.
-    stmt_validate = lambda self, text, tokens: True in (text.startswith(token) for token in tokens)
-
+    def stmt_validate(self, text, tokens): 
+        """A function template to check if a string started with a substring in the "tokens" list.""""
+        if isinstance(tokens, list):
+            return True in (text.startswith(token) for token in tokens)
+        elif isinstance(tokens, str):
+            return text.startswith(tokens)
+        else:
+            return False
+        
     #Functions to check if a string is a conditional/looping control flow statement.
     is_conditional = lambda self, text: self.stmt_validate(text, rules.conditionals)
     is_declaration = lambda self, text: self.stmt_validate(text, rules.datatypes)
+    is_include = lambda self, text: self.stmt_validate(text, rules.include)
     is_loop = lambda self, text: self.stmt_validate(text, rules.loops)
+    is_multicomment = lambda self, text: self.stmt_validate(text, rules.multi_comment)
+    is_singlecomment = lambda self, text: self.stmt_validate(text, rules.single_comment)
 
     def __init__(self, filepath):
         #Prepare the temporary file
@@ -27,6 +36,23 @@ class Deformat:
             return "{"
         else:
             return ";"
+
+    def _extract_substmt(self, text):
+        #TODO: extract comments from all statements
+        #TODO: extract expressions from if/for/while
+        
+        substmts = [text]
+        return substmts
+
+        #if it's comments, no need to reanalyze statement.
+        if self.is_singlecomment(text) or self.is_multicomment(text):
+            return substmts
+
+        if self.is_declaration(text):
+            if text.find("//") != -1:
+                pass
+
+
 
     def _readfile(self):
         with open(self._filepath, "r") as file_input:
@@ -43,7 +69,6 @@ class Deformat:
 
     def _statements_generator(self):
 
-        #TODO: Strip leading whitespace in statements
         #TODO: Refine rule to correctly separate function/for/if statements
 
         prev_line = ""
@@ -65,22 +90,22 @@ class Deformat:
                     break
                 else:
                     next_stmt, cur_line = cur_line[:cut_pos], cur_line[cut_pos:]
-                    print(len(cur_line))
-                    yield next_stmt
+                    for stmt in self._extract_substmt(next_stmt.strip()):
+                        yield stmt
             
             prev_line = cur_line
 
         if len(prev_line) > 0:
-            yield prev_line
+            yield prev_line.strip()
 
         raise StopIteration 
 
     def stmt_sep(self, line):
         line = str(line).lstrip()
 
-        if line.startswith("//") or line.startswith("#"):
+        if self.is_singlecomment(line) or self.is_include(line):
             return '\n'
-        elif line.startswith("/*"):
+        elif self.is_multicomment(line):
             return '*/'
         elif self.is_conditional(line) or self.is_loop(line):
             return '{'
