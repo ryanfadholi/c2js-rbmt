@@ -1,11 +1,30 @@
+import transrules as rules
+
 class Deformat:
 
     _tempfile_path = "temp/source.txt"
+
+    #A function template to check if a string started with a substring in the "tokens" list.
+    stmt_validate = lambda self, text, tokens: True in (text.startswith(token) for token in tokens)
+
+    #Functions to check if a string is a conditional/looping control flow statement.
+    is_conditional = lambda self, text: self.stmt_validate(text, rules.conditionals)
+    is_declaration = lambda self, text: self.stmt_validate(text, rules.datatypes)
+    is_loop = lambda self, text: self.stmt_validate(text, rules.loops)
 
     def __init__(self, filepath):
         #Prepare the temporary file
         self._filepath = filepath
         self._readfile()
+
+    def _determine_decl_end(self, text):
+        curlybrace_pos = text.find("{")
+        semicolon_pos = text.find(";")
+
+        if curlybrace_pos > 0 and curlybrace_pos < semicolon_pos:
+            return "{"
+        else:
+            return ";"
 
     def _readfile(self):
         with open(self._filepath, "r") as file_input:
@@ -25,19 +44,21 @@ class Deformat:
         #TODO: Strip leading whitespace in statements
         #TODO: Refine rule to correctly separate function/for/if statements
 
-        lines = self._lines_generator()
         prev_line = ""
 
-        itera = 0
+        counter = 0
         for line in self._lines_generator():
-            itera = itera + 1
+            counter = counter + 1
             cur_line = prev_line + line
             while len(cur_line) > 0:
                 cur_sep = self.stmt_sep(cur_line.lstrip()) #Determine separator for current statement
-                print("Current separator:", cur_sep, end="")
+                
                 sep_offset = len(cur_sep) #Determine the offset
                 cut_pos = cur_line.find(cur_sep) + sep_offset #Find the first appearance of the substring
-                print("Line", str(itera), "Pos", str(cut_pos))
+                
+                # print("Current separator:", cur_sep, end="")
+                # print("Line", str(counter), "Pos", str(cut_pos))
+
                 if cur_line.find(cur_sep) == -1:
                     break
                 else:
@@ -52,7 +73,6 @@ class Deformat:
 
         raise StopIteration 
 
-
     def stmt_sep(self, line):
         line = str(line).lstrip()
 
@@ -60,7 +80,11 @@ class Deformat:
             return '\n'
         elif line.startswith("/*"):
             return '*/'
-        else:
+        elif self.is_conditional(line) or self.is_loop(line):
+            return '{'
+        elif self.is_declaration(line):
+            return self._determine_decl_end(line)
+        else: 
             return ';'
 
     @property
