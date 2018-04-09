@@ -1,4 +1,6 @@
+import c2js_runner
 import transrules as rules
+
 
 class Deformat:
 
@@ -90,3 +92,7 @@ class Deformat:
     @property
     def lines(self):
         return [line for line in self._lines_generator()]
+
+if __name__ == "__main__":
+    #When run, run c2js instead
+    import c2js
