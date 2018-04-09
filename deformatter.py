@@ -6,8 +6,8 @@ class Deformat:
 
     _tempfile_path = "temp/source.txt"
 
-    def stmt_validate(self, text, tokens): 
-        """A function template to check if a string started with a substring in the "tokens" list.""""
+    def stmt_validate(self, text, tokens):
+        #TODO: add docstring
         if isinstance(tokens, list):
             return True in (text.startswith(token) for token in tokens)
         elif isinstance(tokens, str):
@@ -40,7 +40,7 @@ class Deformat:
     def _extract_substmt(self, text):
         #TODO: extract comments from all statements
         #TODO: extract expressions from if/for/while
-        
+
         substmts = [text]
         return substmts
 
