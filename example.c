@@ -11,8 +11,16 @@ int main() {
     int i = 1;
     */
 
-    if (2 == 2) {
+    if (2 
+    //Wow, it's a first comment!
+    //This is the second comment.
+    == 2)
+     {
     //This is a comment; and this is another;
-    int i = 2;
+    
+    int i /*how about
+    //srts
+    this? */
+     = 2;
     return 0;
 }

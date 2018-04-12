@@ -1,4 +1,3 @@
-import c2js_runner
 import transrules as rules
 
 
@@ -7,7 +6,10 @@ class Deformat:
     _tempfile_path = "temp/source.txt"
 
     def stmt_validate(self, text, tokens):
-        #TODO: add docstring
+        """
+        A template function to check if text starts with the tokens (if it's string),
+        or if the text starts with any token from the tokens (if it's list).
+        """
         if isinstance(tokens, list):
             return True in (text.startswith(token) for token in tokens)
         elif isinstance(tokens, str):
@@ -15,7 +17,7 @@ class Deformat:
         else:
             return False
         
-    #Functions to check if a string is a conditional/looping control flow statement.
+    #Functions to check the type of a statement.
     is_conditional = lambda self, text: self.stmt_validate(text, rules.conditionals)
     is_declaration = lambda self, text: self.stmt_validate(text, rules.datatypes)
     is_include = lambda self, text: self.stmt_validate(text, rules.include)
@@ -38,27 +40,54 @@ class Deformat:
             return ";"
 
     def _extract_substmt(self, text):
-        #TODO: extract comments from all statements
         #TODO: extract expressions from if/for/while
 
-        substmts = [text]
+        substmts = []
+        substmt_exists = False
+
+        #if it's comments or include statements, no need to reanalyze statement.
+        if self.is_singlecomment(text) or self.is_multicomment(text) or self.is_include(text):
+            pass 
+        else:
+            while self.findfirst(text, rules.comments) > -1:
+                substmt_exists = True 
+                start_cut = self.findfirst(text, rules.comments)
+                sep, cut_length = self.sentencecutter(text[start_cut:])
+                end_cut = start_cut + cut_length
+                #text on the left side are right-stripped and the text on the right are left-stripped,
+                #to cut any extra whitespace/next lines between them.
+                comment, text = text[start_cut:end_cut], text[:start_cut].rstrip() + " " + text[end_cut:].lstrip()
+                substmts.append(comment)
+
+        substmts.append(text)
         return substmts
 
-        #if it's comments, no need to reanalyze statement.
-        if self.is_singlecomment(text) or self.is_multicomment(text):
-            return substmts
 
-        if self.is_declaration(text):
-            if text.find("//") != -1:
-                pass
+    def sentencecutter(self, text):
+        """Determine where a statement ends and its separator."""
+        separator = self.stmt_sep(text.lstrip()) #Determine separator for current statement
 
+        sep_pos = text.find(separator)        
+        sep_offset = len(separator) #Determine the offset
+        cut_pos = sep_pos + sep_offset if sep_pos > -1 else -1
 
+        return separator, cut_pos
+
+    def findfirst(self, text, tokens):
+        """
+        Find the first instance of any token from the tokens list on the text string. 
+        Returns -1 when there is no instance of any token in the string.
+        """
+
+        findall = [text.find(token) for token in tokens]
+        found = list(filter(lambda pos: pos > -1, findall))
+
+        return min(found) if len(found) > 0 else -1
 
     def _readfile(self):
         with open(self._filepath, "r") as file_input:
             
             raw_input = file_input.read()
-            
             with open(self._tempfile_path, "w") as temp_file:
                 temp_file.write(raw_input)
 
@@ -81,10 +110,7 @@ class Deformat:
                 cur_sep = self.stmt_sep(cur_line.lstrip()) #Determine separator for current statement
                 
                 sep_offset = len(cur_sep) #Determine the offset
-                cut_pos = cur_line.find(cur_sep) + sep_offset #Find the first appearance of the substring
-                
-                # print("Current separator:", cur_sep, end="")
-                # print("Line", str(counter), "Pos", str(cut_pos))
+                cut_pos = cur_line.find(cur_sep) + sep_offset #Find where to cut.
 
                 if cur_line.find(cur_sep) == -1:
                     break
