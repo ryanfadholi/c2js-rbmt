@@ -5,9 +5,11 @@ os.system("cls")
 #------------------------------------------------
 
 import deformatter as dfrmt
+import postagger as post
 
 print("-------------------------------------------------")
 df = dfrmt.Deformat("example.c")
+tagger = post.POSTagger()
 # for line in df.lines:
 #     print(line)
 #     print("New line:", line.find("\n"))
@@ -15,5 +17,5 @@ df = dfrmt.Deformat("example.c")
 
 for stmt in df._statements_generator():
     print("**Statement")
-    print(stmt)
+    print(tagger.tokenize(stmt))
 

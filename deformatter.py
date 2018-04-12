@@ -51,25 +51,25 @@ class Deformat:
         else:
             while self.findfirst(text, rules.comments) > -1:
                 start_cut = self.findfirst(text, rules.comments)
-                sep, offset, cut_length = self.sentencecutter(text[start_cut:])
-                end_cut = start_cut + cut_length
+                cut_len = self.stmt_cutter(text[start_cut:])
+                end_cut = start_cut + cut_len
                 #text on the left side are right-stripped and the text on the right are left-stripped,
                 #to cut any extra whitespace/next lines between them.
                 comment, text = text[start_cut:end_cut], text[:start_cut].rstrip() + " " + text[end_cut:].lstrip()
                 substmts.append(comment)
 
         substmts.append(text)
-        return substmts
+        return map(lambda text: text.strip(), substmts)
 
 
-    def sentencecutter(self, text):
+    def stmt_cutter(self, text):
         """Determine where a statement ends and its separator."""
         separator = self.stmt_sep(text.lstrip()) #Determine separator for current statement
 
         sep_pos = text.find(separator)        
         offset = len(separator) #Determine the offset
         cut_pos = sep_pos + offset if sep_pos > -1 else -1
-        return separator, offset, cut_pos
+        return cut_pos
 
     def findfirst(self, text, tokens):
         """
@@ -106,22 +106,16 @@ class Deformat:
             counter = counter + 1
             cur_line = prev_line + line
             while len(cur_line) > 0:
-                #Determine separator, offset, and cutting position for current statement
-                sep, offset, cut_pos = self.sentencecutter(cur_line)  
-                
-                # if cut_pos == -1:
-                #     break
-                # cur_sep = self.stmt_sep(cur_line.lstrip()) #Determine separator for current statement
-                
-                # sep_offset = len(cur_sep) #Determine the offset
-                # cut_pos = cur_line.find(cur_sep) + sep_offset #Find where to cut.
+                cut_pos = self.stmt_cutter(cur_line)  
 
-                if cur_line.find(sep) == -1:
+                if cut_pos == -1:
                     break
                 else:
                     next_stmt, cur_line = cur_line[:cut_pos], cur_line[cut_pos:]
                     for stmt in self._extract_substmt(next_stmt.strip()):
-                        yield stmt
+                        #Scrap empty strings.
+                        if len(stmt) > 0:
+                            yield stmt
             
             prev_line = cur_line
 
