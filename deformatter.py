@@ -18,6 +18,7 @@ class Deformat:
             return False
         
     #Functions to check the type of a statement.
+    is_block_end = lambda self, text: self.stmt_validate(text, rules.block_end)
     is_conditional = lambda self, text: self.stmt_validate(text, rules.conditionals)
     is_declaration = lambda self, text: self.stmt_validate(text, rules.datatypes)
     is_include = lambda self, text: self.stmt_validate(text, rules.include)
@@ -43,16 +44,14 @@ class Deformat:
         #TODO: extract expressions from if/for/while
 
         substmts = []
-        substmt_exists = False
 
         #if it's comments or include statements, no need to reanalyze statement.
         if self.is_singlecomment(text) or self.is_multicomment(text) or self.is_include(text):
             pass 
         else:
             while self.findfirst(text, rules.comments) > -1:
-                substmt_exists = True 
                 start_cut = self.findfirst(text, rules.comments)
-                sep, cut_length = self.sentencecutter(text[start_cut:])
+                sep, offset, cut_length = self.sentencecutter(text[start_cut:])
                 end_cut = start_cut + cut_length
                 #text on the left side are right-stripped and the text on the right are left-stripped,
                 #to cut any extra whitespace/next lines between them.
@@ -68,10 +67,9 @@ class Deformat:
         separator = self.stmt_sep(text.lstrip()) #Determine separator for current statement
 
         sep_pos = text.find(separator)        
-        sep_offset = len(separator) #Determine the offset
-        cut_pos = sep_pos + sep_offset if sep_pos > -1 else -1
-
-        return separator, cut_pos
+        offset = len(separator) #Determine the offset
+        cut_pos = sep_pos + offset if sep_pos > -1 else -1
+        return separator, offset, cut_pos
 
     def findfirst(self, text, tokens):
         """
@@ -99,6 +97,7 @@ class Deformat:
     def _statements_generator(self):
 
         #TODO: Refine rule to correctly separate function/for/if statements
+        #TODO: Eliminate empty statements?
 
         prev_line = ""
 
@@ -107,12 +106,17 @@ class Deformat:
             counter = counter + 1
             cur_line = prev_line + line
             while len(cur_line) > 0:
-                cur_sep = self.stmt_sep(cur_line.lstrip()) #Determine separator for current statement
+                #Determine separator, offset, and cutting position for current statement
+                sep, offset, cut_pos = self.sentencecutter(cur_line)  
                 
-                sep_offset = len(cur_sep) #Determine the offset
-                cut_pos = cur_line.find(cur_sep) + sep_offset #Find where to cut.
+                # if cut_pos == -1:
+                #     break
+                # cur_sep = self.stmt_sep(cur_line.lstrip()) #Determine separator for current statement
+                
+                # sep_offset = len(cur_sep) #Determine the offset
+                # cut_pos = cur_line.find(cur_sep) + sep_offset #Find where to cut.
 
-                if cur_line.find(cur_sep) == -1:
+                if cur_line.find(sep) == -1:
                     break
                 else:
                     next_stmt, cur_line = cur_line[:cut_pos], cur_line[cut_pos:]
@@ -135,6 +139,8 @@ class Deformat:
             return '*/'
         elif self.is_conditional(line) or self.is_loop(line):
             return '{'
+        elif self.is_block_end(line):
+            return '}'
         elif self.is_declaration(line):
             return self._determine_decl_end(line)
         else: 

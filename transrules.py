@@ -6,4 +6,7 @@ single_comment = "//"
 multi_comment = "/*"
 comments = [single_comment, multi_comment]
 
+block_start = "{"
+block_end = "}"
+
 include = "#"

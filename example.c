@@ -22,5 +22,9 @@ int main() {
     //srts
     this? */
      = 2;
+     }
+    for(i=1;i<5;i++){
+        printf("%d",i);
+    }
     return 0;
 }
