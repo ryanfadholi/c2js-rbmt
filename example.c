@@ -18,10 +18,10 @@ int main() {
      {
     //This is a comment; and this is another;
     
-    int i /*how about
+    int i /*@@@@@how about
     //srts
     this? */
-     = 2;
+     = 2  ;
      }
     for(i=1;i<5;i++){
         printf("%d",i);

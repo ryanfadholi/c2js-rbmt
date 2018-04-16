@@ -1,5 +1,6 @@
 import transrules as rules
 
+#TODO: When all rules are in dictionary, delete unnecessary instance checks.
 
 class Deformat:
 
@@ -10,7 +11,9 @@ class Deformat:
         A template function to check if text starts with the tokens (if it's string),
         or if the text starts with any token from the tokens (if it's list).
         """
-        if isinstance(tokens, list):
+        if isinstance(tokens, dict):
+            return True in (text.startswith(token) for key, token in tokens.items())
+        elif isinstance(tokens, list):
             return True in (text.startswith(token) for token in tokens)
         elif isinstance(tokens, str):
             return text.startswith(tokens)
@@ -77,7 +80,11 @@ class Deformat:
         Returns -1 when there is no instance of any token in the string.
         """
 
-        findall = [text.find(token) for token in tokens]
+        if isinstance(tokens, dict):
+            findall = [text.find(token) for key, token in tokens.items()]
+        elif isinstance(tokens, list):
+            findall = [text.find(token) for token in tokens]
+        
         found = list(filter(lambda pos: pos > -1, findall))
 
         return min(found) if len(found) > 0 else -1

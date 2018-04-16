@@ -9,9 +9,23 @@ class POSTagger:
     #TODO: Add string and comment merging mechanism.
 
     def __init__(self):
+        self.rule_ws = re.compile(r"(\s+)")
         pass
 
+    def extract_special_tokens(self, string):
+        """
+        Splits and returns valid tokens from a string of non-alphanumeric characters.
+        
+        For example, "++);" would return ["++", ")", ";"]
+        """
+        #TODO: How to extract comment end? (It might very well be enclosed in whitespaces)
+
+        #Idea, check all operators, return the length of the operator, cut by it? Use for-else!
+        while len(string > 0):
+            pass
+
     def tokenize(self, text):
+        #TODO: Split the tokens further into whitespaces and non whitespaces
         splitter = re.compile(r"(\W+)")    
         non_ws = re.compile(r"\S+")
         #Filter empty tokens.
