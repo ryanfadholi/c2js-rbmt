@@ -12,16 +12,16 @@ class POSTagger:
         self.rule_ws = re.compile(r"(\s+)")
         pass
 
-    def extract_special_tokens(self, string):
+    def extract_special_tokens(self, string, preserve_whitespace=False):
         """
         Splits and returns valid tokens from a string of non-alphanumeric characters.
         
         For example, "++);" would return ["++", ")", ";"]
         """
         #TODO: How to extract comment end? (It might very well be enclosed in whitespaces)
-
+        
         #Idea, check all operators, return the length of the operator, cut by it? Use for-else!
-        while len(string > 0):
+        while len(string > 0):  
             pass
 
     def tokenize(self, text):
