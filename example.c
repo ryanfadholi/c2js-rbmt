@@ -5,6 +5,7 @@ int main() {
 
 
     /*
+    __++ ** --&$
     This a multiline comment asdasdsadasdasdasdasdasdsa
     sadsadasdasdsad
     sadasdasdsadsa
