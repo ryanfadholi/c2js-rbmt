@@ -35,14 +35,70 @@ class POSTagger:
 
         return result
 
-    def merge_tokens(self, tokens):
-        #TODO: Add string and comment merging mechanism.
-        if tokens[0] == "//":
-            return [tokens[0], "".join(tokens[1:])]
-        elif tokens[0] == "/*":
+    def rebuild_tokens(self, tokens):
+        """
+        Accepts these as parameter:
+        1. List of tokenized single or multi-line comment.
+        2. List of tokenized statement containing single or double quotes.
+
+        Returns the same list, but with some parts merged (when needed)
+        """
+        if self.rules.is_singlecomment(tokens):
+            return [tokens[0], "".join(tokens[1:])] 
+        elif self.rules.is_multicomment(tokens):
             return [tokens[0], "".join(tokens[1:-1]), tokens[-1]]
         else:
-            return tokens
+            #If it's not a comment statement, assume it's a statement containing a string. 
+            return self.merge_string(tokens)
+
+    def merge_string(self, tokens):
+        """
+        Merges every tokens between single or double quotes (including the quotes) into one. 
+        Leave the rest as it is, except that whitespaces outside quotes is removed.
+        
+        Will handle escaped quotes, but fails silently if there is non-even number of quotes 
+        (all tokens after the last quote will be dumped)
+        """
+        in_string = False
+        
+        cur_string = ""
+        cur_string_delimiter = None
+        result_tokens = []
+
+        for token in tokens:
+            if in_string:
+                #If the current token is the same as the one starting the string
+                #(either single or double quote)
+                if token == cur_string_delimiter:
+                    #If the last character in current string is backslash, it means
+                    #that the delimiter is escaped; continue.
+                    if cur_string[-1] == "\\":
+                        cur_string += token
+                    #else it means that the current string is ending. Reset all flags.
+                    else:
+                        in_string = False
+                        cur_string_delimiter = None
+                        
+                        cur_string += token
+                        result_tokens.append(cur_string)
+                        cur_string = ""
+                else:
+                    cur_string += token
+            else:
+                #If we're not currently in string and we stumble upon a quote, 
+                #set in_string flag 
+                if token == "'" or token == '"':
+                    in_string = True
+                    cur_string_delimiter = token
+                    cur_string += token
+                #Else add to result tokens if it isn't whitespace.
+                else:
+                    if self.rule_ws.match(token):
+                        pass #do nothing
+                    else:
+                        result_tokens.append(token)
+        
+        return result_tokens
 
     def tokenize(self, text, preserve_whitespace=False):
         """
@@ -75,12 +131,12 @@ class POSTagger:
         #Check if there is single-quote/double-quote token in the statement.
         quote_exists = '"' in statement or "'" in statement
         #If there's quote in the statement, or it's a comment statement, set as True.
-        is_ws_preserved = quote_exists or self.rules.is_singlecomment(statement) or self.rules.is_multicomment(statement)
+        is_ws_sensitive = quote_exists or self.rules.is_singlecomment(statement) or self.rules.is_multicomment(statement)
         
-        tokens = self.tokenize(statement, is_ws_preserved)
+        tokens = self.tokenize(statement, preserve_whitespace=is_ws_sensitive)
 
-        if is_ws_preserved:
-            tokens = self.merge_tokens(tokens)
+        if is_ws_sensitive:
+            tokens = self.rebuild_tokens(tokens)
 
         return tokens
         

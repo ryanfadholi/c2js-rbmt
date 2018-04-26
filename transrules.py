@@ -24,19 +24,47 @@ class TranslationHelper:
 
     findcomment = lambda self, text: self.findfirst(text, tokens.comments)
 
-    def stmt_validate(self, text, tokens):
+    def tokens_validate(self, text_tokens, rule_tokens):
         """
-        A template function to check if text starts with the tokens (if it's string),
-        or if the text starts with any token from the tokens (if it's list).
+        A template function to check if text_tokens list of string's first element
+        is rule_tokens (if it's string), or if it's in rule_tokens if the text starts 
+        with any token from the tokens (if it's list or dictionary).
+        """
+        start_token = text_tokens[0]
+        if isinstance(rule_tokens, dict):
+            return start_token in rule_tokens.values()
+        elif isinstance(rule_tokens, list):
+            return start_token in rule_tokens
+        elif isinstance(rule_tokens, str):
+            return start_token == rule_tokens
+        else:
+            return False
+            
+    def text_validate(self, text, tokens):
+        """
+        A template function to check if text string starts with the tokens (if it's string),
+        or if the text starts with any token from the tokens (if it's list or dictionary).
         """
         if isinstance(tokens, dict):
-            return True in (text.startswith(token) for key, token in tokens.items())
+            return True in (text.startswith(token) for token in tokens.values())
         elif isinstance(tokens, list):
             return True in (text.startswith(token) for token in tokens)
         elif isinstance(tokens, str):
             return text.startswith(tokens)
         else:
             return False
+
+    def stmt_validate(self, statement, tokens):
+        """
+        A template function to check if a statement (either as a string or a list of string)
+        starts with the tokens variable (tokens might be a dict, list, or string)
+        """
+        if isinstance(statement, list):
+            return self.tokens_validate(statement, tokens)
+        elif isinstance(statement, str):
+            return self.text_validate(statement, tokens)
+        else:
+            raise ValueError("Statement is neither a list or string object")
         
     #Functions to check the type of a statement.
     is_block_end = lambda self, text: self.stmt_validate(text, tokens.block_end)
