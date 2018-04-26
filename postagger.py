@@ -3,12 +3,9 @@ import re
 
 class POSTagger:
 
-    #TODO: Design decision: split per special character and merge as needed, or split chunks at once and split when needed?
-    #First option is good when special characters are lined up, e.g ("% but it costs more computation as it splits everything.
-    #Second option need less computation, but need to mitigate cases where special cases are lined up. 
-    #TODO: Add string and comment merging mechanism.
-
     def __init__(self):
+        self.rules = rules.TranslationHelper()
+
         self.rule_ws_incl = re.compile(r"(\s+)")
         self.rule_ws = re.compile(r"\s+")
         self.rule_alphanum = re.compile(r"\w+")
@@ -16,7 +13,7 @@ class POSTagger:
 
     def extract_special_tokens(self, string):
         """
-        Splits and returns valid tokens from a string of symbol characters.
+        Splits and returns valid symbol tokens from a string of symbol characters.
         Unknown symbols will be treated as single-character token.
         
         For example, "++);" would return ["++", ")", ";"]
@@ -24,7 +21,9 @@ class POSTagger:
         result = []
         while len(string) > 0:
 
-            for token in rules.multichar_symbol_token:
+            #If the string starts with a sequence of known token, e.g ++, +=, cut as needed.
+            #Otherwise treat the first character as a standalone symbol.
+            for token in self.rules.multichar_symbol_tokens:
                 if(string.startswith(token)):
                     cut_len = len(token)
                     break
@@ -37,13 +36,17 @@ class POSTagger:
         return result
 
     def tokenize(self, text, preserve_whitespace=False):
-        #TODO: Split the tokens further into whitespaces and non whitespaces
-        splitter = re.compile(r"(\w+|\s+)")    
-        non_ws = re.compile(r"\S+")
-        #Filter empty tokens.
-        # for token in splitter
+        """
+        Tokenizes a given string into strings of whitespace, alphanumeric, and valid symbol tokens in C.
+        If preserve_whitespace is set to True, all whitespaces will be treated as tokens; 
+        otherwise whitespaces will be skipped.
+        """
+
+        splitter = re.compile(r"(\w+|\s+)")
+        
         result = []
 
+        #Filter empty tokens, and loop through it.
         for token in filter(lambda token: len(token) > 0, splitter.split(text)):
             if(self.rule_ws.match(token)):
                 if preserve_whitespace:
@@ -56,9 +59,17 @@ class POSTagger:
 
         return result
 
-    def tag(self, text):
-        if True in (text.startswith(token) for token in rules.comments):
-            pass
+    def tag(self, statement):
+         #TODO: Add string and comment merging mechanism.
+         #TODO: Consider escaped single-quote & double-quote.
+
+        #Check if there is single-quote/double-quote token in the statement.
+        quote_exists = '"' in statement or "'" in statement
+        #If there's quote in the statement, or it's a comment statement, set as True.
+        is_ws_preserved = quote_exists or self.rules.is_singlecomment(statement) or self.rules.is_multicomment(statement)
+        
+        return self.tokenize(statement, is_ws_preserved)
+        
 
 if __name__ == "__main__":
     #When run, run c2js instead

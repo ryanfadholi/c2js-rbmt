@@ -1,95 +1,48 @@
-#TODO: Convert everything to dictionary
+import tokendicts as tokens
 
-conditionals = ["if", "else"]
-datatypes = ["char", "double" ,"float", "int", "long", "short"]
+#TODO: When all rules are in dictionary, delete unnecessary instance checks.
 
-block_start = "{"
-block_end = "}"
+class TranslationHelper:
 
-include = "#"
+    def __init__(self):
+        self.multichar_symbol_tokens = tokens.multichar_symbol
 
-dowhile_loop = "do"
-for_loop = "for"
-while_loop = "while"
+    def findfirst(self, text, tokens):
+        """
+        Find the first instance of any token from the tokens list on the text string. 
+        Returns -1 when there is no instance of any token in the string.
+        """
 
-single_comment = "//"
-multi_comment = "/*"
+        if isinstance(tokens, dict):
+            findall = [text.find(token) for key, token in tokens.items()]
+        elif isinstance(tokens, list):
+            findall = [text.find(token) for token in tokens]
+        
+        found = list(filter(lambda pos: pos > -1, findall))
 
-op_decrement = "--"
-op_increment = "++"
+        return min(found) if len(found) > 0 else -1
 
-op_assign = "="
+    findcomment = lambda self, text: self.findfirst(text, tokens.comments)
 
-op_add = "+"
-op_minus = "-"
-op_multiply = "*"
-op_divide = "/"
-
-op_eq = "=="
-op_not_eq = "!="
-op_gt_eq = ">="
-op_lt_eq = "<="
-
-op_not = "!"
-op_and = "&&"
-op_or = "||"
-
-op_comp_add = "+="
-op_comp_minus = "-="
-op_comp_multiply = "*="
-op_comp_divide = "/="
-op_comp_modulo = "%="
-op_comp_and = "&="
-op_comp_or = "|="
-op_comp_xor = "^="
-op_comp_lshift = "<<="
-op_comp_rshift = ">>="
-
-op_lshift = "<<"
-op_rshift = ">>"
-
-#lists every tokens with more than one character
-multichar_symbol_token = [
-    op_comp_lshift, op_comp_rshift, single_comment, multi_comment, op_eq, 
-    op_not_eq, op_gt_eq, op_lt_eq, op_and, op_or, op_increment, op_decrement, 
-    op_comp_add, op_comp_minus, op_comp_multiply, op_comp_divide, 
-    op_comp_modulo, op_comp_and, op_comp_or, op_comp_xor, op_lshift, op_rshift
-]
-
-arithmetic_operator = {
-    "op-add" : op_add,
-    "op-minus" : op_minus,
-    "op-multiply" : op_multiply,
-    "op-divide" : op_divide
-}
-
-comments = {
-    "single-comment" : single_comment,
-    "multi-comment" : multi_comment
-}
-
-#Max operator length: 3
-op_comp_assignment = {
-    "op-compound-lshift" : op_comp_lshift,
-    "op-compound-rshift" : op_comp_rshift,
-    "op-compound-add" : op_comp_add,
-    "op-compound-minus" : op_comp_minus,
-    "op-compound-multiply" : op_comp_multiply,
-    "op-compound-divide" : op_comp_divide,
-    "op-compound-modulo" : op_comp_modulo,
-    "op-compound-and" : op_comp_and,
-    "op-compound-or" : op_comp_or
-}
-
-loops = {
-    "dowhile-loop" : dowhile_loop, 
-    "for-loop" : for_loop, 
-    "while-loop" : while_loop
-    }
-
-logical_operator = {
-    "not-op" : op_not,
-    "and-op" : op_and,
-    "or-op" : op_or
-}
-
+    def stmt_validate(self, text, tokens):
+        """
+        A template function to check if text starts with the tokens (if it's string),
+        or if the text starts with any token from the tokens (if it's list).
+        """
+        if isinstance(tokens, dict):
+            return True in (text.startswith(token) for key, token in tokens.items())
+        elif isinstance(tokens, list):
+            return True in (text.startswith(token) for token in tokens)
+        elif isinstance(tokens, str):
+            return text.startswith(tokens)
+        else:
+            return False
+        
+    #Functions to check the type of a statement.
+    is_block_end = lambda self, text: self.stmt_validate(text, tokens.block_end)
+    is_conditional = lambda self, text: self.stmt_validate(text, tokens.conditionals)
+    is_declaration = lambda self, text: self.stmt_validate(text, tokens.datatypes)
+    is_include = lambda self, text: self.stmt_validate(text, tokens.include)
+    is_loop = lambda self, text: self.stmt_validate(text, tokens.loops)
+    is_multicomment = lambda self, text: self.stmt_validate(text, tokens.multi_comment)
+    is_singlecomment = lambda self, text: self.stmt_validate(text, tokens.single_comment)

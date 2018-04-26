@@ -17,5 +17,5 @@ tagger = post.POSTagger()
 
 for stmt in df._statements_generator():
     print("**Statement")
-    print(tagger.tokenize(stmt))
+    print(tagger.tag(stmt))
 

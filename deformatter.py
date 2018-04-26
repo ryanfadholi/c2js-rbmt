@@ -1,35 +1,12 @@
 import transrules as rules
 
-#TODO: When all rules are in dictionary, delete unnecessary instance checks.
-
 class Deformat:
 
     _tempfile_path = "temp/source.txt"
 
-    def stmt_validate(self, text, tokens):
-        """
-        A template function to check if text starts with the tokens (if it's string),
-        or if the text starts with any token from the tokens (if it's list).
-        """
-        if isinstance(tokens, dict):
-            return True in (text.startswith(token) for key, token in tokens.items())
-        elif isinstance(tokens, list):
-            return True in (text.startswith(token) for token in tokens)
-        elif isinstance(tokens, str):
-            return text.startswith(tokens)
-        else:
-            return False
-        
-    #Functions to check the type of a statement.
-    is_block_end = lambda self, text: self.stmt_validate(text, rules.block_end)
-    is_conditional = lambda self, text: self.stmt_validate(text, rules.conditionals)
-    is_declaration = lambda self, text: self.stmt_validate(text, rules.datatypes)
-    is_include = lambda self, text: self.stmt_validate(text, rules.include)
-    is_loop = lambda self, text: self.stmt_validate(text, rules.loops)
-    is_multicomment = lambda self, text: self.stmt_validate(text, rules.multi_comment)
-    is_singlecomment = lambda self, text: self.stmt_validate(text, rules.single_comment)
-
     def __init__(self, filepath):
+        self.rules = rules.TranslationHelper()        
+
         #Prepare the temporary file
         self._filepath = filepath
         self._readfile()
@@ -49,11 +26,11 @@ class Deformat:
         substmts = []
 
         #if it's comments or include statements, no need to reanalyze statement.
-        if self.is_singlecomment(text) or self.is_multicomment(text) or self.is_include(text):
+        if self.rules.is_singlecomment(text) or self.rules.is_multicomment(text) or self.rules.is_include(text):
             pass 
         else:
-            while self.findfirst(text, rules.comments) > -1:
-                start_cut = self.findfirst(text, rules.comments)
+            while self.rules.findcomment(text) > -1:
+                start_cut = self.rules.findcomment(text)
                 cut_len = self.stmt_cutter(text[start_cut:])
                 end_cut = start_cut + cut_len
                 #text on the left side are right-stripped and the text on the right are left-stripped,
@@ -134,15 +111,15 @@ class Deformat:
     def stmt_sep(self, line):
         line = str(line).lstrip()
 
-        if self.is_singlecomment(line) or self.is_include(line):
+        if self.rules.is_singlecomment(line) or self.rules.is_include(line):
             return '\n'
-        elif self.is_multicomment(line):
+        elif self.rules.is_multicomment(line):
             return '*/'
-        elif self.is_conditional(line) or self.is_loop(line):
+        elif self.rules.is_conditional(line) or self.rules.is_loop(line):
             return '{'
-        elif self.is_block_end(line):
+        elif self.rules.is_block_end(line):
             return '}'
-        elif self.is_declaration(line):
+        elif self.rules.is_declaration(line):
             return self._determine_decl_end(line)
         else: 
             return ';'
