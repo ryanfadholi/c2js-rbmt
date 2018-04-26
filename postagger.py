@@ -35,6 +35,15 @@ class POSTagger:
 
         return result
 
+    def merge_tokens(self, tokens):
+        #TODO: Add string and comment merging mechanism.
+        if tokens[0] == "//":
+            return [tokens[0], "".join(tokens[1:])]
+        elif tokens[0] == "/*":
+            return [tokens[0], "".join(tokens[1:-1]), tokens[-1]]
+        else:
+            return tokens
+
     def tokenize(self, text, preserve_whitespace=False):
         """
         Tokenizes a given string into strings of whitespace, alphanumeric, and valid symbol tokens in C.
@@ -68,7 +77,12 @@ class POSTagger:
         #If there's quote in the statement, or it's a comment statement, set as True.
         is_ws_preserved = quote_exists or self.rules.is_singlecomment(statement) or self.rules.is_multicomment(statement)
         
-        return self.tokenize(statement, is_ws_preserved)
+        tokens = self.tokenize(statement, is_ws_preserved)
+
+        if is_ws_preserved:
+            tokens = self.merge_tokens(tokens)
+
+        return tokens
         
 
 if __name__ == "__main__":
