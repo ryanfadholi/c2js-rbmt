@@ -6,10 +6,15 @@ class POSTagger:
     def __init__(self):
         self.rules = rules.TranslationHelper()
 
+        self.rule_digit = re.compile(r"\d+")
         self.rule_ws_incl = re.compile(r"(\s+)")
         self.rule_ws = re.compile(r"\s+")
         self.rule_alphanum = re.compile(r"\w+")
         pass
+
+    #Check if there is single-quote/double-quote token in the statement.
+    quote_token_exists = lambda self, tokens: '"' in tokens or "'" in tokens
+    dot_token_exists = lambda self, tokens: '.' in tokens
 
     def extract_special_tokens(self, string):
         """
@@ -40,6 +45,7 @@ class POSTagger:
         Accepts these as parameter:
         1. List of tokenized single or multi-line comment.
         2. List of tokenized statement containing single or double quotes.
+        3. List of tokenized statement containing dots.
 
         Returns the same list, but with some parts merged (when needed)
         """
@@ -48,8 +54,38 @@ class POSTagger:
         elif self.rules.is_multicomment(tokens):
             return [tokens[0], "".join(tokens[1:-1]), tokens[-1]]
         else:
-            #If it's not a comment statement, assume it's a statement containing a string. 
-            return self.merge_string(tokens)
+            #If it's not a comment statement, assume it's a statement containing a string or dots.
+            if self.quote_token_exists(tokens): 
+                tokens = self.merge_string(tokens)    
+            
+            if self.dot_token_exists(tokens):
+                tokens = self.merge_float(tokens)
+
+            return tokens
+
+    def merge_float(self, tokens):
+        """
+        Merges every digit, dot, digit token sequence into one.
+        """
+        index = 0
+        last_check = len(tokens) - 2 #Check until there is two remaining tokens.
+        result = []
+
+        #Check until the last three tokens. (Checking further than this will cause index error :) )
+        while index < last_check:
+            if tokens[index+1] == "." and self.rule_digit.match(tokens[index]) and self.rule_digit.match(tokens[index+2]):
+                result.append("".join(tokens[index:index+3]))
+                index += 3
+            else:
+                result.append(tokens[index])
+                index += 1
+
+        #After the checking is done, append the remaining last three tokens.
+        while index < len(tokens):
+            result.append(tokens[index])
+            index += 1
+
+        return result
 
     def merge_string(self, tokens):
         """
@@ -100,9 +136,9 @@ class POSTagger:
         
         return result_tokens
 
-    def tokenize(self, text, preserve_whitespace=False):
+    def split_statement(self, text, preserve_whitespace=False):
         """
-        Tokenizes a given string into strings of whitespace, alphanumeric, and valid symbol tokens in C.
+        Splits a given string into strings of whitespace, alphanumeric, and valid symbol tokens in C.
         If preserve_whitespace is set to True, all whitespaces will be treated as tokens; 
         otherwise whitespaces will be skipped.
         """
@@ -113,10 +149,10 @@ class POSTagger:
 
         #Filter empty tokens, and loop through it.
         for token in filter(lambda token: len(token) > 0, splitter.split(text)):
-            if(self.rule_ws.match(token)):
+            if self.rule_ws.match(token):
                 if preserve_whitespace:
                     result.append(token)
-            elif(self.rule_alphanum.match(token)):
+            elif self.rule_alphanum.match(token):
                 result.append(token)
             #it's neither alphanumeric or whitespace, assume it's a symbol string.
             else:
@@ -124,22 +160,31 @@ class POSTagger:
 
         return result
 
-    def tag(self, statement):
-         #TODO: Add string and comment merging mechanism.
-         #TODO: Consider escaped single-quote & double-quote.
+    def tokenize(self, statement):
+        """
+        Tokenizes C statement given as parameter into tagging-ready tokens.
+        """
 
-        #Check if there is single-quote/double-quote token in the statement.
-        quote_exists = '"' in statement or "'" in statement
         #If there's quote in the statement, or it's a comment statement, set as True.
-        is_ws_sensitive = quote_exists or self.rules.is_singlecomment(statement) or self.rules.is_multicomment(statement)
+        is_ws_sensitive = self.quote_token_exists(statement) or self.rules.is_singlecomment(statement) or self.rules.is_multicomment(statement)
         
-        tokens = self.tokenize(statement, preserve_whitespace=is_ws_sensitive)
+        tokens = self.split_statement(statement, preserve_whitespace=is_ws_sensitive)
 
-        if is_ws_sensitive:
+        if is_ws_sensitive or self.dot_token_exists(statement):
             tokens = self.rebuild_tokens(tokens)
 
         return tokens
-        
+
+    def tag(self, statement):
+        tokens = self.tokenize(statement)
+
+        # identify_first_token(tokens)
+        for index, token in enumerate(token):
+            pass
+            # if
+
+        return tokens
+
 
 if __name__ == "__main__":
     #When run, run c2js instead

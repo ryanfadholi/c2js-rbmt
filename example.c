@@ -2,8 +2,9 @@
 
 int main() {
     printf("Hello World!");
-
-
+    
+    float r = 2.2;
+    printf("This is a floating point number: %f", 2.23);
     /*
     __++ ** --&$
     This a multiline comment asdasdsadasdasdasdasdasdsa
@@ -29,5 +30,6 @@ int main() {
         printf     (     "This is an arbitrarily long string *designed to test* the string joiner %d. %s ",  i, "Whoaaa. is this another string???");
         printf("Hmmmm \" I escaped some string here %c",'\'');
     }
+
     return 0;
 }
