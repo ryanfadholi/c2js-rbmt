@@ -1,15 +1,19 @@
 import transrules as rules
 import re 
+from collections import namedtuple
 
 class POSTagger:
 
     def __init__(self):
         self.rules = rules.TranslationHelper()
+        self.TaggedToken = namedtuple("TaggedTuple", ["token", "token_type"])
 
         self.rule_digit = re.compile(r"\d+")
         self.rule_ws_incl = re.compile(r"(\s+)")
         self.rule_ws = re.compile(r"\s+")
         self.rule_alphanum = re.compile(r"\w+")
+
+
         pass
 
     #Check if there is single-quote/double-quote token in the statement.
@@ -63,6 +67,9 @@ class POSTagger:
 
             return tokens
 
+    def create_taggedtoken(self, token, token_type):
+        return {"token" : token, "type" : token_type}
+
     def merge_float(self, tokens):
         """
         Merges every digit, dot, digit token sequence into one.
@@ -92,7 +99,7 @@ class POSTagger:
         Merges every tokens between single or double quotes (including the quotes) into one. 
         Leave the rest as it is, except that whitespaces outside quotes is removed.
         
-        Will handle escaped quotes, but fails silently if there is non-even number of quotes 
+        Will handle escaped quotes correctly, but fails silently if there is non-even number of quotes 
         (all tokens after the last quote will be dumped)
         """
         in_string = False
@@ -149,9 +156,8 @@ class POSTagger:
 
         #Filter empty tokens, and loop through it.
         for token in filter(lambda token: len(token) > 0, splitter.split(text)):
-            if self.rule_ws.match(token):
-                if preserve_whitespace:
-                    result.append(token)
+            if self.rule_ws.match(token) and preserve_whitespace:
+                result.append(token)
             elif self.rule_alphanum.match(token):
                 result.append(token)
             #it's neither alphanumeric or whitespace, assume it's a symbol string.
@@ -178,12 +184,21 @@ class POSTagger:
     def tag(self, statement):
         tokens = self.tokenize(statement)
 
-        # identify_first_token(tokens)
         for index, token in enumerate(token):
             pass
-            # if
 
         return tokens
+
+    def identify_first_token(self, tokens):
+        identified = False
+        tags = []
+
+        if tokens[0] == self.rules.singleline_comment_token and len(tokens) == 2:
+            tags = ["single-line-comment", "comment-string"]
+            identified = True
+
+
+
 
 
 if __name__ == "__main__":

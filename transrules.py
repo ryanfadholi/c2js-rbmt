@@ -5,6 +5,8 @@ import tokendicts as tokens
 class TranslationHelper:
 
     def __init__(self):
+        #tokendicts redirects
+        self.singleline_comment_token = tokens.single_comment
         self.multichar_symbol_tokens = tokens.multichar_symbol
 
     def findfirst(self, text, tokens):
