@@ -2,6 +2,8 @@ import transrules as rules
 import re 
 from collections import namedtuple
 
+from itertools import repeat
+
 class POSTagger:
 
     def __init__(self):
@@ -12,9 +14,6 @@ class POSTagger:
         self.rule_ws_incl = re.compile(r"(\s+)")
         self.rule_ws = re.compile(r"\s+")
         self.rule_alphanum = re.compile(r"\w+")
-
-
-        pass
 
     #Check if there is single-quote/double-quote token in the statement.
     quote_token_exists = lambda self, tokens: '"' in tokens or "'" in tokens
@@ -43,6 +42,16 @@ class POSTagger:
             result.append(next_token)
 
         return result
+
+    def generate_tag(self, token, token_type):
+        """
+        Returns a dictionary containing token and token type.
+        """
+        return {
+            "token" : token,
+            "type"  : token_type
+        }
+
 
     def rebuild_tokens(self, tokens):
         """
