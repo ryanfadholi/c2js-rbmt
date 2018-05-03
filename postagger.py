@@ -1,14 +1,13 @@
 import transrules as rules
 import re 
-from collections import namedtuple
 
+from collections import namedtuple
 from itertools import repeat
 
 class POSTagger:
 
     def __init__(self):
         self.rules = rules.TranslationHelper()
-        self.TaggedToken = namedtuple("TaggedTuple", ["token", "token_type"])
 
         self.rule_digit = re.compile(r"\d+")
         self.rule_ws_incl = re.compile(r"(\s+)")
@@ -165,8 +164,9 @@ class POSTagger:
 
         #Filter empty tokens, and loop through it.
         for token in filter(lambda token: len(token) > 0, splitter.split(text)):
-            if self.rule_ws.match(token) and preserve_whitespace:
-                result.append(token)
+            if self.rule_ws.match(token):
+                if preserve_whitespace:
+                    result.append(token)
             elif self.rule_alphanum.match(token):
                 result.append(token)
             #it's neither alphanumeric or whitespace, assume it's a symbol string.
@@ -192,20 +192,25 @@ class POSTagger:
 
     def tag(self, statement):
         tokens = self.tokenize(statement)
-
-        for index, token in enumerate(token):
-            pass
-
         return tokens
+        return self.identify_first_token(tokens)
 
     def identify_first_token(self, tokens):
         identified = False
         tags = []
 
-        if tokens[0] == self.rules.singleline_comment_token and len(tokens) == 2:
+        if len(tokens) == 2 and tokens[0] == self.rules.singlecomment_token:
             tags = ["single-line-comment", "comment-string"]
             identified = True
+        elif len(tokens) == 3 and (
+            tokens[0] == self.rules.multicomment_token and tokens[2] == self.rules.multicomment_token_end):
+            tags = ["multi-line-comment", "comment-string", "multi-line-comment-end"]
+            identified = True
 
+        if identified:
+            return [self.generate_tag(token, token_type) for token, token_type in zip(tokens, tags)] 
+        else:
+            return [self.generate_tag(token, "unknown") for token in tokens]
 
 
 

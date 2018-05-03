@@ -6,7 +6,9 @@ class TranslationHelper:
 
     def __init__(self):
         #tokendicts redirects
-        self.singleline_comment_token = tokens.single_comment
+        self.singlecomment_token = tokens.single_comment
+        self.multicomment_token = tokens.multi_comment
+        self.multicomment_token_end = tokens.multi_comment_end
         self.multichar_symbol_tokens = tokens.multichar_symbol
 
     def findfirst(self, text, tokens):
@@ -25,6 +27,20 @@ class TranslationHelper:
         return min(found) if len(found) > 0 else -1
 
     findcomment = lambda self, text: self.findfirst(text, tokens.comments)
+
+    def match(self, token):
+        for key, value in tokens.comments.items():
+            if token == value:
+                return key
+
+        for key, value in tokens.
+        
+        if(token == tokens.single_comment):
+            return "single-comment"
+        elif(token == tokens.multi_comment):
+            return "multi-comment-start"
+        elif(token == tokens.multi_comment_end):
+            return "multi-comment-end"
 
     def tokens_validate(self, text_tokens, rule_tokens):
         """

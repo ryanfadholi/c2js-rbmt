@@ -1,12 +1,14 @@
 #TODO: Convert everything to dictionary
 
-conditionals = ["if", "else"]
 datatypes = ["char", "double" ,"float", "int", "long", "short"]
 
 block_start = "{"
 block_end = "}"
 
 include = "#"
+
+if_conditional = "if"
+else_conditional = "else"
 
 dowhile_loop = "do"
 for_loop = "for"
@@ -66,7 +68,8 @@ arithmetic_operator = {
 
 comments = {
     "single-comment" : single_comment,
-    "multi-comment" : multi_comment
+    "multi-comment" : multi_comment,
+    "multi-comment-end" : multi_comment_end
 }
 
 #Max operator length: 3
@@ -80,6 +83,11 @@ op_comp_assignment = {
     "op-compound-modulo" : op_comp_modulo,
     "op-compound-and" : op_comp_and,
     "op-compound-or" : op_comp_or
+}
+
+conditionals = {
+    "if-cond" : if_conditional,
+    "else-cond" : else_conditional
 }
 
 loops = {
