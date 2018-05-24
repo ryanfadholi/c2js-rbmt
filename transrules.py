@@ -29,18 +29,51 @@ class TranslationHelper:
     findcomment = lambda self, text: self.findfirst(text, tokens.comments)
 
     def match(self, token):
+        for key, value in tokens.arithmetic_operator.items():
+            if token == value:
+                return key
+
+        for key, value in tokens.bitwise_operator.items():
+            if token == value:
+                return key
+        
+        for key, value in tokens.relational_operator.items():
+            if token == value:
+                return key
+
+        for key, value in tokens.compound_assignment_operator.items():
+            if token == value:
+                return key
+
+        for key, value in tokens.logical_operator.items():
+            if token == value:
+                return key
+
+        for key, value in tokens.misc_operator.items():
+            if token == value:
+                return key
+
         for key, value in tokens.comments.items():
             if token == value:
                 return key
 
-        for key, value in tokens.
+        for key, value in tokens.conditionals.items():
+            if token == value:
+                return key
+
+        for key, value in tokens.datatypes.items():
+            if token == value:
+                return key
+
+        for key, value in tokens.loops.items():
+            if token == value:
+                return key
+
+        for key, value in tokens.special_functions.items():
+            if token == value:
+                return key
         
-        if(token == tokens.single_comment):
-            return "single-comment"
-        elif(token == tokens.multi_comment):
-            return "multi-comment-start"
-        elif(token == tokens.multi_comment_end):
-            return "multi-comment-end"
+        return "unknown"
 
     def tokens_validate(self, text_tokens, rule_tokens):
         """
@@ -85,7 +118,7 @@ class TranslationHelper:
             raise ValueError("Statement is neither a list or string object")
         
     #Functions to check the type of a statement.
-    is_block_end = lambda self, text: self.stmt_validate(text, tokens.block_end)
+    is_block_end = lambda self, text: self.stmt_validate(text, tokens.curly_right)
     is_conditional = lambda self, text: self.stmt_validate(text, tokens.conditionals)
     is_declaration = lambda self, text: self.stmt_validate(text, tokens.datatypes)
     is_include = lambda self, text: self.stmt_validate(text, tokens.include)

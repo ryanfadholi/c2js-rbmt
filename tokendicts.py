@@ -18,6 +18,9 @@ while_loop = "while"
 output_func = "printf"
 input_func = "scanf"
 
+include_stmt = "include"
+return_stmt = "return"
+
 single_comment = "//"
 multi_comment = "/*"
 multi_comment_end = "*/"
@@ -73,15 +76,6 @@ op_binary_flip = "~"
 op_lshift = "<<"
 op_rshift = ">>"
 
-bitwise_operator = {
-    "op-binary-and" : op_binary_and,
-    "op-binary-or" : op_binary_or,
-    "op-binary-xor" : op_binary_xor,
-    "op-binary-flip" : op_binary_flip,
-    "op-left-shift" : op_lshift,
-    "op-right-shift" : op_rshift
-}
-
 #lists every tokens with more than one character
 multichar_symbol = [
     op_comp_lshift, op_comp_rshift, single_comment, multi_comment, multi_comment_end, op_eq, 
@@ -97,19 +91,13 @@ arithmetic_operator = {
     "op-divide" : op_divide
 }
 
-misc_operator = {
-    "assign" : assign,    
-    "comma" : comma,
-    "pointer" : pointer,
-    "semicolon" : semicolon,
-    "single-quote" : single_quote,
-    "double-quote" : double_quote,
-    "bracket-left" : bracket_left,
-    "bracket-right" : bracket_right,
-    "curly-left" : curly_left,
-    "curly-right" : curly_right,
-    "parenthesis-left" : parenthesis_left,
-    "parenthesis-right" : parenthesis_right,
+bitwise_operator = {
+    "op-binary-and" : op_binary_and,
+    "op-binary-or" : op_binary_or,
+    "op-binary-xor" : op_binary_xor,
+    "op-binary-flip" : op_binary_flip,
+    "op-left-shift" : op_lshift,
+    "op-right-shift" : op_rshift
 }
 
 relational_operator = {
@@ -119,12 +107,6 @@ relational_operator = {
     "op-less-equal" : op_lt_eq,
     "op-greater" : op_gt,
     "op-less" : op_lt
-}
-
-comments = {
-    "single-comment" : single_comment,
-    "multi-comment" : multi_comment,
-    "multi-comment-end" : multi_comment_end
 }
 
 #Max operator length: 3
@@ -144,6 +126,27 @@ logical_operator = {
     "op-not" : op_not,
     "op-and" : op_and,
     "op-or" : op_or
+}
+
+misc_operator = {
+    "assign" : assign,    
+    "comma" : comma,
+    "pointer" : pointer,
+    "semicolon" : semicolon,
+    "single-quote" : single_quote,
+    "double-quote" : double_quote,
+    "bracket-left" : bracket_left,
+    "bracket-right" : bracket_right,
+    "curly-left" : curly_left,
+    "curly-right" : curly_right,
+    "parenthesis-left" : parenthesis_left,
+    "parenthesis-right" : parenthesis_right,
+}
+
+comments = {
+    "single-comment" : single_comment,
+    "multi-comment" : multi_comment,
+    "multi-comment-end" : multi_comment_end
 }
 
 conditionals = {

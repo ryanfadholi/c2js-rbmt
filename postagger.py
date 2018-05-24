@@ -192,28 +192,9 @@ class POSTagger:
 
     def tag(self, statement):
         tokens = self.tokenize(statement)
-        return tokens
-        return self.identify_first_token(tokens)
-
-    def identify_first_token(self, tokens):
-        identified = False
-        tags = []
-
-        if len(tokens) == 2 and tokens[0] == self.rules.singlecomment_token:
-            tags = ["single-line-comment", "comment-string"]
-            identified = True
-        elif len(tokens) == 3 and (
-            tokens[0] == self.rules.multicomment_token and tokens[2] == self.rules.multicomment_token_end):
-            tags = ["multi-line-comment", "comment-string", "multi-line-comment-end"]
-            identified = True
-
-        if identified:
-            return [self.generate_tag(token, token_type) for token, token_type in zip(tokens, tags)] 
-        else:
-            return [self.generate_tag(token, "unknown") for token in tokens]
-
-
-
+        
+        return list(map(lambda x: (self.rules.match(x), x), tokens))
+        # return tokens
 
 if __name__ == "__main__":
     #When run, run c2js instead

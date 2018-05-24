@@ -12,6 +12,11 @@ class Deformat:
         self._readfile()
 
     def _determine_decl_end(self, text):
+        """
+        Determines whether a sentence ends with "{" or ";".
+        Should only be called when the sentence started with data type.
+        (Thus it's ambiguous whether it's a variable or function declaration)
+        """        
         curlybrace_pos = text.find("{")
         semicolon_pos = text.find(";")
 
@@ -21,7 +26,10 @@ class Deformat:
             return ";"
 
     def _extract_substmt(self, text):
-        #TODO: extract expressions from if/for/while
+        """
+        Extracts comments inserted inside a statement.
+        Returns the statement (and any comments found) as a list.
+        """
 
         substmts = []
 
@@ -67,6 +75,11 @@ class Deformat:
         return min(found) if len(found) > 0 else -1
 
     def _readfile(self):
+        """
+        Reads file located in self._filepath, and rewrites it
+        into the designated path (self._tempfile_path).
+        """
+
         with open(self._filepath, "r") as file_input:
             
             raw_input = file_input.read()
@@ -74,14 +87,13 @@ class Deformat:
                 temp_file.write(raw_input)
 
     def _lines_generator(self):
+        """Reads temporary file per-line."""
         with open(self._tempfile_path) as file:
             for line in file:
                 yield line
 
     def _statements_generator(self):
-
-        #TODO: Refine rule to correctly separate function/for/if statements
-        #TODO: Eliminate empty statements?
+        """Returns temporary file's content as an iterable of separated C statements."""
 
         prev_line = ""
 
@@ -109,6 +121,11 @@ class Deformat:
         raise StopIteration 
 
     def stmt_sep(self, line):
+        """
+        Returns the correct ending character for the line string, according
+        to the first characters of the string.
+        """
+
         line = str(line).lstrip()
 
         if self.rules.is_singlecomment(line) or self.rules.is_include(line):
