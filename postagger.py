@@ -193,7 +193,8 @@ class POSTagger:
     def tag(self, statement):
         tokens = self.tokenize(statement)
         
-        return list(map(lambda x: (self.rules.match(x), x), tokens))
+        #Only matches known tokens
+        matched_tokens = list(map(lambda x: (self.rules.match(x), x), tokens))
         # return tokens
 
 if __name__ == "__main__":

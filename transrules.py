@@ -28,6 +28,9 @@ class TranslationHelper:
 
     findcomment = lambda self, text: self.findfirst(text, tokens.comments)
 
+    def identify(self, tokens):
+        return "identified"
+
     def match(self, token):
         for key, value in tokens.arithmetic_operator.items():
             if token == value:
@@ -70,6 +73,10 @@ class TranslationHelper:
                 return key
 
         for key, value in tokens.special_functions.items():
+            if token == value:
+                return key
+
+        for key, value in tokens.keywords.items():
             if token == value:
                 return key
         
@@ -121,7 +128,7 @@ class TranslationHelper:
     is_block_end = lambda self, text: self.stmt_validate(text, tokens.curly_right)
     is_conditional = lambda self, text: self.stmt_validate(text, tokens.conditionals)
     is_declaration = lambda self, text: self.stmt_validate(text, tokens.datatypes)
-    is_include = lambda self, text: self.stmt_validate(text, tokens.include)
+    is_include = lambda self, text: self.stmt_validate(text, tokens.preprocessor)
     is_loop = lambda self, text: self.stmt_validate(text, tokens.loops)
     is_multicomment = lambda self, text: self.stmt_validate(text, tokens.multi_comment)
     is_singlecomment = lambda self, text: self.stmt_validate(text, tokens.single_comment)

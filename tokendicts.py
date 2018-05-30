@@ -18,8 +18,8 @@ while_loop = "while"
 output_func = "printf"
 input_func = "scanf"
 
-include_stmt = "include"
-return_stmt = "return"
+include_kw = "include"
+return_kw = "return"
 
 single_comment = "//"
 multi_comment = "/*"
@@ -27,7 +27,7 @@ multi_comment_end = "*/"
 
 assign = "="
 comma = ","
-include = "#"
+preprocessor = "#"
 pointer = "*"
 semicolon = ";"
 single_quote = "'"
@@ -131,6 +131,7 @@ logical_operator = {
 misc_operator = {
     "assign" : assign,    
     "comma" : comma,
+    "preprocessor" : preprocessor,
     "pointer" : pointer,
     "semicolon" : semicolon,
     "single-quote" : single_quote,
@@ -172,4 +173,9 @@ loops = {
 special_functions = {
     "output-function" : output_func,
     "input-function" : input_func
+}
+
+keywords = {
+    "include-keyword" : include_kw,
+    "return-keyword" : return_kw
 }
