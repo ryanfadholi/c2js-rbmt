@@ -97,9 +97,7 @@ class Deformat:
 
         prev_line = ""
 
-        counter = 0
         for line in self._lines_generator():
-            counter = counter + 1
             cur_line = prev_line + line
             while len(cur_line) > 0:
                 cut_pos = self.stmt_cutter(cur_line)  

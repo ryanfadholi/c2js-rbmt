@@ -29,7 +29,13 @@ class TranslationHelper:
     findcomment = lambda self, text: self.findfirst(text, tokens.comments)
 
     def identify(self, tokens):
-        return "identified"
+        for token in tokens:
+            if token.lower().endswith(".h"):
+                token["type"] = "preprocessor-name"
+            if token["type"] == "unknown":
+                token["type"] = "identified"
+
+        return tokens
 
     def match(self, token):
         for key, value in tokens.arithmetic_operator.items():

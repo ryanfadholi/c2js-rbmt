@@ -88,9 +88,14 @@ class POSTagger:
 
         #Check until the last three tokens. (Checking further than this will cause index error :) )
         while index < last_check:
+            #Merge dots of floating-point numbers
             if tokens[index+1] == "." and self.rule_digit.match(tokens[index]) and self.rule_digit.match(tokens[index+2]):
                 result.append("".join(tokens[index:index+3]))
                 index += 3
+            #Merge dots of library names in include statements.
+            elif tokens[0] == "#" and tokens[index+1] == ".":
+                result.append("".join(tokens[index:index+3]))
+                index += 3                
             else:
                 result.append(tokens[index])
                 index += 1
@@ -194,8 +199,8 @@ class POSTagger:
         tokens = self.tokenize(statement)
         
         #Only matches known tokens
-        matched_tokens = list(map(lambda x: (self.rules.match(x), x), tokens))
-        # return tokens
+        matched_tokens = list(map(lambda x: self.create_taggedtoken(x, self.rules.match(x)), tokens))
+        return self.rules.identify(matched_tokens)
 
 if __name__ == "__main__":
     #When run, run c2js instead
