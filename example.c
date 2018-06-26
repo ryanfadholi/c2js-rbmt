@@ -4,6 +4,7 @@ int main() {
     printf("Hello World!");
     
     float r = 2.2;
+    float r2 = 2.;
     printf("This is a floating point number: %f", 2.23);
     /*
     __++ ** --&$

@@ -28,14 +28,23 @@ class TranslationHelper:
 
     findcomment = lambda self, text: self.findfirst(text, tokens.comments)
 
-    def identify(self, tokens):
-        for token in tokens:
-            if token.lower().endswith(".h"):
+    def identify(self, input_tokens):
+
+        for token in input_tokens:
+            token_str = token["token"]
+            #Match library names (stdio.h, conio.h)
+            if token_str.lower().endswith(".h"):
                 token["type"] = "preprocessor-name"
-            if token["type"] == "unknown":
+            #Match characters ('a', 'b')
+            elif token_str.startswith(tokens.single_quote) and token_str.endswith(tokens.single_quote):
+                token["type"] = "character-string"
+            #Match strings ("abc", "def")
+            elif token_str.startswith(tokens.double_quote) and token_str.endswith(tokens.double_quote):
+                token["type"] = "string"
+            elif token["type"] == "unknown":
                 token["type"] = "identified"
 
-        return tokens
+        return input_tokens
 
     def match(self, token):
         for key, value in tokens.arithmetic_operator.items():
