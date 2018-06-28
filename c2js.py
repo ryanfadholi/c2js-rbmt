@@ -1,9 +1,3 @@
-#------------------------------------------------
-#Clean terminal when run. Delete on final version!
-# import os
-# os.system("cls")
-#------------------------------------------------
-
 import deformatter as dfrmt
 import postagger as post
 

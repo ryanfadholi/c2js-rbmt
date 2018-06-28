@@ -29,7 +29,8 @@ int main() {
      }
     for(i         =1;i<5;i++){
         printf     (     "This is an arbitrarily long string *designed to test* the string joiner %d. %s ",  i, "Whoaaa. is this another string???");
-        printf("Hmmmm \" I escaped some string here %c",'\'');
+        printf("Hmmmm \" I escaped 
+        some string here %c",'\'');
     }
 
     return 0;

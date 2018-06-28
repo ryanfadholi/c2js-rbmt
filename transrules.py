@@ -1,4 +1,5 @@
 import tokendicts as tokens
+import re
 
 #TODO: When all rules are in dictionary, delete unnecessary instance checks.
 
@@ -30,16 +31,19 @@ class TranslationHelper:
 
     def identify(self, input_tokens):
 
+        id_char = re.compile(r"^'.*'$")
+        id_string = re.compile(r'^".*"$')
+
         for token in input_tokens:
             token_str = token["token"]
             #Match library names (stdio.h, conio.h)
             if token_str.lower().endswith(".h"):
                 token["type"] = "preprocessor-name"
             #Match characters ('a', 'b')
-            elif token_str.startswith(tokens.single_quote) and token_str.endswith(tokens.single_quote):
+            elif id_char.match(token_str):
                 token["type"] = "character-string"
             #Match strings ("abc", "def")
-            elif token_str.startswith(tokens.double_quote) and token_str.endswith(tokens.double_quote):
+            elif id_string.match(token_str):
                 token["type"] = "string"
             elif token["type"] == "unknown":
                 token["type"] = "identified"
