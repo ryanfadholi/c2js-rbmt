@@ -4,6 +4,9 @@ import re
 from collections import namedtuple
 from itertools import repeat
 
+from taggedtoken import TaggedToken
+from taggedstatement import TaggedStatement
+
 class POSTagger:
 
     def __init__(self):
@@ -82,17 +85,16 @@ class POSTagger:
         Merges every digit, dot, digit token sequence into one.
         """
         index = 0
-        last_check = len(tokens) - 2 #Check until there is two remaining tokens.
+        last_check = len(tokens) - 1 #Check until there is at least one remaining tokens.
         result = []
 
-        #Check until the last three tokens. (Checking further than this will cause index error :) )
+        #Check until the last two tokens. (Checking further than this will cause index error :) )
         while index < last_check:
-            #TODO: Fix floats that ends with dot, e.g: "2.", "100."
             #Merge dots of floating-point numbers (e.g "3.", "4.14")
             if tokens[index+1] == "." and self.rule_digit.match(tokens[index]):
                 #At this point, there's a number followed by a dot.
                 to_join = 2 #Number of token to join
-                if self.rule_digit.match(tokens[index+2]):
+                if (index+2 < len(tokens)) and self.rule_digit.match(tokens[index+2]):
                     #If the dot is in turn followed by a digit, assume that it's the decimal part of the float
                     to_join = 3
 
@@ -205,7 +207,7 @@ class POSTagger:
         tokens = self.tokenize(statement)
         
         #Only matches known tokens
-        matched_tokens = list(map(lambda x: self.create_taggedtoken(x, self.rules.match(x)), tokens))
+        matched_tokens = TaggedStatement(list(map(lambda x: TaggedToken(x, self.rules.match(x)), tokens)))
         return self.rules.identify(matched_tokens)
 
 if __name__ == "__main__":

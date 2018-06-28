@@ -38,30 +38,27 @@ class TranslationHelper:
         id_char = re.compile(r"^'.*'$", re.DOTALL)
         id_string = re.compile(r'^".*"$', re.DOTALL)
 
-        #TODO: Only check "unknown" tokens?
         for token in input_tokens:
-            if token["type"] == "unknown":
-                token_str = token["token"]
+            if token.tag == "unknown":
+                token_str = token.token
                 #Match library names (stdio.h, conio.h)
                 if token_str.lower().endswith(".h"):
-                    token["type"] = "preprocessor-name"
+                    token.tag = "preprocessor-name"
                 #Match integers (1234, 5454, 5)
                 elif id_int.match(token_str):
-                    token["type"] = "int-value"
+                    token.tag = "int-value"
                 #Match floating-point (1.1, 3.14, 2.)
                 elif id_float.match(token_str):
-                    token["type"] = "float-value"
+                    token.tag = "float-value"
                 #Match variable names (x, result, _hero9, y2)
                 elif id_var.match(token_str):
-                    token["type"] = "var-name"
+                    token.tag = "var-name"
                 #Match characters ('a', 'b')
                 elif id_char.match(token_str):
-                    token["type"] = "char-value"
+                    token.tag = "char-value"
                 #Match strings ("abc", "def")
                 elif id_string.match(token_str):
-                    token["type"] = "string-value"
-                else:
-                    token["type"] = "identified"
+                    token.tag = "string-value"
 
         return input_tokens
 

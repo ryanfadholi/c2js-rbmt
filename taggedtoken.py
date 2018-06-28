@@ -1,7 +1,7 @@
 class TaggedToken:
-    def __init__(self, tag, token):
+    def __init__(self, token, tag):
+        self.token = token        
         self.tag = tag
-        self.token = token
 
     def __str__(self):
         return f"{self.tag} - {repr(self.token)}"
