@@ -31,22 +31,37 @@ class TranslationHelper:
 
     def identify(self, input_tokens):
 
-        id_char = re.compile(r"^'.*'$")
-        id_string = re.compile(r'^".*"$')
+        id_int = re.compile(r"^\d+$")
+        id_float = re.compile(r"^\d+\.(\d+)?$")
+        id_var = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
+        id_char = re.compile(r"^'.*'$", re.DOTALL)
+        id_string = re.compile(r'^".*"$', re.DOTALL)
+
+        #TODO: Only check "unknown" tokens?
         for token in input_tokens:
-            token_str = token["token"]
-            #Match library names (stdio.h, conio.h)
-            if token_str.lower().endswith(".h"):
-                token["type"] = "preprocessor-name"
-            #Match characters ('a', 'b')
-            elif id_char.match(token_str):
-                token["type"] = "character-string"
-            #Match strings ("abc", "def")
-            elif id_string.match(token_str):
-                token["type"] = "string"
-            elif token["type"] == "unknown":
-                token["type"] = "identified"
+            if token["type"] == "unknown":
+                token_str = token["token"]
+                #Match library names (stdio.h, conio.h)
+                if token_str.lower().endswith(".h"):
+                    token["type"] = "preprocessor-name"
+                #Match integers (1234, 5454, 5)
+                elif id_int.match(token_str):
+                    token["type"] = "int-value"
+                #Match floating-point (1.1, 3.14, 2.)
+                elif id_float.match(token_str):
+                    token["type"] = "float-value"
+                #Match variable names (x, result, _hero9, y2)
+                elif id_var.match(token_str):
+                    token["type"] = "var-name"
+                #Match characters ('a', 'b')
+                elif id_char.match(token_str):
+                    token["type"] = "char-value"
+                #Match strings ("abc", "def")
+                elif id_string.match(token_str):
+                    token["type"] = "string-value"
+                else:
+                    token["type"] = "identified"
 
         return input_tokens
 

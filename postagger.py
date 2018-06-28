@@ -88,10 +88,16 @@ class POSTagger:
         #Check until the last three tokens. (Checking further than this will cause index error :) )
         while index < last_check:
             #TODO: Fix floats that ends with dot, e.g: "2.", "100."
-            #Merge dots of floating-point numbers
-            if tokens[index+1] == "." and self.rule_digit.match(tokens[index]) and self.rule_digit.match(tokens[index+2]):
-                result.append("".join(tokens[index:index+3]))
-                index += 3
+            #Merge dots of floating-point numbers (e.g "3.", "4.14")
+            if tokens[index+1] == "." and self.rule_digit.match(tokens[index]):
+                #At this point, there's a number followed by a dot.
+                to_join = 2 #Number of token to join
+                if self.rule_digit.match(tokens[index+2]):
+                    #If the dot is in turn followed by a digit, assume that it's the decimal part of the float
+                    to_join = 3
+
+                result.append("".join(tokens[index:index+to_join]))
+                index += to_join
             #Merge dots of library names in include statements.
             elif tokens[0] == "#" and tokens[index+1] == ".":
                 result.append("".join(tokens[index:index+3]))
