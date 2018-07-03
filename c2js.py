@@ -1,6 +1,6 @@
 import deformatter as dfrmt
 import postagger as post
-
+import sltransfer as slt
 def tagprint(tags):
     for tag in tags:
         print(f"{tag['token']} - {tag['type']}", end=", " )
@@ -9,7 +9,10 @@ def tagprint(tags):
 print("-------------------------------------------------")
 df = dfrmt.Deformat("example.c")
 tagger = post.POSTagger()
+transfer = slt.StructuralLexicalTransfer()
 
 for stmt in df._statements_generator():
-    print(tagger.tag(stmt))
+    tagged = tagger.tag(stmt)
+    print(transfer.identify(tagged))
+
 

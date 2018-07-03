@@ -19,6 +19,7 @@ output_func = "printf"
 input_func = "scanf"
 
 include_kw = "include"
+include_kw_tag = "include-keyword"
 return_kw = "return"
 
 single_comment = "//"
@@ -83,6 +84,16 @@ multichar_symbol = [
     op_comp_add, op_comp_minus, op_comp_multiply, op_comp_divide, 
     op_comp_modulo, op_comp_and, op_comp_or, op_comp_xor, op_lshift, op_rshift
 ]
+
+#Every dynamically-named tokens goes here
+name_preproc = "preprocessor-name"
+name_var = "var-name"
+val_char = "char-value"
+val_float = "float-value"
+val_int = "int-value"
+val_string = "string-value"
+
+#TODO: Store every keys in a variable instead!
 
 arithmetic_operator = {
     "op-add" : op_add,
@@ -176,6 +187,6 @@ special_functions = {
 }
 
 keywords = {
-    "include-keyword" : include_kw,
+    include_kw_tag : include_kw,
     "return-keyword" : return_kw
 }

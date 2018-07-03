@@ -1,7 +1,7 @@
 import tokendicts as tokens
 import re
 
-#TODO: When all rules are in dictionary, delete unnecessary instance checks.
+#TODO: When everything's said and done, is it better to spread this file to each project that need each individual function instead?
 
 class TranslationHelper:
 
@@ -43,22 +43,22 @@ class TranslationHelper:
                 token_str = token.token
                 #Match library names (stdio.h, conio.h)
                 if token_str.lower().endswith(".h"):
-                    token.tag = "preprocessor-name"
+                    token.tag = tokens.name_preproc
                 #Match integers (1234, 5454, 5)
                 elif id_int.match(token_str):
-                    token.tag = "int-value"
+                    token.tag = tokens.val_int
                 #Match floating-point (1.1, 3.14, 2.)
                 elif id_float.match(token_str):
-                    token.tag = "float-value"
+                    token.tag = tokens.val_float
                 #Match variable names (x, result, _hero9, y2)
                 elif id_var.match(token_str):
-                    token.tag = "var-name"
+                    token.tag = tokens.name_var
                 #Match characters ('a', 'b')
                 elif id_char.match(token_str):
-                    token.tag = "char-value"
+                    token.tag = tokens.val_char
                 #Match strings ("abc", "def")
                 elif id_string.match(token_str):
-                    token.tag = "string-value"
+                    token.tag = tokens.val_string
 
         return input_tokens
 
