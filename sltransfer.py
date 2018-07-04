@@ -18,7 +18,7 @@ class StructuralLexicalTransfer:
     def identify(self, statement):
 
         tags = list(map(lambda token: token.tag, statement))
-        preprocessor_pattern = [tokens.preprocessor, tokens.include_kw_tag] 
+        preprocessor_pattern = [tokens.preprocessor, tokens.tag_include_kw] 
         if self.trace(preprocessor_pattern, tags):
             statement.statement_type = "include"
         else:

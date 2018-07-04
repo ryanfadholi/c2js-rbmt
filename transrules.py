@@ -43,22 +43,22 @@ class TranslationHelper:
                 token_str = token.token
                 #Match library names (stdio.h, conio.h)
                 if token_str.lower().endswith(".h"):
-                    token.tag = tokens.name_preproc
+                    token.tag = tokens.tag_name_preproc
                 #Match integers (1234, 5454, 5)
                 elif id_int.match(token_str):
-                    token.tag = tokens.val_int
+                    token.tag = tokens.tag_val_int
                 #Match floating-point (1.1, 3.14, 2.)
                 elif id_float.match(token_str):
-                    token.tag = tokens.val_float
+                    token.tag = tokens.tag_val_float
                 #Match variable names (x, result, _hero9, y2)
                 elif id_var.match(token_str):
-                    token.tag = tokens.name_var
+                    token.tag = tokens.tag_name_var
                 #Match characters ('a', 'b')
                 elif id_char.match(token_str):
-                    token.tag = tokens.val_char
+                    token.tag = tokens.tag_val_char
                 #Match strings ("abc", "def")
                 elif id_string.match(token_str):
-                    token.tag = tokens.val_string
+                    token.tag = tokens.tag_val_string
 
         return input_tokens
 
