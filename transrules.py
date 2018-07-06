@@ -1,6 +1,8 @@
 import tokendicts as tokens
 import re
 
+from typing import Dict, List
+
 #TODO: When everything's said and done, is it better to spread this file to each project that need each individual function instead?
 
 class TranslationHelper:
@@ -63,53 +65,62 @@ class TranslationHelper:
         return input_tokens
 
     def match(self, token):
-        for key, value in tokens.arithmetic_operator.items():
-            if token == value:
-                return key
+        token_dicts = [ tokens.arithmetic_operator, tokens.bitwise_operator, tokens.relational_operator, 
+            tokens.compound_assignment_operator, tokens.logical_operator, tokens.misc_operator, tokens.comments, 
+            tokens.conditionals, tokens.datatypes, tokens.loops, tokens.special_functions, tokens.keywords ]
 
-        for key, value in tokens.bitwise_operator.items():
-            if token == value:
-                return key
+        for token_dict in token_dicts:
+            for key, value in token_dict.items():
+                if token == value:
+                    return key
+
+        # for key, value in tokens.arithmetic_operator.items():
+        #     if token == value:
+        #         return key
+
+        # for key, value in tokens.bitwise_operator.items():
+        #     if token == value:
+        #         return key
         
-        for key, value in tokens.relational_operator.items():
-            if token == value:
-                return key
+        # for key, value in tokens.relational_operator.items():
+        #     if token == value:
+        #         return key
 
-        for key, value in tokens.compound_assignment_operator.items():
-            if token == value:
-                return key
+        # for key, value in tokens.compound_assignment_operator.items():
+        #     if token == value:
+        #         return key
 
-        for key, value in tokens.logical_operator.items():
-            if token == value:
-                return key
+        # for key, value in tokens.logical_operator.items():
+        #     if token == value:
+        #         return key
 
-        for key, value in tokens.misc_operator.items():
-            if token == value:
-                return key
+        # for key, value in tokens.misc_operator.items():
+        #     if token == value:
+        #         return key
 
-        for key, value in tokens.comments.items():
-            if token == value:
-                return key
+        # for key, value in tokens.comments.items():
+        #     if token == value:
+        #         return key
 
-        for key, value in tokens.conditionals.items():
-            if token == value:
-                return key
+        # for key, value in tokens.conditionals.items():
+        #     if token == value:
+        #         return key
 
-        for key, value in tokens.datatypes.items():
-            if token == value:
-                return key
+        # for key, value in tokens.datatypes.items():
+        #     if token == value:
+        #         return key
 
-        for key, value in tokens.loops.items():
-            if token == value:
-                return key
+        # for key, value in tokens.loops.items():
+        #     if token == value:
+        #         return key
 
-        for key, value in tokens.special_functions.items():
-            if token == value:
-                return key
+        # for key, value in tokens.special_functions.items():
+        #     if token == value:
+        #         return key
 
-        for key, value in tokens.keywords.items():
-            if token == value:
-                return key
+        # for key, value in tokens.keywords.items():
+        #     if token == value:
+        #         return key
         
         return "unknown"
 

@@ -41,8 +41,8 @@ op_minus = "-"; tag_op_minus = "op-minus"
 op_multiply = "*"; tag_op_multiply = "op-multiply"
 op_divide = "/"; tag_op_divide = "op-divide" 
 op_modulo = "%"; tag_op_modulo = "op-modulo"
-op_increment = "++"
-op_decrement = "--"
+op_increment = "++"; tag_op_increment = "op-increment"
+op_decrement = "--"; tag_op_decrement = "op-decrement"
 
 op_eq = "=="; tag_op_eq = "op-equal"
 op_not_eq = "!="; tag_op_not_eq = "op-not-equal"
@@ -89,14 +89,14 @@ tag_val_float = "float-value"
 tag_val_int = "int-value"
 tag_val_string = "string-value"
 
-#TODO: Where to put increment/decrement?
-
 arithmetic_operator = {
     tag_op_add : op_add,
     tag_op_minus : op_minus,
     tag_op_multiply : op_multiply,
     tag_op_divide : op_divide,
-    tag_op_modulo : op_modulo
+    tag_op_modulo : op_modulo,
+    tag_op_increment : op_increment,
+    tag_op_decrement : op_decrement
 }
 
 bitwise_operator = {
