@@ -73,54 +73,6 @@ class TranslationHelper:
             for key, value in token_dict.items():
                 if token == value:
                     return key
-
-        # for key, value in tokens.arithmetic_operator.items():
-        #     if token == value:
-        #         return key
-
-        # for key, value in tokens.bitwise_operator.items():
-        #     if token == value:
-        #         return key
-        
-        # for key, value in tokens.relational_operator.items():
-        #     if token == value:
-        #         return key
-
-        # for key, value in tokens.compound_assignment_operator.items():
-        #     if token == value:
-        #         return key
-
-        # for key, value in tokens.logical_operator.items():
-        #     if token == value:
-        #         return key
-
-        # for key, value in tokens.misc_operator.items():
-        #     if token == value:
-        #         return key
-
-        # for key, value in tokens.comments.items():
-        #     if token == value:
-        #         return key
-
-        # for key, value in tokens.conditionals.items():
-        #     if token == value:
-        #         return key
-
-        # for key, value in tokens.datatypes.items():
-        #     if token == value:
-        #         return key
-
-        # for key, value in tokens.loops.items():
-        #     if token == value:
-        #         return key
-
-        # for key, value in tokens.special_functions.items():
-        #     if token == value:
-        #         return key
-
-        # for key, value in tokens.keywords.items():
-        #     if token == value:
-        #         return key
         
         return "unknown"
 
