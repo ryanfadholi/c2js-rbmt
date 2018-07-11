@@ -12,7 +12,10 @@ tagger = post.POSTagger()
 transfer = slt.StructuralLexicalTransfer()
 
 for stmt in df._statements_generator():
+    # print("----------------NEW STATEMENT")    
+
     tagged = tagger.tag(stmt)
-    print(transfer.identify(tagged))
+    # print(stmt)
+    # print(transfer.identify(tagged))
 
 

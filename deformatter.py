@@ -25,15 +25,18 @@ class Deformat:
         comment_start = self.rules.findstring(unchecked_text) 
         while comment_start > -1:
             offset = text_length - len(unchecked_text)
-            
-            comment_end = self._skip_text(text[comment_start:])
-            if comment_end == -1:
-                comment_end = len(text)
-                        
+
+            comment_length = self._skip_text(unchecked_text[comment_start:])
+            if comment_length == -1:
+                comment_end = len(unchecked_text)
+            else:
+                comment_end = comment_start + comment_length
+
             new_range = self.CharRange(offset + comment_start, offset + comment_end)
             ranges.append(new_range)
 
-            unchecked_text = unchecked_text[comment_end:]
+            unchecked_text = unchecked_text[comment_end+1:]
+            # print(f"Text: {unchecked_text}")
             comment_start = self.rules.findstring(unchecked_text)
 
         return ranges
@@ -101,6 +104,11 @@ class Deformat:
         to_ignore = [] if bypass_exception_checking else self.scan_parsing_exceptions(text)
 
         if len(to_ignore) > 0:
+            print("Sanity check")
+            print(f"Statement length is {len(text)}, content: {text}")
+        
+            print(f"to ignore: {to_ignore}")
+            print(f"separator positions: {sep_pos}")
             valid_sep_pos = -1
             for pos in sep_pos:
                 for char_range in to_ignore:
@@ -255,6 +263,7 @@ class Deformat:
         cur_string_delimiter = text[0]
         found = False
 
+        #Start from one to account for the first character (the first single/double quote)
         for idx, char in enumerate(text[1:], 1):
             #If the current token is the same as the one starting the string
             #(either single or double quote)
