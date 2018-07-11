@@ -120,6 +120,7 @@ class TranslationHelper:
         
     #Functions to check the type of a statement.
     is_block_end = lambda self, text: self.stmt_validate(text, tokens.curly_right)
+    is_block_start = lambda self, text: self.stmt_validate(text, tokens.curly_left)
     is_conditional = lambda self, text: self.stmt_validate(text, tokens.conditionals)
     is_declaration = lambda self, text: self.stmt_validate(text, tokens.datatypes)
     is_include = lambda self, text: self.stmt_validate(text, tokens.preprocessor)

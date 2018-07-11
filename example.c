@@ -19,7 +19,7 @@ int main() {
     //This is the second comment.
     == 2)
      {
-    //This is a comment; and this is another;
+    //This is a comment and this is another
     //
     /**/
     int i /*@@@@@how about
@@ -32,6 +32,12 @@ int main() {
         printf("Hmmmm \" I escaped 
         some string here %c",'\'');
     }
+
+    // if (2 == 2) printf("Benerrrr");
+    // while (2 == 2) printf("Benerrrr loopnyo");
+    // do {
+    //     i++;
+    // } while(i < 5);
 
     return 0;
 }
