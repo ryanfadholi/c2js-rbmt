@@ -13,8 +13,6 @@ class Deformat:
         self._filepath = filepath
         self._readfile()
 
-    # def _determine_genera_end()
-
     def _determine_decl_end(self, text):
         """
         Determines whether a declaration sentence ends with "{" or ";", 
@@ -24,9 +22,9 @@ class Deformat:
         semicolon_pos = text.find(";")
 
         if curlybrace_pos > 0 and curlybrace_pos < semicolon_pos:
-            return "{"
+            return self._determine_statement_end(text, "{")
         else:
-            return ";"
+            return self._determine_statement_end(text, ";")
 
     def _determine_bracket_end(self, text):
         # print(f"determine_bracket_end called, the text: {text}")
@@ -48,11 +46,11 @@ class Deformat:
                     open_bracket_count -= 1
                 
                 if open_bracket_count == 0:
-                    
                     bracket_end_idx = char_idx
                     break
 
                 char_idx += 1
+                
         bracket_closed = open_bracket_count == 0
         # print(f"is bracket closed? {bracket_closed}")
 
@@ -62,64 +60,15 @@ class Deformat:
         else:
             return -1
 
-    def _determine_block_end(self, text):
-        #TODO: Correctly handle conditionals/loops separated by comments!
-        print(f"determine_block_end called, the text: {text}")
-        first_open_bracket = text.find("(")
-    
-        if first_open_bracket == -1:
+    def _determine_statement_end(self, text, separator=None):
+
+        if separator is None:
             return -1
-        else:
-            char_idx = first_open_bracket+1
 
-            bracket_end_idx = -1
-            open_bracket_count = 1
-
-            while(char_idx < len(text)):
-                cur_char = text[char_idx]
-                if cur_char == "(":
-                    open_bracket_count += 1
-                elif cur_char == ")":
-                    open_bracket_count -= 1
-                
-                if open_bracket_count == 0:
-                    
-                    bracket_end_idx = char_idx
-                    break
-
-                char_idx += 1
-        bracket_closed = open_bracket_count == 0
-        one_liner = False
-
-        if(bracket_closed):
-            char_idx = bracket_end_idx+1
-            unfinished_comment = False
-            comment_check = self.rules.findcomment(text[char_idx:])
-            if comment_check > -1:
-                cut_comment = self.stmt_cutter(text[comment_check:])
-                if cut_comment > -1:
-                    char_idx = char_idx + comment_check + cut_comment
-                    print(f"comment found! jump to {char_idx} from {len(text)} characters")
-                else:
-                    unfinished_comment = True
-
-            while(char_idx < len(text) and not unfinished_comment):
-                cur_char = text[char_idx]
-                if(not (cur_char == " " or cur_char == "{")):
-                    one_liner = True
-                    break 
-
-                char_idx += 1
-    
-        if one_liner:
-            return bracket_end_idx + 1 
-        else:
-            separator = "{"
-            sep_pos = text.find(separator)        
-            offset = len(separator) #Determine the offset
-            cut_pos = sep_pos + offset if sep_pos > -1 else -1
-            return cut_pos 
-
+        sep_pos = text.find(separator)        
+        offset = len(separator) #Determine the offset, because we want to cut AFTER the separator.
+        cut_pos = sep_pos + offset if sep_pos > -1 else -1
+        return cut_pos
 
     def _extract_substmt(self, text):
         """
@@ -155,33 +104,27 @@ class Deformat:
         to the first characters of the string.
         """
 
-        #TODO: Refactor as in the paper, add whitespace_offset variable.
+        #TODO: How do you handle separator occurrence in strings comments?
         line = str(text).lstrip()
+        whitespace_offset = len(text) - len(line)
 
-        #Get special case out of the way first (if it's a conditional/loop statement)
-        if self.rules.is_conditional(line) or self.rules.is_loop(line):
-            if self._determine_bracket_end(line) > -1:
-                return self._determine_bracket_end(line) + (len(str(text)) - len(str(text).lstrip()))
-            else:
-                return -1
-
-        separator = ""
+        end_pos = -1
         if self.rules.is_singlecomment(line) or self.rules.is_include(line):
-            separator = '\n'
+            end_pos = self._determine_statement_end(line, '\n')
         elif self.rules.is_multicomment(line):
-            separator = '*/'
+            end_pos = self._determine_statement_end(line,  '*/')
+        elif self.rules.is_block_start(line):
+            end_pos = self._determine_statement_end(line, '{')
         elif self.rules.is_block_end(line):
-            separator = '}'
+            end_pos = self._determine_statement_end(line,  '}')
         elif self.rules.is_declaration(line):
-            separator = self._determine_decl_end(line)
-        # elif self.rules.is_conditional(line) or self.rules.is_loop(line):
-        #     separator = "{"
+            end_pos = self._determine_decl_end(line)
+        elif self.rules.is_conditional(line) or self.rules.is_loop(line):
+            end_pos = self._determine_bracket_end(line)
         else: 
-            separator = ';'
+            end_pos = self._determine_statement_end(line,  ';')
 
-        sep_pos = text.find(separator)        
-        offset = len(separator) #Determine the offset
-        cut_pos = sep_pos + offset if sep_pos > -1 else -1
+        cut_pos = whitespace_offset + end_pos if end_pos > -1 else -1
         return cut_pos
 
     def findfirst(self, text, tokens):

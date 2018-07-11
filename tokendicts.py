@@ -81,6 +81,10 @@ multichar_symbol = [
     op_comp_modulo, op_comp_and, op_comp_or, op_comp_xor, op_lshift, op_rshift
 ]
 
+parsing_exceptions = [
+    single_comment, multi_comment, single_quote, double_quote
+]
+
 #Every dynamically-determined tokens key goes here
 tag_name_preproc = "preprocessor-name"
 tag_name_var = "variable-name"

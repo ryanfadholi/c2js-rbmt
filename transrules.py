@@ -29,7 +29,9 @@ class TranslationHelper:
 
         return min(found) if len(found) > 0 else -1
 
+    findchar = lambda self, text: text.find(tokens.comments)
     findcomment = lambda self, text: self.findfirst(text, tokens.comments)
+    findstring = lambda self, text: text.find(tokens.double_quote)
 
     def identify(self, input_tokens):
 
