@@ -1,5 +1,7 @@
 import transrules as rules
 
+from collections import namedtuple
+
 #TODO: delete all unnecessary commented print-debugs! 
 
 class Deformat:
@@ -8,10 +10,33 @@ class Deformat:
 
     def __init__(self, filepath):
         self.rules = rules.TranslationHelper()        
-
+        self.CharRange = namedtuple("CharRange", ['start', 'end'])
         #Prepare the temporary file
         self._filepath = filepath
         self._readfile()
+
+    def scan_parsing_exceptions(self, text):
+        
+        unchecked_text = text
+        text_length = len(text)
+        offset = 0
+        ranges = []
+
+        comment_start = self.rules.findstring(unchecked_text) 
+        while comment_start > -1:
+            offset = text_length - len(unchecked_text)
+            
+            comment_end = self._skip_text(text[comment_start:])
+            if comment_end == -1:
+                comment_end = len(text)
+                        
+            new_range = self.CharRange(offset + comment_start, offset + comment_end)
+            ranges.append(new_range)
+
+            unchecked_text = unchecked_text[comment_end:]
+            comment_start = self.rules.findstring(unchecked_text)
+
+        return ranges
 
     def _determine_decl_end(self, text):
         """
@@ -60,14 +85,35 @@ class Deformat:
         else:
             return -1
 
-    def _determine_statement_end(self, text, separator=None):
+    def _determine_statement_end(self, text, separator=None, bypass_exception_checking=False):
+
+        # print(f"determine_statement_end called. Text is {text}")
 
         if separator is None:
             return -1
 
-        sep_pos = text.find(separator)        
+        sep_pos = self.rules.findall(text, separator)
+        #If there's no separator found, that means the statement isn't over yet.
+        if len(sep_pos) == 0:
+            return -1
+        
+        #If it's a comment, bypass parsing exception checking 
+        to_ignore = [] if bypass_exception_checking else self.scan_parsing_exceptions(text)
+
+        if len(to_ignore) > 0:
+            valid_sep_pos = -1
+            for pos in sep_pos:
+                for char_range in to_ignore:
+                    if not char_range.start <= pos <= char_range.end:
+                        valid_sep_pos = pos
+                        break
+                if valid_sep_pos != -1:
+                    break
+        else:
+            valid_sep_pos = sep_pos[0]
+        
         offset = len(separator) #Determine the offset, because we want to cut AFTER the separator.
-        cut_pos = sep_pos + offset if sep_pos > -1 else -1
+        cut_pos = valid_sep_pos + offset if valid_sep_pos > -1 else -1
         return cut_pos
 
     def _extract_substmt(self, text):
@@ -110,9 +156,9 @@ class Deformat:
 
         end_pos = -1
         if self.rules.is_singlecomment(line) or self.rules.is_include(line):
-            end_pos = self._determine_statement_end(line, '\n')
+            end_pos = self._determine_statement_end(line, '\n', bypass_exception_checking=True)
         elif self.rules.is_multicomment(line):
-            end_pos = self._determine_statement_end(line,  '*/')
+            end_pos = self._determine_statement_end(line,  '*/', bypass_exception_checking=True)
         elif self.rules.is_block_start(line):
             end_pos = self._determine_statement_end(line, '{')
         elif self.rules.is_block_end(line):
@@ -190,6 +236,39 @@ class Deformat:
     @property
     def lines(self):
         return [line for line in self._lines_generator()]
+
+
+    def _skip_text(self, text):
+        """
+        Merges every tokens between single or double quotes (including the quotes) into one. 
+        Leave the rest as it is, except that whitespaces outside quotes is removed.
+        
+        Will handle escaped quotes correctly, but fails silently if there is non-even number of quotes 
+        (the last quote and all quote afterwards will be dumped)
+        """
+        
+        #Do a sanity check; is the text really a string?
+        if(not self.rules.is_string(text)):
+            print(f"ERROR! The text ({text}) is not a string, but skip_text() is called on it.")
+            return -1
+
+        cur_string_delimiter = text[0]
+        found = False
+
+        for idx, char in enumerate(text[1:], 1):
+            #If the current token is the same as the one starting the string
+            #(either single or double quote)
+            if char == cur_string_delimiter:
+                #If the last character in current string is backslash, it means
+                #that the delimiter is escaped; continue.
+                if text[idx-1] == "\\":
+                    pass
+                #else it means that the current string is ending. Break from loop
+                else:
+                    found = True
+                    break
+        
+        return idx if found else -1
 
 if __name__ == "__main__":
     #When run, run c2js instead

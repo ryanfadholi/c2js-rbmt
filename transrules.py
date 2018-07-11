@@ -14,6 +14,22 @@ class TranslationHelper:
         self.multicomment_token_end = tokens.multi_comment_end
         self.multichar_symbol_tokens = tokens.multichar_symbol
 
+    def findall(self, text, token):
+        """
+        Find all instances of token in text.
+        Returns a list of indexes in which the token start.
+        (Supports overlapping cases)
+        """
+        # print(f"Token: {token}; Text: {text}")
+
+        result = []
+        token_len = len(token)
+        for i in range(len(text)):
+            if token == text[i:i+token_len]:
+                result.append(i)
+
+        return result 
+
     def findfirst(self, text, tokens):
         """
         Find the first instance of any token from the tokens list on the text string. 
@@ -29,9 +45,8 @@ class TranslationHelper:
 
         return min(found) if len(found) > 0 else -1
 
-    findchar = lambda self, text: text.find(tokens.comments)
+    findstring = lambda self, text: self.findfirst(text, tokens.string_identifiers)
     findcomment = lambda self, text: self.findfirst(text, tokens.comments)
-    findstring = lambda self, text: text.find(tokens.double_quote)
 
     def identify(self, input_tokens):
 
@@ -129,3 +144,4 @@ class TranslationHelper:
     is_loop = lambda self, text: self.stmt_validate(text, tokens.loops)
     is_multicomment = lambda self, text: self.stmt_validate(text, tokens.multi_comment)
     is_singlecomment = lambda self, text: self.stmt_validate(text, tokens.single_comment)
+    is_string = lambda self, text: self.stmt_validate(text, tokens.string_identifiers)

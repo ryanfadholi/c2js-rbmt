@@ -121,7 +121,7 @@ class POSTagger:
         Leave the rest as it is, except that whitespaces outside quotes is removed.
         
         Will handle escaped quotes correctly, but fails silently if there is non-even number of quotes 
-        (all tokens after the last quote will be dumped)
+        (the last quote and all quote afterwards will be dumped)
         """
         in_string = False
         

@@ -85,6 +85,10 @@ parsing_exceptions = [
     single_comment, multi_comment, single_quote, double_quote
 ]
 
+string_identifiers = [
+    single_quote, double_quote
+]
+
 #Every dynamically-determined tokens key goes here
 tag_name_preproc = "preprocessor-name"
 tag_name_var = "variable-name"
