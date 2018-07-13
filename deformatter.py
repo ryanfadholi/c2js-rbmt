@@ -1,5 +1,8 @@
 import transrules as rules
 
+import itertools
+
+from charrange import CharRange
 from collections import namedtuple
 
 #TODO: delete all unnecessary commented print-debugs! 
@@ -8,12 +11,32 @@ class Deformat:
 
     _tempfile_path = "temp/source.txt"
 
-    def __init__(self, filepath):
-        self.rules = rules.TranslationHelper()        
-        self.CharRange = namedtuple("CharRange", ['start', 'end'])
+    def __init__(self, filepath, debug_mode=False):
+        self.debug_mode = debug_mode
+        self.rules = rules.TranslationHelper()
+
         #Prepare the temporary file
         self._filepath = filepath
         self._readfile()
+
+    def get_special_tokens(self, text):
+        quotes_pos = map(lambda pos: (pos, "string"), self.rules.find_all_string(text)) 
+        comment_start_pos =  map(lambda pos: (pos, "comment"), self.rules.find_all_comment(text)) 
+
+        result = list(itertools.chain.from_iterable((quotes_pos, comment_start_pos)))
+        result.sort()
+        return result
+
+    def first_parsing_exception(self, text):
+        quotes_start = self.rules.findstring(text) 
+        comments_start = self.rules.findcomment(text)
+
+        has_quotes = quotes_start != -1
+        has_comments = quotes_start != -1
+
+        if(has_comments or has_quotes):
+            pass
+        pass
 
     def scan_parsing_exceptions(self, text):
         
@@ -22,22 +45,30 @@ class Deformat:
         offset = 0
         ranges = []
 
-        comment_start = self.rules.findstring(unchecked_text) 
-        while comment_start > -1:
-            offset = text_length - len(unchecked_text)
+        exception_tokens_pos = self.get_special_tokens(text)
 
-            comment_length = self._skip_text(unchecked_text[comment_start:])
+        while exception_tokens_pos:
+            # offset = text_length - len(unchecked_text)
+            offset = 0
+            
+            current_exception_item = exception_tokens_pos[0]
+            current_exception = current_exception_item[0]
+
+            if(current_exception_item[1] == "string"):
+                comment_length = self.skip_text(unchecked_text[current_exception:])
+            else:
+                comment_length = self.stmt_cutter(unchecked_text[current_exception:])
+
             if comment_length == -1:
                 comment_end = len(unchecked_text)
             else:
-                comment_end = comment_start + comment_length
+                comment_end = current_exception + comment_length
 
-            new_range = self.CharRange(offset + comment_start, offset + comment_end)
+            new_range = CharRange(offset + current_exception, offset + comment_end)
             ranges.append(new_range)
 
-            unchecked_text = unchecked_text[comment_end+1:]
             # print(f"Text: {unchecked_text}")
-            comment_start = self.rules.findstring(unchecked_text)
+            exception_tokens_pos = list(filter(lambda pos: pos[0] > comment_end, exception_tokens_pos))
 
         return ranges
 
@@ -90,35 +121,41 @@ class Deformat:
 
     def _determine_statement_end(self, text, separator=None, bypass_exception_checking=False):
 
-        # print(f"determine_statement_end called. Text is {text}")
+        if(self.debug_mode):
+            print(f"Statement length is {len(text)}, content: {text}")
+        
+        valid_sep_pos = -1
 
         if separator is None:
             return -1
 
         sep_pos = self.rules.findall(text, separator)
         #If there's no separator found, that means the statement isn't over yet.
-        if len(sep_pos) == 0:
+        if not sep_pos:
             return -1
         
         #If it's a comment, bypass parsing exception checking 
         to_ignore = [] if bypass_exception_checking else self.scan_parsing_exceptions(text)
 
-        if len(to_ignore) > 0:
-            print("Sanity check")
-            print(f"Statement length is {len(text)}, content: {text}")
-        
-            print(f"to ignore: {to_ignore}")
-            print(f"separator positions: {sep_pos}")
-            valid_sep_pos = -1
+        if to_ignore:            
+            if(self.debug_mode):
+                print(f"ignore range: {to_ignore}")
+                print(f"separator positions: {sep_pos}")
+
             for pos in sep_pos:
+                #First assume that the separator is valid.
+                valid_sep_pos = pos
                 for char_range in to_ignore:
-                    if not char_range.start <= pos <= char_range.end:
-                        valid_sep_pos = pos
+                    #If the separator is between ANY ignore range, that means the separator is invalid.
+                    if pos in char_range:
+                        valid_sep_pos = -1
                         break
+                #If the value is not reverted to -1, that means the value is valid. 
                 if valid_sep_pos != -1:
                     break
         else:
-            valid_sep_pos = sep_pos[0]
+            #If there is no character ranges to ignore, return the first instance of the separator (the one with smallest index)
+            valid_sep_pos = min(sep_pos)
         
         offset = len(separator) #Determine the offset, because we want to cut AFTER the separator.
         cut_pos = valid_sep_pos + offset if valid_sep_pos > -1 else -1
@@ -129,7 +166,6 @@ class Deformat:
         Extracts comments inserted inside a statement.
         Returns the statement (and any comments found) as a list.
         """
-        original_text = text
 
         substmts = []
 
@@ -245,8 +281,41 @@ class Deformat:
     def lines(self):
         return [line for line in self._lines_generator()]
 
+    # def skip_comment(self, text):
+        
+    #     #Do a sanity check; is the text really a comment?
+    #     if(not self.rules.is_comment(text)):
+    #         print(f"ERROR! The text ({text}) is not a comment, but skip_comment() is called on it.")
+    #         return -1
 
-    def _skip_text(self, text):
+    #     if(self.rules.is_singlecomment(text)):
+    #         comment_start = self.rules.singlecomment_token
+    #         cur_string_delimiter = "\n"
+    #     else:
+    #         comment_start = self.rules.multicomment_token
+    #         cur_string_delimiter = self.rules.multicomment_token_end
+        
+    #     init_offset = len(comment_start)
+    #     cut_len
+    #     found = False
+        
+    #      #Start from AFTER the to account for the first character (the first single/double quote)
+    #     for idx, char in enumerate(text[1:], 1):
+    #         #If the current token is the same as the one starting the string
+    #         #(either single or double quote)
+    #         if char == cur_string_delimiter:
+    #             #If the last character in current string is backslash, it means
+    #             #that the delimiter is escaped; continue.
+    #             if text[idx-1] == "\\":
+    #                 pass
+    #             #else it means that the current string is ending. Break from loop
+    #             else:
+    #                 found = True
+    #                 break
+        
+    #     return idx if found else -1
+
+    def skip_text(self, text):
         """
         Merges every tokens between single or double quotes (including the quotes) into one. 
         Leave the rest as it is, except that whitespaces outside quotes is removed.
@@ -260,6 +329,7 @@ class Deformat:
             print(f"ERROR! The text ({text}) is not a string, but skip_text() is called on it.")
             return -1
 
+        #What we're looking for is either single or double token; check the first character to determine which.
         cur_string_delimiter = text[0]
         found = False
 

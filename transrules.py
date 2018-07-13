@@ -1,7 +1,6 @@
 import tokendicts as tokens
+import itertools
 import re
-
-from typing import Dict, List
 
 #TODO: When everything's said and done, is it better to spread this file to each project that need each individual function instead?
 
@@ -17,7 +16,26 @@ class TranslationHelper:
     def findall(self, text, token):
         """
         Find all instances of token in text.
-        Returns a list of indexes in which the token start.
+        Returns a list of indexes in which the token start. If there is no token instance in the text, it returns empty list.
+        (Supports overlapping cases)
+        """
+        # print(f"Token: {token}; Text: {text}")
+
+        if isinstance(token, str):
+            return self.findall_token(text, token)
+        if isinstance(token, dict):
+            findall = [self.findall_token(text, token_item) for key, token_item in token.items()]
+        elif isinstance(token, list):
+            findall = [self.findall_token(text, token_item) for token_item in token]
+
+        result = list(itertools.chain.from_iterable(findall))
+        result.sort() 
+        return result
+
+    def findall_token(self, text, token):
+        """
+        Find all instances of token in text.
+        Returns a list of indexes in which the token start. If there is no token instance in the text, it returns empty list.
         (Supports overlapping cases)
         """
         # print(f"Token: {token}; Text: {text}")
@@ -46,7 +64,9 @@ class TranslationHelper:
         return min(found) if len(found) > 0 else -1
 
     findstring = lambda self, text: self.findfirst(text, tokens.string_identifiers)
+    find_all_string = lambda self, text: self.findall(text, tokens.string_identifiers)
     findcomment = lambda self, text: self.findfirst(text, tokens.comments)
+    find_all_comment = lambda self, text: self.findall(text, tokens.comments)
 
     def identify(self, input_tokens):
 
@@ -144,4 +164,5 @@ class TranslationHelper:
     is_loop = lambda self, text: self.stmt_validate(text, tokens.loops)
     is_multicomment = lambda self, text: self.stmt_validate(text, tokens.multi_comment)
     is_singlecomment = lambda self, text: self.stmt_validate(text, tokens.single_comment)
+    is_comment = lambda self, text: self.is_singlecomment or self.is_multicomment #Returns true for both single and multi-line comments
     is_string = lambda self, text: self.stmt_validate(text, tokens.string_identifiers)

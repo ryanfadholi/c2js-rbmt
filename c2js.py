@@ -11,11 +11,10 @@ df = dfrmt.Deformat("example.c")
 tagger = post.POSTagger()
 transfer = slt.StructuralLexicalTransfer()
 
-for stmt in df._statements_generator():
-    # print("----------------NEW STATEMENT")    
+for stmt in df._statements_generator():  
 
     tagged = tagger.tag(stmt)
     # print(stmt)
-    # print(transfer.identify(tagged))
+    print(transfer.identify(tagged))
 
 
