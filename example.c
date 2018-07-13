@@ -1,6 +1,12 @@
 #include<stdio.h>
 
-int main() {
+int main(
+    /* ({Test}) */
+
+
+    
+    )
+      {
     printf("Hello World!");
     
     float r = 2.2;
@@ -14,8 +20,8 @@ int main() {
     int i = 1;
     */
 
-    if (2 
-    //Wow, it's a first comment!
+     if (((1+1) + 1 - 1)  
+    //Wow) it's a first comment!
     //This is the second comment.
     == 2)
     //Another comment {
@@ -28,8 +34,11 @@ int main() {
     //srts
     this? */
      = 2  ;
+
+     char = ';
+     ';
      }
-    for(i         =1;i<5;i++){
+    for(i=(0+1);i<5;i++){
         printf     (     "This \" is; an arbitrarily; long string; *designed to test* the string joiner %d. %s ",  i, "Whoaaa. is this another string???");
         printf("Hmmmm \" I escaped 
         some string here %c",'\'');
