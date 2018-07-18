@@ -13,6 +13,9 @@ class TranslationHelper:
         self.multicomment_token_end = tokens.multi_comment_end
         self.multichar_symbol_tokens = tokens.multichar_symbol
 
+        self.variable_list = []
+        self.function_list = []
+
     def findall(self, text, token):
         """
         Find all instances of token in text.
@@ -77,7 +80,7 @@ class TranslationHelper:
         id_char = re.compile(r"^'.*'$", re.DOTALL)
         id_string = re.compile(r'^".*"$', re.DOTALL)
 
-        for token in input_tokens:
+        for idx, token in enumerate(input_tokens):
             if token.tag == "unknown":
                 token_str = token.token
                 #Match library names (stdio.h, conio.h)
@@ -99,6 +102,12 @@ class TranslationHelper:
                 elif id_string.match(token_str):
                     token.tag = tokens.tag_val_string
 
+                #TODO: Finish this!
+                if idx == 1:
+                    prev_token = input_tokens[0].token
+                    # if prev_token == tokens. or prev_token ==  
+
+        
         return input_tokens
 
     def match(self, token):
@@ -112,6 +121,37 @@ class TranslationHelper:
                     return key
         
         return "unknown"
+
+    def get_string_length(self, text):
+        """
+        Returns an index in which the first string in the text ends. Returns -1 if no string are ending.
+        (The text parameter must start with either single or double quotes)
+        """
+        
+        #Do a sanity check; is the text really a string?
+        if(not self.is_string(text)):
+            print(f"ERROR! The text ({text}) is not a string, but skip_text() is called on it.")
+            return -1
+
+        #What we're looking for is either single or double token; check the first character to determine which.
+        cur_string_delimiter = text[0]
+        found = False
+
+        #Start from one to account for the first character (the first single/double quote)
+        for idx, char in enumerate(text[1:], 1):
+            #If the current token is the same as the one starting the string
+            #(either single or double quote)
+            if char == cur_string_delimiter:
+                #If the last character in current string is backslash, it means
+                #that the delimiter is escaped; continue.
+                if text[idx-1] == "\\":
+                    pass
+                #else it means that the current string is ending. Break from loop
+                else:
+                    found = True
+                    break
+        
+        return idx if found else -1
 
     def tokens_validate(self, text_tokens, rule_tokens):
         """

@@ -7,6 +7,8 @@ from itertools import repeat
 from taggedtoken import TaggedToken
 from taggedstatement import TaggedStatement
 
+#TODO: Tag "dynamic" tokens
+
 class POSTagger:
 
     def __init__(self):
@@ -77,12 +79,9 @@ class POSTagger:
 
             return tokens
 
-    def create_taggedtoken(self, token, token_type):
-        return {"token" : token, "type" : token_type}
-
     def merge_float(self, tokens):
         """
-        Merges every digit, dot, digit token sequence into one.
+        Merges every digit, dot, digit or digit, dot token sequence into one.
         """
         index = 0
         last_check = len(tokens) - 1 #Check until there is at least one remaining tokens.
@@ -123,45 +122,21 @@ class POSTagger:
         Will handle escaped quotes correctly, but fails silently if there is non-even number of quotes 
         (the last quote and all quote afterwards will be dumped)
         """
-        in_string = False
-        
-        cur_string = ""
-        cur_string_delimiter = None
+
+        limit = -1
         result_tokens = []
 
-        for token in tokens:
-            if in_string:
-                #If the current token is the same as the one starting the string
-                #(either single or double quote)
-                if token == cur_string_delimiter:
-                    #If the last character in current string is backslash, it means
-                    #that the delimiter is escaped; continue.
-                    if cur_string[-1] == "\\":
-                        cur_string += token
-                    #else it means that the current string is ending. Reset all flags.
-                    else:
-                        in_string = False
-                        cur_string_delimiter = None
-                        
-                        cur_string += token
-                        result_tokens.append(cur_string)
-                        cur_string = ""
-                else:
-                    cur_string += token
+        for idx, token in enumerate(tokens):
+            #Do nothing if the token is inside of a string's range, OR it's only whitespace.
+            if idx < limit or self.rule_ws.match(token):
+                pass
+            elif token == "'" or token == '"':
+                    str_length = self.rules.get_string_length(tokens[idx:])
+                    limit = idx + str_length + 1 #Extra 1 is the offset of single/double quotes
+                    result_tokens.append("".join(tokens[idx:limit]))
             else:
-                #If we're not currently in string and we stumble upon a quote, 
-                #set in_string flag 
-                if token == "'" or token == '"':
-                    in_string = True
-                    cur_string_delimiter = token
-                    cur_string += token
-                #Else add to result tokens if it isn't whitespace.
-                else:
-                    if self.rule_ws.match(token):
-                        pass #do nothing
-                    else:
-                        result_tokens.append(token)
-        
+                result_tokens.append(token)
+                    
         return result_tokens
 
     def split_statement(self, text, preserve_whitespace=False):

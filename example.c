@@ -44,6 +44,7 @@ int main(
         some string here %c",'\'');
     }
 
+    char* test = "Hello; World!";
     // if (2 == 2) printf("Benerrrr");
     // while (2 == 2) printf("Benerrrr loopnyo");
     // do {

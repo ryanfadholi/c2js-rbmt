@@ -9,6 +9,8 @@ class Deformat:
 
     _tempfile_path = "temp/source.txt"
 
+    #TODO: Solve dowhile ending semicolon parse!
+
     def __init__(self, filepath, debug_mode=False):
 
         self.debug_mode = debug_mode
@@ -156,37 +158,6 @@ class Deformat:
         cut_pos = valid_sep_pos + offset if valid_sep_pos > -1 else -1
         return cut_pos
 
-    def get_string_length(self, text):
-        """
-        Returns an index in which the first string in the text ends. Returns -1 if no string are ending.
-        (The text parameter must start with either single or double quotes)
-        """
-        
-        #Do a sanity check; is the text really a string?
-        if(not self.rules.is_string(text)):
-            print(f"ERROR! The text ({text}) is not a string, but skip_text() is called on it.")
-            return -1
-
-        #What we're looking for is either single or double token; check the first character to determine which.
-        cur_string_delimiter = text[0]
-        found = False
-
-        #Start from one to account for the first character (the first single/double quote)
-        for idx, char in enumerate(text[1:], 1):
-            #If the current token is the same as the one starting the string
-            #(either single or double quote)
-            if char == cur_string_delimiter:
-                #If the last character in current string is backslash, it means
-                #that the delimiter is escaped; continue.
-                if text[idx-1] == "\\":
-                    pass
-                #else it means that the current string is ending. Break from loop
-                else:
-                    found = True
-                    break
-        
-        return idx if found else -1
-
     def _extract_substmt(self, text):
         """
         Extracts comments inserted inside a statement.
@@ -223,7 +194,7 @@ class Deformat:
         elif self.rules.is_multicomment(line):
             end_pos = self.get_statement_end(line,  '*/', do_exception_checking=False)
         elif self.rules.is_string(line):
-            end_pos = self.get_string_length(line)
+            end_pos = self.rules.get_string_length(line)
         elif self.rules.is_block_start(line):
             end_pos = self.get_statement_end(line, '{')
         elif self.rules.is_block_end(line):
