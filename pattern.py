@@ -1,5 +1,5 @@
 class Pattern:
-    def __init__(self, start=[], end=[]):
+    def __init__(self, start=[], end=[], carryover=True):
         if not isinstance(start, list):
             start = []
             print("Start parameter is not list, using empty list instead")
@@ -9,6 +9,8 @@ class Pattern:
         
         self.start = [] + start
         self.end = [] + end
+
+        self.carryover = carryover
 
     def fit(self, tags):
         target_length = len(tags) - (len(self.start) + len(self.end))

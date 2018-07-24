@@ -102,12 +102,12 @@ class TranslationHelper:
                 elif id_string.match(token_str):
                     token.tag = tokens.tag_val_string
 
-                #TODO: Finish this!
+                #Match comment string (comments doesn't have any pattern, match based on position of comment tags)
                 if idx == 1:
-                    prev_token = input_tokens[0].token
-                    # if prev_token == tokens. or prev_token ==  
+                    prev_token = input_tokens[0].tag
+                    if prev_token == tokens.tag_single_comment or prev_token == tokens.tag_multi_comment:
+                        token.tag = "comment"
 
-        
         return input_tokens
 
     def match(self, token):
