@@ -21,7 +21,7 @@ class Pattern:
             if ptrn is None:
                 match = True
             elif isinstance(ptrn, list) or isinstance(ptrn, dict):
-                match = True in (tag == item for item in ptrn)
+                match = tag in ptrn
             else:
                 match = ptrn == tag
 

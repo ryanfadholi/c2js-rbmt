@@ -1,10 +1,11 @@
 /* ({Test}) */
-int main ()
+function main ()
 {
-printf ("Hello World!");
-float r = 2.2;
-float r2 = 2.;
-printf ("This is a floating point number: %f", 2.23);
+console.log(util.format ("Hello World!"));
+var alet = 1;
+var r = 2.2;
+var r2 = 2.;
+console.log(util.format ("This is a floating point number: %d", 2.23));
 /*
     __++ ** --&$
     This a multiline comment asdasdsadasdasdasdasdasdsa
@@ -23,17 +24,17 @@ if (((1 + 1) + 1 - 1) == 2)
 /*@@@@@how about;
     //srts
     this? */
-int i = 2;
-char = ';
-     ';
+var i = 2;
+var i = ';';
 }
 for (i = (0 + 1); i < 5; i ++)
 {
-printf ("This \" is; an arbitrarily; long string; *designed to test* the string joiner %d. %s ", i, "Whoaaa. is this another string???");
-printf ("Hmmmm \" I escaped 
-        some string here %c", '\'');
+console.log(util.format ("%d %d %d", i, i, i));
+console.log(util.format ("This \" is; an arbitrarily; long string; *designed to test* the string joiner %d. %s ", i, "Whoaaa. is this another string???"));
+console.log(util.format ("Hmmmm \" I escaped \
+    some string here %s", '\''));
 }
-char * test = "Hello; World!";
+var * test = "Hello; World!";
 // if (2 == 2) printf("Benerrrr");
 // while (2 == 2) printf("Benerrrr loopnyo");
 // do {

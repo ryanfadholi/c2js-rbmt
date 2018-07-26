@@ -7,7 +7,7 @@ class TaggedStatement:
         #Ensure copy
         self.carryover = True
         self.tokens = copy.copy(tokens)
-        self._statement_type = statement_type
+        self._type = statement_type
 
     def __len__(self):
         return len(self.tokens)
@@ -17,7 +17,7 @@ class TaggedStatement:
         
     def __str__(self):
         result = ""
-        result += f"Statement Type: {self.statement_type}\n"
+        result += f"Statement Type: {self._type}\n"
         result += "Tokens: "
 
         comma_flag = False
@@ -36,12 +36,12 @@ class TaggedStatement:
         self.tokens.__setitem__(key, value)
 
     @property
-    def statement_type(self):
-        return self._statement_type
+    def type(self):
+        return self._type
 
-    @statement_type.setter
-    def statement_type(self, value):
-        self._statement_type = value
+    @type.setter
+    def type(self, value):
+        self._type = value
 
         if value in no_carryover:
             self.carryover = False

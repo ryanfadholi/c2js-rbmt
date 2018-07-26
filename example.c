@@ -9,6 +9,7 @@ int main(
       {
     printf("Hello World!");
     
+    char let = 1;
     float r = 2.2;
     float r2 = 2.;
     printf("This is a floating point number: %f", 2.23);
@@ -35,13 +36,13 @@ int main(
     this? */
      = 2  ;
 
-     char = ';
-     ';
+     char i = ';';
      }
     for(i=(0+1);i<5;i++){
+        printf("%lli %hi %f", i, i, i);
         printf     (     "This \" is; an arbitrarily; long string; *designed to test* the string joiner %d. %s ",  i, "Whoaaa. is this another string???");
-        printf("Hmmmm \" I escaped 
-        some string here %c",'\'');
+        printf("Hmmmm \" I escaped \
+    some string here %c",'\'');
     }
 
     char* test = "Hello; World!";
