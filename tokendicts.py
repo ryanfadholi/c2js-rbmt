@@ -1,3 +1,10 @@
+#Javascript keywords & functions
+variable_type = "var";  tag_variable_type = "variable-type"
+function_type = "function"; tag_function_type = "function-type"
+console_func = "console"; tag_console_func = "console-function"
+util_func = "util"; tag_util_func = "utility-module"
+format_func = "format"; tag_format_func = "format-function"
+
 if_conditional = "if"; tag_if_conditional = "if-cond"
 else_conditional = "else"; tag_else_conditional = "else-cond"
 
@@ -12,7 +19,7 @@ dowhile_loop = "do"; tag_dowhile_loop = "dowhile-loop"
 for_loop = "for"; tag_for_loop = "for-loop"
 while_loop = "while"; tag_while_loop = "while-loop"
 
-output_func = "printf"; tag_output_func = "output-function"
+output_func = "printf"; output_func_js = "log"; tag_output_func = "output-function"
 input_func = "scanf"; tag_input_func = "input-function"
 
 include_kw = "include"; tag_include_kw = "include-keyword"
@@ -24,6 +31,7 @@ multi_comment_end = "*/"; tag_multi_comment_end = "multi-comment-end"
 
 assign = "="; tag_assign = "assign"
 comma = ","; tag_comma = "comma"
+dot = "."; tag_dot = "dot"
 preprocessor = "#"; tag_preprocessor = "preprocessor"
 pointer = "*"; tag_pointer = "pointer"
 semicolon = ";"; tag_semicolon = "semicolon"
@@ -148,6 +156,7 @@ logical_operator = {
 misc_operator = {
     tag_assign : assign,
     tag_comma : comma,
+    tag_dot : dot,
     tag_preprocessor : preprocessor,
     tag_pointer : pointer,
     tag_semicolon : semicolon,

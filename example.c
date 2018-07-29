@@ -7,8 +7,13 @@ int main(
     
     )
       {
+
+    for(i=0;i<10;printf("%d",i)){
+        i++;
+    }
+
     printf("Hello World!");
-    
+    printf("Hello""HaroHappi""Poppin'Party");
     char let = 1;
     float r = 2.2;
     float r2 = 2.;
@@ -43,6 +48,10 @@ int main(
         printf     (     "This \" is; an arbitrarily; long string; *designed to test* the string joiner %d. %s ",  i, "Whoaaa. is this another string???");
         printf("Hmmmm \" I escaped \
     some string here %c",'\'');
+    }
+
+    for(printf("%d""%f\n",i,i);i<10;printf("%d\n",i)){
+        i++;
     }
 
     char* test = "Hello; World!";

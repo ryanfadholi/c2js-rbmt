@@ -36,12 +36,29 @@ class TaggedStatement:
         self.tokens.__setitem__(key, value)
 
     @property
-    def type(self):
+    def tag(self):
         return self._type
 
-    @type.setter
-    def type(self, value):
+    @tag.setter
+    def tag(self, value):
         self._type = value
 
         if value in no_carryover:
             self.carryover = False
+
+    def findall(self, *args):
+        result = {}
+
+        for item in args:
+            print(item)
+            result[item] = []
+
+        for pos, token in enumerate(self.tokens):
+            if token.tag in result:
+                result[token.tag].append(pos)
+
+        if len(args) == 1:
+            item = args[0]
+            return result[item]
+        else:
+            return tuple(result[item] for item in args)
