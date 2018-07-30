@@ -44,7 +44,9 @@ class StructuralLexicalTransfer:
         self.printf_tl = self.TranslationItem(tokens.tag_output_func, 
             [tokens.tag_console_func, tokens.tag_dot, tokens.tag_output_func, tokens.tag_parenthesis_left, tokens.tag_util_func, tokens.tag_dot, tokens.tag_format_func], 
             [tokens.console_func, tokens.dot, tokens.output_func_js, tokens.parenthesis_left, tokens.util_func, tokens.dot, tokens.format_func])
-
+        self.scanf_tl = self.TranslationItem(tokens.tag_input_func,
+            [tokens.tag_read_func, tokens.tag_dot, tokens.tag_question_func],
+            [tokens.read_func, tokens.dot, tokens.question_func])
     def addbracket(self, statement):
         #TODO: Finish this!
         obrs, cbrs, fstmts = statement.findall(tokens.tag_parenthesis_left, tokens.tag_parenthesis_right, tokens.tag_format_func)
@@ -67,6 +69,37 @@ class StructuralLexicalTransfer:
             statement.tokens.insert(pos + add_offset, TaggedToken(tokens.parenthesis_right, tokens.tag_parenthesis_right))
 
         return statement
+
+    def fixinput(self, statement):
+        #TODO: Fix this!
+        obrs, cbrs, qstmts = statement.findall(tokens.tag_parenthesis_left, tokens.tag_parenthesis_right, tokens.tag_question_func)
+        
+        if qstmts:
+            for question_pos in qstmts:
+
+                closed_bracket_count = 0
+                open_bracket_count = 0
+                variable_found = False
+                variable_token = None
+
+                cur_open_brackets = list(filter(lambda pos: pos > question_pos, obrs))
+                open_bracket_pos = min(cur_open_brackets)
+                closed_bracket_pos = -1
+
+                for idx, token in enumerate(statement[open_bracket_poss:]):
+                    if token.tag == tokens.parenthesis_left:
+                        open_bracket_count += 1
+                    elif token.tag == tokens.parenthesis_right:
+                        closed_bracket_count += 1
+                    elif token.tag == tokens.tag_name_var and not variable_found:
+                        variable_token = token
+                        variable_found - True
+
+                    if open_bracket_count == closed_bracket_count and open_bracket_count > 0:
+                        closed_bracket_count = open_bracket_count + idx 
+
+                       
+                    
 
     def trace(self, pattern, statement):
         """Matches statement to the given pattern."""
@@ -106,7 +139,7 @@ class StructuralLexicalTransfer:
         return result
 
     def swap(self, statement, specific_translations=[]):
-        default_translations = [self.declaration_tl, self.printf_tl]
+        default_translations = [self.declaration_tl, self.printf_tl, self.scanf_tl]
         result = []
         translations = ChainMap(self.tldict(specific_translations), self.tldict(default_translations))
         
@@ -135,6 +168,8 @@ class StructuralLexicalTransfer:
             statement = self.swap(statement)  
         elif statement.tag == "function-declaration":
             statement = self.swap(statement, [self.function_tl])
+        elif statement.tag == "input":
+            statement = self.swap(statement)
         elif statement.tag == "output":
             statement = self.swap(statement)
             #Insert extra closing bracket before semicolon

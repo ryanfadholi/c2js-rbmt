@@ -30,6 +30,7 @@ function main ()
     //srts
     this? */
         var i = 2;
+        readlineSync.question ("%d", & i);
         var i = ';';
     }
     for (i = (0 + 1); i < 5; i ++)

@@ -4,6 +4,8 @@ function_type = "function"; tag_function_type = "function-type"
 console_func = "console"; tag_console_func = "console-function"
 util_func = "util"; tag_util_func = "utility-module"
 format_func = "format"; tag_format_func = "format-function"
+read_func = "readlineSync"; tag_read_func = "readline-module"
+question_func = "question"; tag_question_func = "question-function"
 
 if_conditional = "if"; tag_if_conditional = "if-cond"
 else_conditional = "else"; tag_else_conditional = "else-cond"

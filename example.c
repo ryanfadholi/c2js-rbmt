@@ -40,7 +40,7 @@ int main(
     //srts
     this? */
      = 2  ;
-
+    scanf("%d", &i);
      char i = ';';
      }
     for(i=(0+1);i<5;i++){
