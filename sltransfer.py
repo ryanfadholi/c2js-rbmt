@@ -95,7 +95,7 @@ class StructuralLexicalTransfer:
                         closed_bracket_count += 1
                     elif token.tag == tokens.tag_name_var and not variable_found:
                         variable_token = token
-                        variable_found - True
+                        variable_found = True
 
                     if open_bracket_count == closed_bracket_count and open_bracket_count > 0:
                         closed_bracket_count = open_bracket_count + idx 
