@@ -4,7 +4,7 @@ class TaggedToken:
         self.tag = tag
 
         no_bspacing = [")", ";", ".", ",", "[", "]", "*/"]
-        no_fspacing = ["(", ".", "//", "/*", "{", "}", "log", "format"]
+        no_fspacing = ["(", ".", "//", "/*", "{", "}", "log", "format", "question"]
         
         self.bspacing = False if token in no_bspacing else True
         self.fspacing = False if token in no_fspacing else True
