@@ -1,7 +1,7 @@
 /* ({Test}) */
 function main ()
 {
-    for (i = 0; i < 10; printf ("%d", i))
+    for (i = 0; i < 10; console.log(util.format("%d", i)))
     {
         i ++;
     }
@@ -39,7 +39,7 @@ function main ()
         console.log(util.format("Hmmmm \" I escaped \
     some string here %s", '\''));
     }
-    for (printf ("%d" + "%d\n", i, i); i < 10; printf ("%d\n", i))
+    for (console.log(util.format("%d" + "%d\n", i, i)); i < 10; console.log(util.format("%d\n", i)))
     {
         i ++;
     }

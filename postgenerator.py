@@ -26,7 +26,7 @@ class PostGenerator:
         return result
 
     def write(self, statements):
-        #Decides how many spaces the program should give before writing the line, 1 block depth equals 4 spaces.
+        #Decides how many spaces the program should give before writing a line, 1 block depth equals 4 spaces.
         block_depth = 0
         with open(self.filepath, "w") as file_output:
             for statement in statements:
@@ -50,7 +50,6 @@ class PostGenerator:
         after_output = False
         before_comma = True
 
-        is_first_string = True
         is_prev_string = False
         new_tokens = []
         for token in statement:

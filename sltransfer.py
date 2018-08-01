@@ -59,8 +59,10 @@ class StructuralLexicalTransfer:
                 close_bracket_count = idx + 1
                 cur_open_brackets = list(filter(lambda pos: close_pos > pos > format_pos, obrs))
                 open_bracket_count = len(cur_open_brackets)
+
                 if open_bracket_count == close_bracket_count:
                     to_add.append(close_pos)
+                    break
 
         add_offset = 0
         for add_offset, pos in enumerate(to_add):
@@ -131,11 +133,9 @@ class StructuralLexicalTransfer:
         if not statement.carryover:
             statement.tokens = []
 
-        if statement.tag == "variable-declaration":
-            statement = self.swap(statement)  
-        elif statement.tag == "function-declaration":
+        if statement.tag == "function-declaration":
             statement = self.swap(statement, [self.function_tl])
-        elif statement.tag == "output":
+        else:
             statement = self.swap(statement)
             #Insert extra closing bracket before semicolon
             statement = self.addbracket(statement)
