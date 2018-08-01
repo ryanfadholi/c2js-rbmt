@@ -54,12 +54,24 @@ int main(
         i++;
     }
 
+    int t,v,x;
+
+    for(scanf("%d %d",&t, &v);i<10;scanf("%d %d",&x)){
+        i++;
+    }
+
     char* test = "Hello; World!";
     // if (2 == 2) printf("Benerrrr");
     // while (2 == 2) printf("Benerrrr loopnyo");
     // do {
     //     i++;
     // } while(i < 5);
+
+    int c = 0;
+    int *b = &c;
+    *b = 10;
+    int d = *b;
+
 
     return 0;
 }

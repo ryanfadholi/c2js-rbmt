@@ -30,7 +30,7 @@ function main ()
     //srts
     this? */
         var i = 2;
-        readlineSync.question ("%d", & i);
+        i = readlineSync.question('');
         var i = ';';
     }
     for (i = (0 + 1); i < 5; i ++)
@@ -44,11 +44,20 @@ function main ()
     {
         i ++;
     }
+    var t, v, x;
+    for (t = readlineSync.question('') t = readlineSync.question('') t = readlineSync.question(''); i < 10; x = readlineSync.question(''))
+    {
+        i ++;
+    }
     var * test = "Hello; World!";
     // if (2 == 2) printf("Benerrrr");
     // while (2 == 2) printf("Benerrrr loopnyo");
     // do {
     //     i++;
     // } while(i < 5);
+    var c = 0;
+    var * b = & c;
+    * b = 10;
+    var d = * b;
     return 0;
 }

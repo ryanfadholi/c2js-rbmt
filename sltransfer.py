@@ -73,33 +73,63 @@ class StructuralLexicalTransfer:
         return statement
 
     def fixinput(self, statement):
-        #TODO: Fix this!
-        obrs, cbrs, qstmts = statement.findall(tokens.tag_parenthesis_left, tokens.tag_parenthesis_right, tokens.tag_question_func)
-        
-        if qstmts:
-            for question_pos in qstmts:
+        #TODO: Refactor as procedure?
+        input_tokens = statement.findall(tokens.tag_read_func)
+        empty_string_token = TaggedToken("''", tokens.tag_val_string)
+        assign_token = TaggedToken("=", tokens.tag_assign)
 
+        if input_tokens:
+            #At start, we haven't processed anything.
+            processed_input_count = 0
+            while True:
+
+                #Rerun the positioning check for every loop, as the position may change after the previous loop.
+                obrs, input_tokens = statement.findall(tokens.tag_parenthesis_left, tokens.tag_read_func)
+                #If we have processed the same number of input tokens as there is input tokens in the statement, end the loop.
+                if processed_input_count == len(input_tokens):
+                    break
+
+                #Otherwise, get the first instance of unprocessed input token. (Notice how we sliced the list?)
+                question_pos = min(input_tokens[processed_input_count:])
+                #Then reset every flags and counters
+                cur_open_brackets = list(filter(lambda pos: pos > question_pos, obrs))
+                open_bracket_pos = min(cur_open_brackets)
+                closed_bracket_pos = -1
                 closed_bracket_count = 0
                 open_bracket_count = 0
                 variable_found = False
                 variable_token = None
 
-                cur_open_brackets = list(filter(lambda pos: pos > question_pos, obrs))
-                open_bracket_pos = min(cur_open_brackets)
-                closed_bracket_pos = -1
-
+                #And finally start iterating!
                 for idx, token in enumerate(statement[open_bracket_pos:]):
-                    if token.tag == tokens.parenthesis_left:
+                    if token.tag == tokens.tag_parenthesis_left:
                         open_bracket_count += 1
-                    elif token.tag == tokens.parenthesis_right:
+                    elif token.tag == tokens.tag_parenthesis_right:
                         closed_bracket_count += 1
+                    #If a variable is encountered, capture it, as it needs to be rewritten later. Only capture once, thus set the found flag.
                     elif token.tag == tokens.tag_name_var and not variable_found:
                         variable_token = token
                         variable_found = True
 
+                    #If a bracket is encountered and the set(s) is complete, stop iteration.
                     if open_bracket_count == closed_bracket_count and open_bracket_count > 0:
-                        closed_bracket_count = open_bracket_count + idx 
+                        closed_bracket_pos = open_bracket_pos + idx 
+                        break
+            
+                #The operation below will modify scanf-style substatement to proper readlineSync substatement. Example:
+                #From: readlineSync.question("%d", &x);
+                #To  : x = readlineSync.question('');
 
+                #First get all tokens before the "readlineSync", and append it with variable captured above and an assignment operator
+                statement.tokens = (statement.tokens[:question_pos] + [variable_token, assign_token] 
+                #Next get all the remaining tokens, and insert an empty string token between the readlineSync.question calling parenthesis, 
+                #overwriting any tokens inside of it.
+                    + statement.tokens[question_pos:open_bracket_pos+1] + [empty_string_token] + statement.tokens[closed_bracket_pos:])
+                
+                #We have processed yet another input substatement. Increment. Reiterate.
+                processed_input_count += 1
+
+        return statement
                        
                     
 
@@ -159,8 +189,6 @@ class StructuralLexicalTransfer:
         return statement
 
     def translate(self, statement):
-        #TODO: Also translate printf in unexpected places (e.g inside for)
-        #TODO: Extend declaration_tl swapping to every other statement EXCEPT function declaration (maybe try adding a "exclude-list" of some sort?)
         statement = self.identify(statement)
 
         if not statement.carryover:
@@ -172,7 +200,7 @@ class StructuralLexicalTransfer:
             statement = self.swap(statement)
             #Insert extra closing bracket before semicolon
             statement = self.addbracket(statement)
-            #statement.tokens.insert(len(statement)-1, TaggedToken(")", tokens.tag_bracket_right))
+            statement = self.fixinput(statement)
 
         return statement
 

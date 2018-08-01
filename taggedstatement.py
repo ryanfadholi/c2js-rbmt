@@ -50,7 +50,6 @@ class TaggedStatement:
         result = {}
 
         for item in args:
-            print(item)
             result[item] = []
 
         for pos, token in enumerate(self.tokens):
