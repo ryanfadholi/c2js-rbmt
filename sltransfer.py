@@ -21,6 +21,7 @@ UNKNOWN_TAG = "unknown"
 
 class StructuralLexicalTransfer:
     def __init__(self):
+        self.CallbackPair = namedtuple("CallbackPair", ["trigger", "function"])
         self.PatternPair = namedtuple("PatternPair", ["source", "target"])
         self.TranslationItem = namedtuple("TranslationItem", ["key", "new_keys", "new_values"])
         
@@ -38,6 +39,8 @@ class StructuralLexicalTransfer:
         self.loop_sp = Pattern(LOOP_TAG, [tokens.loops])
         self.initiation_sp = Pattern(INITIATION_TAG, [tokens.tag_name_var, tokens.tag_assign])
 
+        self.input_cb = self.CallbackPair(tokens.tag_output_func, self.addbracket)
+        self.output_cb = self.CallbackPair(tokens.tag_output_func, self.addbracket)
         
         self.declaration_tl = self.TranslationItem(tokens.datatypes, [tokens.tag_variable_type], [tokens.variable_type])
         self.function_tl = self.TranslationItem(tokens.datatypes, [tokens.tag_function_type], [tokens.function_type])
@@ -47,8 +50,10 @@ class StructuralLexicalTransfer:
         self.scanf_tl = self.TranslationItem(tokens.tag_input_func,
             [tokens.tag_read_func, tokens.tag_dot, tokens.tag_question_func],
             [tokens.read_func, tokens.dot, tokens.question_func])
+
     def addbracket(self, statement):
         #TODO: Finish this!
+        #TODO: Fix for closed brackets inside string
         obrs, cbrs, fstmts = statement.findall(tokens.tag_parenthesis_left, tokens.tag_parenthesis_right, tokens.tag_format_func)
         to_add = []
 
@@ -69,8 +74,6 @@ class StructuralLexicalTransfer:
         add_offset = 0
         for add_offset, pos in enumerate(to_add):
             statement.tokens.insert(pos + add_offset, TaggedToken(tokens.parenthesis_right, tokens.tag_parenthesis_right))
-
-        return statement
 
     def fixinput(self, statement):
         #TODO: Refactor as procedure?
@@ -129,9 +132,15 @@ class StructuralLexicalTransfer:
                 #We have processed yet another input substatement. Increment. Reiterate.
                 processed_input_count += 1
 
-        return statement
-                       
-                    
+    def skippointers(self, statement):
+        result = []
+        for token in statement:
+            if token.tag == tokens.tag_op_multiply:
+                continue
+            result.append(token)
+        statement.tokens = result
+
+    
 
     def trace(self, pattern, statement):
         """Matches statement to the given pattern."""
@@ -160,8 +169,14 @@ class StructuralLexicalTransfer:
 
         return statement
 
+    def cbdict(self, callbacks):
+        result = {}
+        for callback in callbacks:
+            result[callback.trigger] = callback.function
+        return result
+
     def tldict(self, translations):
-        result = defaultdict(None)
+        result = {}
         for item in translations:
             if isinstance(item.key, str):
                 result[item.key] = item
@@ -170,9 +185,12 @@ class StructuralLexicalTransfer:
                     result[key] = item
         return result
 
-    def swap(self, statement, specific_translations=[]):
+    def swap(self, statement, specific_translations=[], specific_callbacks=[]):
+        default_callbacks = []
         default_translations = [self.declaration_tl, self.printf_tl, self.scanf_tl]
         result = []
+
+        callbacks = ChainMap(self.cbdict(specific_callbacks), self.cbdict(default_callbacks))
         translations = ChainMap(self.tldict(specific_translations), self.tldict(default_translations))
         
         for token in statement:
@@ -189,6 +207,8 @@ class StructuralLexicalTransfer:
         return statement
 
     def translate(self, statement):
+        #TODO: Convert those extra functions to "callable".
+        #IDEA: Add another data type, pair statement type and its callable functions. Set a default, and use chainmaps inside the "swap" to override the defaults.
         statement = self.identify(statement)
 
         if not statement.carryover:
@@ -199,8 +219,12 @@ class StructuralLexicalTransfer:
         else:
             statement = self.swap(statement)
             #Insert extra closing bracket before semicolon
-            statement = self.addbracket(statement)
-            statement = self.fixinput(statement)
+            self.addbracket(statement)
+            self.fixinput(statement)
+            if statement.tag == DECLARATION_TAG:
+                #TODO: Only skip BEFORE assignment operator
+                #TODO: Also fix assignment statement recognizing for statements that starts with pointer (*)
+                self.skippointers(statement)
 
         return statement
 

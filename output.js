@@ -45,19 +45,19 @@ function main ()
         i ++;
     }
     var t, v, x;
-    for (t = readlineSync.question('') t = readlineSync.question('') t = readlineSync.question(''); i < 10; x = readlineSync.question(''))
+    for (t = readlineSync.question(''); i < 10; x = readlineSync.question(''))
     {
         i ++;
     }
-    var * test = "Hello; World!";
+    var test = "Hello; World!";
     // if (2 == 2) printf("Benerrrr");
     // while (2 == 2) printf("Benerrrr loopnyo");
     // do {
     //     i++;
     // } while(i < 5);
     var c = 0;
-    var * b = & c;
+    var b = & c;
     * b = 10;
-    var d = * b;
+    var d = b;
     return 0;
 }
