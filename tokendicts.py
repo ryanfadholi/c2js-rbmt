@@ -5,7 +5,7 @@ console_func = "console"; tag_console_func = "console-function"
 util_func = "util"; tag_util_func = "utility-module"
 format_func = "format"; tag_format_func = "format-function"
 read_func = "readlineSync"; tag_read_func = "readline-module"
-question_func = "question"; tag_question_func = "question-function"
+ptr_access = "ptr"; tag_ptr_access = "pointer-access"
 
 if_conditional = "if"; tag_if_conditional = "if-cond"
 else_conditional = "else"; tag_else_conditional = "else-cond"
@@ -22,7 +22,7 @@ for_loop = "for"; tag_for_loop = "for-loop"
 while_loop = "while"; tag_while_loop = "while-loop"
 
 output_func = "printf"; output_func_js = "log"; tag_output_func = "output-function"
-input_func = "scanf"; tag_input_func = "input-function"
+input_func = "scanf"; input_func_js = "question"; tag_input_func = "input-function"
 
 include_kw = "include"; tag_include_kw = "include-keyword"
 return_kw = "return"; tag_return_kw = "return-keyword"
@@ -32,6 +32,7 @@ multi_comment = "/*"; tag_multi_comment = "multi-comment"
 multi_comment_end = "*/"; tag_multi_comment_end = "multi-comment-end" 
 
 assign = "="; tag_assign = "assign"
+colon = ":"; tag_colon = "colon"
 comma = ","; tag_comma = "comma"
 dot = "."; tag_dot = "dot"
 preprocessor = "#"; tag_preprocessor = "preprocessor"
@@ -83,6 +84,14 @@ op_binary_flip = "~"; tag_op_binary_flip = "op-binary-flip"
 op_lshift = "<<"; tag_op_left_shift = "op-left-shift" 
 op_rshift = ">>"; tag_op_right_shift = "op-right-shift"
 
+#Every dynamically-determined tokens key goes here
+tag_name_preproc = "preprocessor-name"
+tag_name_var = "variable-name"
+tag_val_char = "char-value"
+tag_val_float = "float-value"
+tag_val_int = "int-value"
+tag_val_string = "string-value"
+
 #lists every tokens with more than one character
 multichar_symbol = [
     op_comp_lshift, op_comp_rshift, single_comment, multi_comment, multi_comment_end, op_eq, 
@@ -99,13 +108,7 @@ string_identifiers = [
     single_quote, double_quote
 ]
 
-#Every dynamically-determined tokens key goes here
-tag_name_preproc = "preprocessor-name"
-tag_name_var = "variable-name"
-tag_val_char = "char-value"
-tag_val_float = "float-value"
-tag_val_int = "int-value"
-tag_val_string = "string-value"
+possible_lefthand_operations = [tag_name_var, tag_val_char, tag_val_float, tag_val_int, tag_val_string, tag_parenthesis_right]
 
 arithmetic_operator = {
     tag_op_add : op_add,

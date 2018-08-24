@@ -56,8 +56,17 @@ function main ()
     //     i++;
     // } while(i < 5);
     var c = 0;
-    var b = & c;
-    * b = 10;
-    var d = b;
+    var b = {ptr : c };
+    b.ptr = 10;
+    var d = b.ptr * c.ptr;
+    console.log(util.format("%d" + "%d\n", b.ptr, d.ptr));
+    console.log(util.format("((abcd"));
+    console.log(util.format("(abcd"));
+    console.log(util.format("abcd"));
+    d = readlineSync.question('');
     return 0;
+}
+function cetak (a)
+{
+    console.log(util.format("%d", a.ptr));
 }

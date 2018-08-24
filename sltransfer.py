@@ -38,22 +38,28 @@ class StructuralLexicalTransfer:
         self.conditional_sp = Pattern(CONDITIONAL_TAG, [tokens.conditionals])
         self.loop_sp = Pattern(LOOP_TAG, [tokens.loops])
         self.initiation_sp = Pattern(INITIATION_TAG, [tokens.tag_name_var, tokens.tag_assign])
+        self.initiation_pointer_sp = Pattern(INITIATION_TAG, [tokens.tag_op_multiply])
 
-        self.input_cb = self.CallbackPair(tokens.tag_output_func, self.addbracket)
+        self.input_cb = self.CallbackPair(tokens.tag_input_func, self.fixinput)
         self.output_cb = self.CallbackPair(tokens.tag_output_func, self.addbracket)
-        
+        self.param_cb = self.CallbackPair(tokens.tag_function_type, self.fixparam)
+        self.pointer_cb = self.CallbackPair(tokens.tag_op_multiply, self.skippointers)
+        self.reference_cb = self.CallbackPair(tokens.tag_op_binary_and, self.helper_reference)
+
         self.declaration_tl = self.TranslationItem(tokens.datatypes, [tokens.tag_variable_type], [tokens.variable_type])
         self.function_tl = self.TranslationItem(tokens.datatypes, [tokens.tag_function_type], [tokens.function_type])
         self.printf_tl = self.TranslationItem(tokens.tag_output_func, 
             [tokens.tag_console_func, tokens.tag_dot, tokens.tag_output_func, tokens.tag_parenthesis_left, tokens.tag_util_func, tokens.tag_dot, tokens.tag_format_func], 
             [tokens.console_func, tokens.dot, tokens.output_func_js, tokens.parenthesis_left, tokens.util_func, tokens.dot, tokens.format_func])
         self.scanf_tl = self.TranslationItem(tokens.tag_input_func,
-            [tokens.tag_read_func, tokens.tag_dot, tokens.tag_question_func],
-            [tokens.read_func, tokens.dot, tokens.question_func])
+            [tokens.tag_read_func, tokens.tag_dot, tokens.tag_input_func],
+            [tokens.read_func, tokens.dot, tokens.input_func_js])
+        self.reference_start =[TaggedToken(tokens.curly_left, tokens.tag_curly_left), TaggedToken(tokens.ptr_access, tokens.tag_ptr_access), TaggedToken(tokens.colon, tokens.tag_colon)]
+        self.reference_end = [TaggedToken(tokens.curly_right, tokens.tag_curly_right)]
+        self.js_pointer = [TaggedToken(tokens.dot, tokens.tag_dot), TaggedToken(tokens.ptr_access, tokens.tag_ptr_access)]
 
     def addbracket(self, statement):
-        #TODO: Finish this!
-        #TODO: Fix for closed brackets inside string
+        print("Addbracket is run!")
         obrs, cbrs, fstmts = statement.findall(tokens.tag_parenthesis_left, tokens.tag_parenthesis_right, tokens.tag_format_func)
         to_add = []
 
@@ -76,7 +82,7 @@ class StructuralLexicalTransfer:
             statement.tokens.insert(pos + add_offset, TaggedToken(tokens.parenthesis_right, tokens.tag_parenthesis_right))
 
     def fixinput(self, statement):
-        #TODO: Refactor as procedure?
+        print("Fixinput is run!")
         input_tokens = statement.findall(tokens.tag_read_func)
         empty_string_token = TaggedToken("''", tokens.tag_val_string)
         assign_token = TaggedToken("=", tokens.tag_assign)
@@ -109,7 +115,7 @@ class StructuralLexicalTransfer:
                         open_bracket_count += 1
                     elif token.tag == tokens.tag_parenthesis_right:
                         closed_bracket_count += 1
-                    #If a variable is encountered, capture it, as it needs to be rewritten later. Only capture once, thus set the found flag.
+                    #If a variable is encountered, capture it, as it needs to be rewitten later. Only capture once, thus set the found flag.
                     elif token.tag == tokens.tag_name_var and not variable_found:
                         variable_token = token
                         variable_found = True
@@ -132,15 +138,54 @@ class StructuralLexicalTransfer:
                 #We have processed yet another input substatement. Increment. Reiterate.
                 processed_input_count += 1
 
-    def skippointers(self, statement):
+    def fixparam(self, statement):
         result = []
+        declaration_passed = False
         for token in statement:
-            if token.tag == tokens.tag_op_multiply:
-                continue
+            if token.tag == tokens.tag_function_type:
+                if declaration_passed:
+                    continue
+                else:
+                    declaration_passed = True
             result.append(token)
+
         statement.tokens = result
 
-    
+    def helper_reference(self, statement):
+        result = []
+        is_referenced = False
+        for idx, token in enumerate(statement):
+            if token.tag == tokens.tag_op_binary_and:
+                if idx == 0 or statement[idx-1].tag not in tokens.possible_lefthand_operations:    
+                    is_referenced = True
+                    continue
+            if is_referenced:
+                result.extend(self.reference_start)
+                result.append(token)
+                result.extend(self.reference_end)
+                is_referenced = False
+                continue
+            result.append(token)
+
+        statement.tokens = result
+        
+    def skippointers(self, statement):
+        result = []
+        is_lefthand = True
+        is_pointer_variable = False
+        for idx, token in enumerate(statement):    
+            if token.tag == tokens.tag_op_multiply:
+                if idx == 0 or statement[idx-1].tag not in tokens.possible_lefthand_operations:
+                    is_pointer_variable = True
+                    continue
+            elif token.tag == tokens.tag_assign:
+                is_lefthand = False
+            result.append(token)
+            if is_pointer_variable:
+                if not ((statement.tag == DECLARATION_TAG and is_lefthand) or statement.tag == FUNCTION_TAG):
+                    result.extend(self.js_pointer)
+                is_pointer_variable = False
+        statement.tokens = result
 
     def trace(self, pattern, statement):
         """Matches statement to the given pattern."""
@@ -158,7 +203,7 @@ class StructuralLexicalTransfer:
     
         patterns = [self.block_start_sp, self.block_end_sp, self.preprocessor_sp, self.single_comment_sp, self.multi_comment_sp, 
                     self.input_sp, self.output_sp, self.return_sp, self.declaration_sp, self.function_sp, self.conditional_sp,
-                    self.loop_sp, self.initiation_sp]
+                    self.loop_sp, self.initiation_sp, self.initiation_pointer_sp]
 
         for pattern in patterns:
             if pattern.trace(tags):
@@ -185,14 +230,17 @@ class StructuralLexicalTransfer:
                     result[key] = item
         return result
 
-    def swap(self, statement, specific_translations=[], specific_callbacks=[]):
-        default_callbacks = []
+    def swap(self, statement, specific_translations=[], specific_helpers=[]):
+        default_helpers = [self.input_cb, self.output_cb, self.param_cb, self.pointer_cb, self.reference_cb]
         default_translations = [self.declaration_tl, self.printf_tl, self.scanf_tl]
+
+        #Prioritize helpers and translations from parameter. Convert them to dicts first.
+        helpers = ChainMap(self.cbdict(specific_helpers), self.cbdict(default_helpers))
+        translations = ChainMap(self.tldict(specific_translations), self.tldict(default_translations))
+
+        helper_functions = []
         result = []
 
-        callbacks = ChainMap(self.cbdict(specific_callbacks), self.cbdict(default_callbacks))
-        translations = ChainMap(self.tldict(specific_translations), self.tldict(default_translations))
-        
         for token in statement:
             translation = translations.get(token.tag)
             if translation is not None:
@@ -202,13 +250,21 @@ class StructuralLexicalTransfer:
                 result.extend(new_tokens)
             else:
                 result.append(token)
-      
+
         statement.tokens = result
+
+        for token in statement:
+            #If there's a helper function defined for the function, add them to the list to call later.
+            helper = helpers.get(token.tag)
+            if helper is not None and helper not in helper_functions:
+                helper_functions.append(helper)
+        
+        for helper in helper_functions:
+            helper(statement)
+
         return statement
 
     def translate(self, statement):
-        #TODO: Convert those extra functions to "callable".
-        #IDEA: Add another data type, pair statement type and its callable functions. Set a default, and use chainmaps inside the "swap" to override the defaults.
         statement = self.identify(statement)
 
         if not statement.carryover:
@@ -216,15 +272,10 @@ class StructuralLexicalTransfer:
 
         if statement.tag == "function-declaration":
             statement = self.swap(statement, [self.function_tl])
+        # elif statement.tag == DECLARATION_TAG or statement.tag == INITIATION_TAG:
+        #     statement = self.swap(statement, specific_helpers=[self.pointer_cb])
         else:
             statement = self.swap(statement)
-            #Insert extra closing bracket before semicolon
-            self.addbracket(statement)
-            self.fixinput(statement)
-            if statement.tag == DECLARATION_TAG:
-                #TODO: Only skip BEFORE assignment operator
-                #TODO: Also fix assignment statement recognizing for statements that starts with pointer (*)
-                self.skippointers(statement)
 
         return statement
 

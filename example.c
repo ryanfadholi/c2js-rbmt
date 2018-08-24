@@ -70,8 +70,16 @@ int main(
     int c = 0;
     int *b = &c;
     *b = 10;
-    int d = *b;
+    int d = *b * *c;
+    printf("%d""%f\n",*b,*d);
 
-
+    printf("((abcd");
+    printf("(abcd");
+    printf("abcd");
+    scanf("(%d", &d);
     return 0;
+}
+
+int cetak(int *a){
+    printf("%d", *a);
 }
