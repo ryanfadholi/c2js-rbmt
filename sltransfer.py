@@ -59,7 +59,6 @@ class StructuralLexicalTransfer:
         self.js_pointer = [TaggedToken(tokens.dot, tokens.tag_dot), TaggedToken(tokens.ptr_access, tokens.tag_ptr_access)]
 
     def addbracket(self, statement):
-        print("Addbracket is run!")
         obrs, cbrs, fstmts = statement.findall(tokens.tag_parenthesis_left, tokens.tag_parenthesis_right, tokens.tag_format_func)
         to_add = []
 
@@ -82,10 +81,12 @@ class StructuralLexicalTransfer:
             statement.tokens.insert(pos + add_offset, TaggedToken(tokens.parenthesis_right, tokens.tag_parenthesis_right))
 
     def fixinput(self, statement):
-        print("Fixinput is run!")
+        #TODO: Fix pointer input!
         input_tokens = statement.findall(tokens.tag_read_func)
         empty_string_token = TaggedToken("''", tokens.tag_val_string)
-        assign_token = TaggedToken("=", tokens.tag_assign)
+        assign_token = TaggedToken(tokens.assign, tokens.tag_assign)
+        dot_token = TaggedToken(tokens.dot, tokens.tag_dot)
+        ptr_access_token = TaggedToken(tokens.ptr_access, tokens.tag_ptr_access)
 
         if input_tokens:
             #At start, we haven't processed anything.
@@ -103,14 +104,16 @@ class StructuralLexicalTransfer:
                 #Then reset every flags and counters
                 cur_open_brackets = list(filter(lambda pos: pos > question_pos, obrs))
                 open_bracket_pos = min(cur_open_brackets)
+                next_input_part = statement[open_bracket_pos:]
                 closed_bracket_pos = -1
                 closed_bracket_count = 0
                 open_bracket_count = 0
                 variable_found = False
+                variable_pointer = False
                 variable_token = None
 
                 #And finally start iterating!
-                for idx, token in enumerate(statement[open_bracket_pos:]):
+                for idx, token in enumerate(next_input_part):
                     if token.tag == tokens.tag_parenthesis_left:
                         open_bracket_count += 1
                     elif token.tag == tokens.tag_parenthesis_right:
@@ -119,6 +122,10 @@ class StructuralLexicalTransfer:
                     elif token.tag == tokens.tag_name_var and not variable_found:
                         variable_token = token
                         variable_found = True
+                        #If previous token is not "&", this variable is a pointer variable
+                        if next_input_part[idx-1].tag != tokens.tag_op_binary_and:
+                            print(f"Well, it's actually {next_input_part[idx-1]}")
+                            variable_pointer = True
 
                     #If a bracket is encountered and the set(s) is complete, stop iteration.
                     if open_bracket_count == closed_bracket_count and open_bracket_count > 0:
@@ -130,11 +137,14 @@ class StructuralLexicalTransfer:
                 #To  : x = readlineSync.question('');
 
                 #First get all tokens before the "readlineSync", and append it with variable captured above and an assignment operator
-                statement.tokens = (statement.tokens[:question_pos] + [variable_token, assign_token] 
+                statement.tokens = (statement.tokens[:question_pos] + [variable_token]
+                    + ([dot_token, ptr_access_token] if variable_token else [])
+                    + [assign_token] 
                 #Next get all the remaining tokens, and insert an empty string token between the readlineSync.question calling parenthesis, 
                 #overwriting any tokens inside of it.
                     + statement.tokens[question_pos:open_bracket_pos+1] + [empty_string_token] + statement.tokens[closed_bracket_pos:])
                 
+
                 #We have processed yet another input substatement. Increment. Reiterate.
                 processed_input_count += 1
 
@@ -272,8 +282,6 @@ class StructuralLexicalTransfer:
 
         if statement.tag == "function-declaration":
             statement = self.swap(statement, [self.function_tl])
-        # elif statement.tag == DECLARATION_TAG or statement.tag == INITIATION_TAG:
-        #     statement = self.swap(statement, specific_helpers=[self.pointer_cb])
         else:
             statement = self.swap(statement)
 

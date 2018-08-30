@@ -36,7 +36,6 @@ colon = ":"; tag_colon = "colon"
 comma = ","; tag_comma = "comma"
 dot = "."; tag_dot = "dot"
 preprocessor = "#"; tag_preprocessor = "preprocessor"
-pointer = "*"; tag_pointer = "pointer"
 semicolon = ";"; tag_semicolon = "semicolon"
 single_quote = "'"; tag_single_quote = "single-quote"
 double_quote = "\""; tag_double_quote = "double-quote"
@@ -163,7 +162,6 @@ misc_operator = {
     tag_comma : comma,
     tag_dot : dot,
     tag_preprocessor : preprocessor,
-    tag_pointer : pointer,
     tag_semicolon : semicolon,
     tag_single_quote : single_quote,
     tag_double_quote : double_quote,

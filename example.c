@@ -76,6 +76,7 @@ int main(
     printf("((abcd");
     printf("(abcd");
     printf("abcd");
+    scanf("(%d", b);
     scanf("(%d", &d);
     return 0;
 }

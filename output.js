@@ -30,7 +30,7 @@ function main ()
     //srts
     this? */
         var i = 2;
-        i = readlineSync.question('');
+        i.ptr = readlineSync.question('');
         var i = ';';
     }
     for (i = (0 + 1); i < 5; i ++)
@@ -45,7 +45,7 @@ function main ()
         i ++;
     }
     var t, v, x;
-    for (t = readlineSync.question(''); i < 10; x = readlineSync.question(''))
+    for (t.ptr = readlineSync.question(''); i < 10; x.ptr = readlineSync.question(''))
     {
         i ++;
     }
@@ -63,7 +63,8 @@ function main ()
     console.log(util.format("((abcd"));
     console.log(util.format("(abcd"));
     console.log(util.format("abcd"));
-    d = readlineSync.question('');
+    b.ptr = readlineSync.question('');
+    d.ptr = readlineSync.question('');
     return 0;
 }
 function cetak (a)

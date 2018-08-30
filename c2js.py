@@ -24,8 +24,8 @@ stmts = [stmt for stmt in df._statements_generator()]
 tagged_stmts = map(lambda x: tagger.tag(x), stmts)
 identified_stmts = list(map(lambda x: transfer.translate(x), tagged_stmts))
 
-# for stmt in identified_stmts:
-#     # print(stmt)
+for stmt in identified_stmts:
+    print(stmt)
 
 pgen.write(identified_stmts)
 
