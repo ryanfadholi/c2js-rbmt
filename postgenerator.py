@@ -29,6 +29,12 @@ class PostGenerator:
         #Decides how many spaces the program should give before writing a line, 1 block depth equals 4 spaces.
         block_depth = 0
         with open(self.filepath, "w") as file_output:
+
+            libs = self.identify_libs(statements)
+            for lib in libs:
+                file_output.write(lib)
+                file_output.write("\n")
+
             for statement in statements:
                 #Reduce spaces when code block closes.
                 if statement.tag == slt.BLOCK_END_TAG:
@@ -39,14 +45,18 @@ class PostGenerator:
                     file_output.write("    " * block_depth)
                     file_output.write(line)
                     file_output.write("\n")
+                    #Add an empty line for each block ends
+                    if statement.tag == slt.BLOCK_END_TAG:
+                        file_output.write("\n")
 
                 #Add spaces AFTER code block opens, so increment after writing current line.
                 if statement.tag == slt.BLOCK_START_TAG:
                     block_depth += 1
 
+            #Run main function at the end of the script!
+            file_output.write("main();")
+
     def fix(self, statement):
-        #TODO: Only fix first strings inside output functions
-        #TODO: Fix strings BEFORE comma, not only the first!
         after_output = False
         before_comma = True
 
@@ -78,6 +88,11 @@ class PostGenerator:
         return statement
         
     def fix_format(self, string):
+        """
+        Converts C formatting characters unknown by JS (for example "%f" for float) to its nearest equivalence in JS.
+        """
+
+        #Define the mappings
         kdigits_three = (["%lli"], 4, "%d")
         kdigits_two = (["%hi", "%li"], 3, "%d")
         kdigits_one = (["%f", "%i"], 2, "%d")
@@ -87,10 +102,31 @@ class PostGenerator:
 
         for keys, tlen, new_format in formatting_guides:
             while True:
+                #Check for any occurrence of the formatting characters
                 tpos = self.rules.findfirst(string, keys)
                 if tpos == -1:
                     break
+                #Cut and paste the correct one
                 lstr, rstr = string[:tpos], string[tpos+tlen:]
                 string = lstr + new_format + rstr
 
         return string
+
+    def identify_libs(self, statements):
+        input_lib = False
+        output_lib = False
+
+        for statement in statements:
+            if statement.tag == slt.INPUT_TAG:
+                input_lib = True
+            elif statement.tag == slt.OUTPUT_TAG:
+                output_lib = True
+
+        to_write = []
+        if input_lib:
+            to_write.append("var readlineSync = require('readlineSync')")
+        if output_lib:
+            to_write.append("var util = require('util')")
+
+        return to_write
+            

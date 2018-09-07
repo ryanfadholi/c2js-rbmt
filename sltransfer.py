@@ -9,6 +9,7 @@ BLOCK_END_TAG = "code-block-end"
 CONDITIONAL_TAG = "conditional"
 DECLARATION_TAG = "variable-declaration"
 FUNCTION_TAG = "function-declaration"
+FUNCTION_DEFINITION_TAG = "function-definition"
 INITIATION_TAG = "variable-initiation"
 INPUT_TAG = "input"
 LOOP_TAG = "loop"
@@ -33,8 +34,9 @@ class StructuralLexicalTransfer:
         self.input_sp = Pattern(INPUT_TAG, [tokens.tag_input_func])
         self.output_sp = Pattern(OUTPUT_TAG, [tokens.tag_output_func])
         self.return_sp = Pattern(RETURN_TAG, [tokens.tag_return_kw])
+        self.function_sp = Pattern(FUNCTION_TAG, [tokens.datatypes, tokens.tag_name_var, tokens.tag_parenthesis_left], [tokens.tag_parenthesis_right])
+        self.function_definition_sp = Pattern(FUNCTION_DEFINITION_TAG, [tokens.datatypes, tokens.tag_name_var, tokens.tag_parenthesis_left], [tokens.tag_semicolon], carryover=False)
         self.declaration_sp = Pattern(DECLARATION_TAG, [tokens.datatypes], [tokens.tag_semicolon])
-        self.function_sp = Pattern(FUNCTION_TAG, [tokens.datatypes, tokens.tag_name_var], [tokens.tag_parenthesis_right])
         self.conditional_sp = Pattern(CONDITIONAL_TAG, [tokens.conditionals])
         self.loop_sp = Pattern(LOOP_TAG, [tokens.loops])
         self.initiation_sp = Pattern(INITIATION_TAG, [tokens.tag_name_var, tokens.tag_assign])
@@ -81,7 +83,6 @@ class StructuralLexicalTransfer:
             statement.tokens.insert(pos + add_offset, TaggedToken(tokens.parenthesis_right, tokens.tag_parenthesis_right))
 
     def fixinput(self, statement):
-        #TODO: Fix pointer input!
         input_tokens = statement.findall(tokens.tag_read_func)
         empty_string_token = TaggedToken("''", tokens.tag_val_string)
         assign_token = TaggedToken(tokens.assign, tokens.tag_assign)
@@ -138,7 +139,7 @@ class StructuralLexicalTransfer:
 
                 #First get all tokens before the "readlineSync", and append it with variable captured above and an assignment operator
                 statement.tokens = (statement.tokens[:question_pos] + [variable_token]
-                    + ([dot_token, ptr_access_token] if variable_token else [])
+                    + ([dot_token, ptr_access_token] if variable_pointer else [])
                     + [assign_token] 
                 #Next get all the remaining tokens, and insert an empty string token between the readlineSync.question calling parenthesis, 
                 #overwriting any tokens inside of it.
@@ -211,13 +212,17 @@ class StructuralLexicalTransfer:
     def identify(self, statement):
         tags = list(map(lambda token: token.tag, statement))
     
+        #NOTE: function_declaration MUST be checked BEFORE declaration! 
+        #Because declaration essentially checks a subset of function_declaration, if declaration are put before it everything will be identified as declaration.
         patterns = [self.block_start_sp, self.block_end_sp, self.preprocessor_sp, self.single_comment_sp, self.multi_comment_sp, 
-                    self.input_sp, self.output_sp, self.return_sp, self.declaration_sp, self.function_sp, self.conditional_sp,
+                    self.input_sp, self.output_sp, self.return_sp, self.function_sp, self.function_definition_sp, self.declaration_sp, self.conditional_sp,
                     self.loop_sp, self.initiation_sp, self.initiation_pointer_sp]
 
         for pattern in patterns:
             if pattern.trace(tags):
                 statement.tag = pattern.tag
+                if not pattern.carryover:
+                    statement.carryover = False
                 break
         else:
             statement.tag = "unknown"

@@ -7,8 +7,6 @@ from itertools import repeat
 from taggedtoken import TaggedToken
 from taggedstatement import TaggedStatement
 
-#TODO: Tag "dynamic" tokens
-
 class POSTagger:
 
     def __init__(self):
@@ -45,16 +43,6 @@ class POSTagger:
             result.append(next_token)
 
         return result
-
-    def generate_tag(self, token, token_type):
-        """
-        Returns a dictionary containing token and token type.
-        """
-        return {
-            "token" : token,
-            "type"  : token_type
-        }
-
 
     def rebuild_tokens(self, tokens):
         """

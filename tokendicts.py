@@ -16,6 +16,7 @@ float_type = "float" ; tag_float_type = "float-type"
 int_type = "int"; tag_int_type = "int-type"
 long_type = "long"; tag_long_type = "long-type" 
 short_type = "short"; tag_short_type = "short-type" 
+void_type = "void"; tag_void_type = "void-type"
 
 dowhile_loop = "do"; tag_dowhile_loop = "dowhile-loop"
 for_loop = "for"; tag_for_loop = "for-loop"
@@ -190,7 +191,8 @@ datatypes = {
     tag_float_type : float_type,
     tag_int_type: int_type,
     tag_long_type: long_type,
-    tag_short_type: short_type
+    tag_short_type: short_type,
+    tag_void_type: void_type
 }
   
 loops = {

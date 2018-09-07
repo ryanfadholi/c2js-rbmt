@@ -1,5 +1,8 @@
 #include<stdio.h>
 
+void mantap();
+int cetak(int *a);
+
 int main(
     /* ({Test}) */
 
@@ -63,15 +66,16 @@ int main(
     char* test = "Hello; World!";
     // if (2 == 2) printf("Benerrrr");
     // while (2 == 2) printf("Benerrrr loopnyo");
-    // do {
-    //     i++;
-    // } while(i < 5);
+    do {
+        i++;
+    } while(i < 5);
 
     int c = 0;
     int *b = &c;
     *b = 10;
     int d = *b * *c;
     printf("%d""%f\n",*b,*d);
+    printf("%hi %li %c\n" "%li",*b,*d);
 
     printf("((abcd");
     printf("(abcd");
@@ -79,6 +83,10 @@ int main(
     scanf("(%d", b);
     scanf("(%d", &d);
     return 0;
+}
+
+void mantap(){
+    printf("Halloooooooo");
 }
 
 int cetak(int *a){

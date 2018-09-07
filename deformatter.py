@@ -137,7 +137,6 @@ class Deformat:
 
     def get_statement_end(self, text, separator, do_exception_checking=True):
         """
-        separator := str
         Returns an index in which the current statement ends, or -1 if no separator are found in the text.
         The index is the first separator occurrence in the text from get_occurrences.
 
@@ -201,8 +200,15 @@ class Deformat:
             end_pos = self.get_statement_end(line,  '}')
         elif self.rules.is_declaration(line):
             end_pos = self.get_declaration_end(line)
-        elif self.rules.is_conditional(line) or self.rules.is_loop(line):
+        elif self.rules.is_conditional(line): 
             end_pos = self.get_bracket_end(line)
+        elif self.rules.is_loop(line):
+            if self.rules.is_do(line):
+                end_pos = self.get_statement_end(line, "do")
+            elif self.rules.is_while(line):
+                end_pos = self.get_declaration_end(line)
+            elif self.rules.is_for(line):
+                end_pos = self.get_bracket_end(line)
         else: 
             end_pos = self.get_statement_end(line,  ';')
 

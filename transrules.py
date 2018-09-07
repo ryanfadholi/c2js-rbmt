@@ -204,5 +204,9 @@ class TranslationHelper:
     is_loop = lambda self, text: self.stmt_validate(text, tokens.loops)
     is_multicomment = lambda self, text: self.stmt_validate(text, tokens.multi_comment)
     is_singlecomment = lambda self, text: self.stmt_validate(text, tokens.single_comment)
-    is_comment = lambda self, text: self.is_singlecomment or self.is_multicomment #Returns true for both single and multi-line comments
+    is_comment = lambda self, text: self.is_singlecomment(text) or self.is_multicomment(text) #Returns true for both single and multi-line comments
     is_string = lambda self, text: self.stmt_validate(text, tokens.string_identifiers)
+
+    is_do = lambda self, text: self.stmt_validate(text, tokens.dowhile_loop)
+    is_for = lambda self, text: self.stmt_validate(text, tokens.for_loop)
+    is_while = lambda self, text: self.stmt_validate(text, tokens.while_loop)

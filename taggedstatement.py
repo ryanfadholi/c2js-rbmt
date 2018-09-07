@@ -1,13 +1,11 @@
 import copy
 
-no_carryover = ["include-library"]
-
 class TaggedStatement:
     def __init__(self, tokens = [], statement_type = "None"):
         #Ensure copy
         self.carryover = True
         self.tokens = copy.copy(tokens)
-        self._type = statement_type
+        self.tag = statement_type
 
     def __len__(self):
         return len(self.tokens)
@@ -17,7 +15,7 @@ class TaggedStatement:
         
     def __str__(self):
         result = ""
-        result += f"Statement Type: {self._type}\n"
+        result += f"Statement Type: {self.tag}\n"
         result += "Tokens: "
 
         comma_flag = False
@@ -34,17 +32,6 @@ class TaggedStatement:
 
     def __setitem__(self, key, value):
         self.tokens.__setitem__(key, value)
-
-    @property
-    def tag(self):
-        return self._type
-
-    @tag.setter
-    def tag(self, value):
-        self._type = value
-
-        if value in no_carryover:
-            self.carryover = False
 
     def findall(self, *args):
         result = {}
