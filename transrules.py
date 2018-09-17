@@ -1,6 +1,7 @@
-import tokendicts as tokens
 import itertools
 import re
+
+import tokendicts as tokens
 
 #TODO: When everything's said and done, is it better to spread this file to each project that need each individual function instead?
 
@@ -41,7 +42,6 @@ class TranslationHelper:
         Returns a list of indexes in which the token start. If there is no token instance in the text, it returns empty list.
         (Supports overlapping cases)
         """
-        # print(f"Token: {token}; Text: {text}")
 
         result = []
         token_len = len(token)
@@ -51,20 +51,20 @@ class TranslationHelper:
 
         return result 
 
-    def findfirst(self, text, tokens):
+    def findfirst(self, text, param_tokens):
         """
-        Find the first instance of any token from the tokens list on the text string. 
+        Find the first instance of any token from the tokens list on the text string.
         Returns -1 when there is no instance of any token in the string.
         """
 
-        if isinstance(tokens, dict):
-            findall = [text.find(token) for key, token in tokens.items()]
-        elif isinstance(tokens, list):
-            findall = [text.find(token) for token in tokens]
-        
+        if isinstance(param_tokens, dict):
+            findall = [text.find(token) for key, token in param_tokens.items()]
+        elif isinstance(param_tokens, list):
+            findall = [text.find(token) for token in param_tokens]
+
         found = list(filter(lambda pos: pos > -1, findall))
 
-        return min(found) if len(found) > 0 else -1
+        return min(found) if found else -1
 
     findstring = lambda self, text: self.findfirst(text, tokens.string_identifiers)
     find_all_string = lambda self, text: self.findall(text, tokens.string_identifiers)

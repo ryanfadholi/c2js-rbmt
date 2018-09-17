@@ -14,10 +14,12 @@ class Pattern:
         self.carryover = carryover
 
     def fit(self, tags):
+        """Matches the length of the pattern to the length of tags"""
         target_length = len(tags) - (len(self.start) + len(self.end))
         return self.start + ([None] * target_length) + self.end
 
     def trace(self, tags):
+        """Compares the pattern to the tag"""
         for ptrn, tag in zip(self.fit(tags), tags):
             if ptrn is None:
                 match = True

@@ -1,20 +1,17 @@
+import re
 import transrules as rules
-import re 
-
-from collections import namedtuple
-from itertools import repeat
 
 from taggedtoken import TaggedToken
 from taggedstatement import TaggedStatement
+
+RULE_ALPHANUM = re.compile(r"^\w+$")
+RULE_DIGIT = re.compile(r"^\d+$")
+RULE_WHITESPACE = re.compile(r"^\s+$")
 
 class POSTagger:
 
     def __init__(self):
         self.rules = rules.TranslationHelper()
-
-        self.rule_digit = re.compile(r"^\d+$")
-        self.rule_ws = re.compile(r"^\s+$")
-        self.rule_alphanum = re.compile(r"^\w+$")
 
     #Check if there is single-quote/double-quote token in the statement.
     quote_token_exists = lambda self, tokens: '"' in tokens or "'" in tokens
@@ -38,34 +35,11 @@ class POSTagger:
                     break
             else:
                 cut_len = 1
-            
+
             next_token, string = string[:cut_len], string[cut_len:]
             result.append(next_token)
 
         return result
-
-    def rebuild_tokens(self, tokens):
-        """
-        Accepts these as parameter:
-        1. List of tokenized single or multi-line comment.
-        2. List of tokenized statement containing single or double quotes.
-        3. List of tokenized statement containing dots.
-
-        Returns the same list, but with some parts merged (when needed)
-        """
-        if self.rules.is_singlecomment(tokens):
-            return [tokens[0], "".join(tokens[1:])] 
-        elif self.rules.is_multicomment(tokens):
-            return [tokens[0], "".join(tokens[1:-1]), tokens[-1]]
-        else:
-            #If it's not a comment statement, assume it's a statement containing a string or dots.
-            if self.quote_token_exists(tokens): 
-                tokens = self.merge_string(tokens)    
-            
-            if self.dot_token_exists(tokens):
-                tokens = self.merge_float(tokens)
-
-            return tokens
 
     def merge_float(self, tokens):
         """
@@ -78,10 +52,10 @@ class POSTagger:
         #Check until the last two tokens. (Checking further than this will cause index error :) )
         while index < last_check:
             #Merge dots of floating-point numbers (e.g "3.", "4.14")
-            if tokens[index+1] == "." and self.rule_digit.match(tokens[index]):
+            if tokens[index+1] == "." and RULE_DIGIT.match(tokens[index]):
                 #At this point, there's a number followed by a dot.
                 to_join = 2 #Number of token to join
-                if (index+2 < len(tokens)) and self.rule_digit.match(tokens[index+2]):
+                if (index+2 < len(tokens)) and RULE_DIGIT.match(tokens[index+2]):
                     #If the dot is in turn followed by a digit, assume that it's the decimal part of the float
                     to_join = 3
 
@@ -116,18 +90,41 @@ class POSTagger:
 
         for idx, token in enumerate(tokens):
             #Do nothing if the token is inside of a string's range, OR it's only whitespace.
-            if idx < limit or self.rule_ws.match(token):
+            if idx < limit or RULE_WHITESPACE.match(token):
                 pass
             elif token == "'" or token == '"':
-                    str_length = self.rules.get_string_length(tokens[idx:])
-                    limit = idx + str_length + 1 #Extra 1 is the offset of single/double quotes
-                    result_tokens.append("".join(tokens[idx:limit]))
+                str_length = self.rules.get_string_length(tokens[idx:])
+                limit = idx + str_length + 1 #Extra 1 is the offset of single/double quotes
+                result_tokens.append("".join(tokens[idx:limit]))
             else:
                 result_tokens.append(token)
                     
         return result_tokens
 
-    def split_statement(self, text, preserve_whitespace=False):
+    def rebuild(self, tokens):
+        """
+        Accepts these as parameter:
+        1. List of tokenized single or multi-line comment.
+        2. List of tokenized statement containing single or double quotes.
+        3. List of tokenized statement containing dots.
+
+        Returns the same list, but with some parts merged (when needed)
+        """
+        if self.rules.is_singlecomment(tokens):
+            return [tokens[0], "".join(tokens[1:])] 
+        elif self.rules.is_multicomment(tokens):
+            return [tokens[0], "".join(tokens[1:-1]), tokens[-1]]
+        else:
+            #If it's not a comment statement, assume it's a statement containing a string or dots.
+            if self.quote_token_exists(tokens): 
+                tokens = self.merge_string(tokens)    
+            
+            if self.dot_token_exists(tokens):
+                tokens = self.merge_float(tokens)
+
+            return tokens
+
+    def split(self, text, preserve_whitespace=False):
         """
         Splits a given string into strings of whitespace, alphanumeric, and valid symbol tokens in C.
         If preserve_whitespace is set to True, all whitespaces will be treated as tokens; 
@@ -140,10 +137,10 @@ class POSTagger:
 
         #Filter empty tokens, and loop through it.
         for token in filter(lambda token: len(token) > 0, splitter.split(text)):
-            if self.rule_ws.match(token):
+            if RULE_WHITESPACE.match(token):
                 if preserve_whitespace:
                     result.append(token)
-            elif self.rule_alphanum.match(token):
+            elif RULE_ALPHANUM.match(token):
                 result.append(token)
             #it's neither alphanumeric or whitespace, assume it's a symbol string.
             else:
@@ -159,20 +156,17 @@ class POSTagger:
         #If there's quote in the statement, or it's a comment statement, set as True.
         is_ws_sensitive = self.quote_token_exists(statement) or self.rules.is_singlecomment(statement) or self.rules.is_multicomment(statement)
         
-        tokens = self.split_statement(statement, preserve_whitespace=is_ws_sensitive)
+        tokens = self.split(statement, preserve_whitespace=is_ws_sensitive)
 
         if is_ws_sensitive or self.dot_token_exists(statement):
-            tokens = self.rebuild_tokens(tokens)
+            tokens = self.rebuild(tokens)
 
         return tokens
 
     def tag(self, statement):
+        """Tokenizes and tags each token from the statement. Returns a TaggedStatement object"""
         tokens = self.tokenize(statement)
         
         #Only matches known tokens
         matched_tokens = TaggedStatement(list(map(lambda x: TaggedToken(x, self.rules.match(x)), tokens)))
         return self.rules.identify(matched_tokens)
-
-if __name__ == "__main__":
-    #When run, run c2js instead
-    import c2js

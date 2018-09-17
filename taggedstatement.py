@@ -1,7 +1,10 @@
 import copy
 
 class TaggedStatement:
-    def __init__(self, tokens = [], statement_type = "None"):
+    def __init__(self, tokens = None, statement_type = "None"):
+        if tokens is None:
+            tokens = []
+
         #Ensure copy
         self.carryover = True
         self.tokens = copy.copy(tokens)
@@ -34,6 +37,12 @@ class TaggedStatement:
         self.tokens.__setitem__(key, value)
 
     def findall(self, *args):
+        """
+        Returns a list of every argument occurrences if there is only one argument,
+        Returns a tuple of lists which containts every arguments occurrences otherwise
+        (every argument has their own occurrence list)
+        """
+
         result = {}
 
         for item in args:

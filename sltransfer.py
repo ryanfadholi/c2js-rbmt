@@ -1,7 +1,7 @@
 import tokendicts as tokens
 from taggedtoken import TaggedToken
 
-from collections import ChainMap, defaultdict, namedtuple
+from collections import ChainMap, namedtuple
 from pattern import Pattern
 
 BLOCK_START_TAG = "code-block-start"
@@ -56,11 +56,12 @@ class StructuralLexicalTransfer:
         self.scanf_tl = self.TranslationItem(tokens.tag_input_func,
             [tokens.tag_read_func, tokens.tag_dot, tokens.tag_input_func],
             [tokens.read_func, tokens.dot, tokens.input_func_js])
-        self.reference_start =[TaggedToken(tokens.curly_left, tokens.tag_curly_left), TaggedToken(tokens.ptr_access, tokens.tag_ptr_access), TaggedToken(tokens.colon, tokens.tag_colon)]
+        self.reference_start = [TaggedToken(tokens.curly_left, tokens.tag_curly_left), TaggedToken(tokens.ptr_access, tokens.tag_ptr_access), TaggedToken(tokens.colon, tokens.tag_colon)]
         self.reference_end = [TaggedToken(tokens.curly_right, tokens.tag_curly_right)]
         self.js_pointer = [TaggedToken(tokens.dot, tokens.tag_dot), TaggedToken(tokens.ptr_access, tokens.tag_ptr_access)]
 
     def addbracket(self, statement):
+        """Adds extra brackets for output statements. (JS's output has one extra bracket from its C counterpart)"""
         obrs, cbrs, fstmts = statement.findall(tokens.tag_parenthesis_left, tokens.tag_parenthesis_right, tokens.tag_format_func)
         to_add = []
 
@@ -83,6 +84,7 @@ class StructuralLexicalTransfer:
             statement.tokens.insert(pos + add_offset, TaggedToken(tokens.parenthesis_right, tokens.tag_parenthesis_right))
 
     def fixinput(self, statement):
+        """Fixes translated input statements."""
         input_tokens = statement.findall(tokens.tag_read_func)
         empty_string_token = TaggedToken("''", tokens.tag_val_string)
         assign_token = TaggedToken(tokens.assign, tokens.tag_assign)
@@ -125,7 +127,6 @@ class StructuralLexicalTransfer:
                         variable_found = True
                         #If previous token is not "&", this variable is a pointer variable
                         if next_input_part[idx-1].tag != tokens.tag_op_binary_and:
-                            print(f"Well, it's actually {next_input_part[idx-1]}")
                             variable_pointer = True
 
                     #If a bracket is encountered and the set(s) is complete, stop iteration.
@@ -259,7 +260,6 @@ class StructuralLexicalTransfer:
         for token in statement:
             translation = translations.get(token.tag)
             if translation is not None:
-                print(f"Found! {translation}")
                 new_tokens = [TaggedToken(new_value, new_key) 
                               for new_key, new_value in zip(translation.new_keys, translation.new_values)]
                 result.extend(new_tokens)

@@ -4,59 +4,18 @@ import sltransfer as slt
 
 from taggedtoken import TaggedToken
 
-js_reserveds = ["catch", "class", "console", "debugger", "delete", "export", "extends", "false", "finally", 
+JS_RESERVED = ["catch", "class", "console", "debugger", "delete", "export", "extends", "false", "finally", 
                 "function", "import", "in", "instanceof", "let", "new", "null", "super", "this", 
                 "throw", "true", "try", "typeof", "util", "var", "with", "yield"]
 
+TEMPFILE_PATH = "temp/result.txt"
+
 class PostGenerator:
-    def __init__(self, filepath):
-        self.filepath = filepath
+    def __init__(self):
         self.rules = tr.TranslationHelper()
 
-    def join(self, tokens):
-        result = ""
-
-        fspacing = False
-        for token in tokens:
-            if fspacing and token.bspacing:
-                result += " "
-            result += token.token
-            fspacing = token.fspacing
-        
-        return result
-
-    def write(self, statements):
-        #Decides how many spaces the program should give before writing a line, 1 block depth equals 4 spaces.
-        block_depth = 0
-        with open(self.filepath, "w") as file_output:
-
-            libs = self.identify_libs(statements)
-            for lib in libs:
-                file_output.write(lib)
-                file_output.write("\n")
-
-            for statement in statements:
-                #Reduce spaces when code block closes.
-                if statement.tag == slt.BLOCK_END_TAG:
-                    block_depth -= 1
-
-                line = self.join(self.fix(statement).tokens)
-                if line: #Only writes if the line is not empty
-                    file_output.write("    " * block_depth)
-                    file_output.write(line)
-                    file_output.write("\n")
-                    #Add an empty line for each block ends
-                    if statement.tag == slt.BLOCK_END_TAG:
-                        file_output.write("\n")
-
-                #Add spaces AFTER code block opens, so increment after writing current line.
-                if statement.tag == slt.BLOCK_START_TAG:
-                    block_depth += 1
-
-            #Run main function at the end of the script!
-            file_output.write("main();")
-
     def fix(self, statement):
+        """Corrects JS-side translation errors."""
         after_output = False
         before_comma = True
 
@@ -78,7 +37,7 @@ class PostGenerator:
                     new_tokens.append(TaggedToken("+", td.tag_op_add))
             #Fix "reserved" token strings
             elif token.tag == td.tag_name_var:
-                if token.token in js_reserveds:
+                if token.token in JS_RESERVED:
                     token.token = 'a' + token.token
             
             is_prev_string = True if token.tag == td.tag_val_string else False
@@ -113,6 +72,7 @@ class PostGenerator:
         return string
 
     def identify_libs(self, statements):
+        """Returns a list of libraries required for statements to run correctly."""
         input_lib = False
         output_lib = False
 
@@ -129,4 +89,48 @@ class PostGenerator:
             to_write.append("var util = require('util')")
 
         return to_write
-            
+
+    def join(self, tokens):
+        """Joins a list of tokens into string."""
+        result = ""
+
+        fspacing = False
+        for token in tokens:
+            if fspacing and token.bspacing:
+                result += " "
+            result += token.token
+            fspacing = token.fspacing
+        
+        return result
+
+    def write(self, statements):
+        """Writes a list of TaggedStatement into the designated temporary file."""
+        #Decides how many spaces the program should give before writing a line, 1 block depth equals 4 spaces.
+        block_depth = 0
+        with open(TEMPFILE_PATH, "w") as output:
+
+            libs = self.identify_libs(statements)
+            for lib in libs:
+                output.write(lib)
+                output.write("\n")
+
+            for statement in statements:
+                #Reduce spaces when code block closes.
+                if statement.tag == slt.BLOCK_END_TAG:
+                    block_depth -= 1
+
+                line = self.join(self.fix(statement).tokens)
+                if line: #Only writes if the line is not empty
+                    output.write("    " * block_depth)
+                    output.write(line)
+                    output.write("\n")
+                    #Add an empty line for each block ends
+                    if statement.tag == slt.BLOCK_END_TAG:
+                        output.write("\n")
+
+                #Add spaces AFTER code block opens, so increment after writing current line.
+                if statement.tag == slt.BLOCK_START_TAG:
+                    block_depth += 1
+
+            #Run main function at the end of the script!
+            output.write("main();")

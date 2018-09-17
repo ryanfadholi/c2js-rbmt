@@ -5,24 +5,16 @@ import itertools
 from charrange import CharRange
 from collections import namedtuple
 
-class Deformat:
+TEMPFILE_PATH = "temp/source.txt"
 
-    _tempfile_path = "temp/source.txt"
+class Deformatter:
 
-    #TODO: Solve dowhile ending semicolon parse!
-
-    def __init__(self, filepath, debug_mode=False):
-
-        self.debug_mode = debug_mode
+    def __init__(self):
         self.rules = rules.TranslationHelper()
-
-        #Prepare the temporary file
-        self._filepath = filepath
-        self._readfile()
 
     def findfirst(self, text, tokens):
         """
-        Find the first instance of any token from the tokens list on the text string. 
+        Find the first instance of any token from the tokens list on the text string.
         Returns -1 when there is no instance of any token in the string.
         """
 
@@ -30,14 +22,15 @@ class Deformat:
             findall = [text.find(token) for key, token in tokens.items()]
         elif isinstance(tokens, list):
             findall = [text.find(token) for token in tokens]
-        
+
         found = list(filter(lambda pos: pos > -1, findall))
 
         return min(found) if len(found) > 0 else -1
 
     def get_bracket_end(self, text):
         """
-        Returns an index where the first bracket set of the text ends. Works even if there is nested brackets present.
+        Returns an index where the first bracket set of the text ends, 
+        Works even if there is nested brackets present.
         Returns -1 if the first bracket set is not complete/no bracket sets are found. 
         """
         open_brackets = self.get_occurrences(text, "(")
@@ -59,7 +52,8 @@ class Deformat:
     def get_declaration_end(self, text):
         """
         Returns an index where the declaration statement ends. Returns -1 if the statement isn't ending yet.
-        Declaration could mean a variable or function declaration, and the function will adapt depending on what it assume the declaration is.
+        Declaration could mean a variable or function declaration,
+        and the function will adapt depending on what it assumes the declaration is.
         """        
         curlybrace_pos = self.get_statement_end(text, "{")
         semicolon_pos = self.get_statement_end(text, ";")
@@ -97,10 +91,6 @@ class Deformat:
         ignored = lambda x: True in (x in char_range for char_range in to_ignore)
 
         sep_pos = self.rules.findall(text, separator)
-
-        if(self.debug_mode):
-                print(f"ignore range: {to_ignore}")
-                print(f"separator positions: {sep_pos}")
         
         if sep_pos and to_ignore:
             sep_pos = list(filter(lambda pos: not ignored(pos), sep_pos))
@@ -109,7 +99,7 @@ class Deformat:
 
     def get_parsing_exceptions(self, text):
         """
-        Returns a list of CharRanges of every strings and comments in the text. 
+        Returns a list of CharRanges of every strings and comments in the text.
         Returns empty list if no strings or comments are found.
         """
         ranges = []
@@ -142,9 +132,6 @@ class Deformat:
 
         The do_exception_checking is forwarded to get_occurrences, see the function's docstring for more infromation.
         """
-
-        if(self.debug_mode):
-            print(f"Statement length is {len(text)}, content: {text}")
         
         valid_sep_pos = -1
 
@@ -157,6 +144,13 @@ class Deformat:
         cut_pos = valid_sep_pos + offset if valid_sep_pos > -1 else -1
         return cut_pos
 
+    def lines(self):
+        """Reads temporary file per-line."""
+
+        with open(TEMPFILE_PATH) as file:
+            for line in file:
+                yield line
+
     def _extract_substmt(self, text):
         """
         Extracts comments inserted inside a statement.
@@ -167,7 +161,7 @@ class Deformat:
 
         #if it's comments or include statements, no need to reanalyze statement.
         if self.rules.is_singlecomment(text) or self.rules.is_multicomment(text) or self.rules.is_include(text):
-            pass 
+            pass
         else:
             while self.rules.findcomment(text) > -1:
                 start_cut = self.rules.findcomment(text)
@@ -191,16 +185,16 @@ class Deformat:
         if self.rules.is_singlecomment(line) or self.rules.is_include(line):
             end_pos = self.get_statement_end(line, '\n', do_exception_checking=False)
         elif self.rules.is_multicomment(line):
-            end_pos = self.get_statement_end(line,  '*/', do_exception_checking=False)
+            end_pos = self.get_statement_end(line, '*/', do_exception_checking=False)
         elif self.rules.is_string(line):
             end_pos = self.rules.get_string_length(line)
         elif self.rules.is_block_start(line):
             end_pos = self.get_statement_end(line, '{')
         elif self.rules.is_block_end(line):
-            end_pos = self.get_statement_end(line,  '}')
+            end_pos = self.get_statement_end(line, '}')
         elif self.rules.is_declaration(line):
             end_pos = self.get_declaration_end(line)
-        elif self.rules.is_conditional(line): 
+        elif self.rules.is_conditional(line):
             end_pos = self.get_bracket_end(line)
         elif self.rules.is_loop(line):
             if self.rules.is_do(line):
@@ -209,36 +203,34 @@ class Deformat:
                 end_pos = self.get_declaration_end(line)
             elif self.rules.is_for(line):
                 end_pos = self.get_bracket_end(line)
-        else: 
-            end_pos = self.get_statement_end(line,  ';')
+        else:
+            end_pos = self.get_statement_end(line, ';')
 
         cut_pos = whitespace_offset + end_pos if end_pos > -1 else -1
         return cut_pos
 
-    def _readfile(self):
+    def read(self, filepath):
         """
-        Reads file located in self._filepath, and rewrites it
-        into the designated path (self._tempfile_path).
+        Reads file and rewrites it
+        into the designated temporary file path.
         """
 
-        with open(self._filepath, "r") as file_input:
+        with open(filepath, "r") as file_input:
             
             raw_input = file_input.read()
-            with open(self._tempfile_path, "w") as temp_file:
+            with open(TEMPFILE_PATH, "w") as temp_file:
                 temp_file.write(raw_input)
 
-    def _lines_generator(self):
-        """Reads temporary file per-line."""
-        with open(self._tempfile_path) as file:
-            for line in file:
-                yield line
+    def statements(self, filepath=None):
+        """Returns temporary file contents as an iterable of separated C statements."""
 
-    def _statements_generator(self):
-        """Returns temporary file's content as an iterable of separated C statements."""
+        #Prepare the temporary file
+        if filepath:
+            self.read(filepath)
 
         prev_line = ""
 
-        for line in self._lines_generator():
+        for line in self.lines():
             cur_line = prev_line + line
             while len(cur_line) > 0:
                 cut_pos = self.stmt_cutter(cur_line)  
@@ -258,10 +250,6 @@ class Deformat:
             yield prev_line.strip()
 
         raise StopIteration 
-
-    @property
-    def lines(self):
-        return [line for line in self._lines_generator()]
 
 if __name__ == "__main__":
     #When run, run c2js instead
