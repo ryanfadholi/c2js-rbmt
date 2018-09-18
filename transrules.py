@@ -66,7 +66,6 @@ class TranslationHelper:
 
         return min(found) if found else -1
 
-    findstring = lambda self, text: self.findfirst(text, tokens.string_identifiers)
     find_all_string = lambda self, text: self.findall(text, tokens.string_identifiers)
     findcomment = lambda self, text: self.findfirst(text, tokens.comments)
     find_all_comment = lambda self, text: self.findall(text, tokens.comments)
@@ -109,18 +108,6 @@ class TranslationHelper:
                         token.tag = "comment"
 
         return input_tokens
-
-    def match(self, token):
-        token_dicts = [ tokens.arithmetic_operator, tokens.bitwise_operator, tokens.relational_operator, 
-            tokens.compound_assignment_operator, tokens.logical_operator, tokens.misc_operator, tokens.comments, 
-            tokens.conditionals, tokens.datatypes, tokens.loops, tokens.special_functions, tokens.keywords ]
-
-        for token_dict in token_dicts:
-            for key, value in token_dict.items():
-                if token == value:
-                    return key
-        
-        return "unknown"
 
     def get_string_length(self, text):
         """

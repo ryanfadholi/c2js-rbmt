@@ -12,21 +12,6 @@ class Deformatter:
     def __init__(self):
         self.rules = rules.TranslationHelper()
 
-    def findfirst(self, text, tokens):
-        """
-        Find the first instance of any token from the tokens list on the text string.
-        Returns -1 when there is no instance of any token in the string.
-        """
-
-        if isinstance(tokens, dict):
-            findall = [text.find(token) for key, token in tokens.items()]
-        elif isinstance(tokens, list):
-            findall = [text.find(token) for token in tokens]
-
-        found = list(filter(lambda pos: pos > -1, findall))
-
-        return min(found) if len(found) > 0 else -1
-
     def get_bracket_end(self, text):
         """
         Returns an index where the first bracket set of the text ends, 

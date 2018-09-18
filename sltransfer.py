@@ -62,7 +62,7 @@ class StructuralLexicalTransfer:
 
     def addbracket(self, statement):
         """Adds extra brackets for output statements. (JS's output has one extra bracket from its C counterpart)"""
-        obrs, cbrs, fstmts = statement.findall(tokens.tag_parenthesis_left, tokens.tag_parenthesis_right, tokens.tag_format_func)
+        obrs, cbrs, fstmts = statement.find_all(tokens.tag_parenthesis_left, tokens.tag_parenthesis_right, tokens.tag_format_func)
         to_add = []
 
         for format_pos in fstmts:
@@ -85,7 +85,7 @@ class StructuralLexicalTransfer:
 
     def fixinput(self, statement):
         """Fixes translated input statements."""
-        input_tokens = statement.findall(tokens.tag_read_func)
+        input_tokens = statement.find_all(tokens.tag_read_func)
         empty_string_token = TaggedToken("''", tokens.tag_val_string)
         assign_token = TaggedToken(tokens.assign, tokens.tag_assign)
         dot_token = TaggedToken(tokens.dot, tokens.tag_dot)
@@ -97,7 +97,7 @@ class StructuralLexicalTransfer:
             while True:
 
                 #Rerun the positioning check for every loop, as the position may change after the previous loop.
-                obrs, input_tokens = statement.findall(tokens.tag_parenthesis_left, tokens.tag_read_func)
+                obrs, input_tokens = statement.find_all(tokens.tag_parenthesis_left, tokens.tag_read_func)
                 #If we have processed the same number of input tokens as there is input tokens in the statement, end the loop.
                 if processed_input_count == len(input_tokens):
                     break
@@ -231,17 +231,19 @@ class StructuralLexicalTransfer:
         return statement
 
     def cbdict(self, callbacks):
+        """Converts a list of CallbackPairs to a dictionary, with its trigger as keys and its function as the values"""
         result = {}
         for callback in callbacks:
             result[callback.trigger] = callback.function
         return result
 
     def tldict(self, translations):
+        """Converts a list of TranslationItems to a dictionary"""
         result = {}
         for item in translations:
             if isinstance(item.key, str):
                 result[item.key] = item
-            elif isinstance(item.key, dict) or isinstance(item.key, list):
+            elif isinstance(item.key, (dict, list)):
                 for key in item.key:
                     result[key] = item
         return result
@@ -273,7 +275,7 @@ class StructuralLexicalTransfer:
             helper = helpers.get(token.tag)
             if helper is not None and helper not in helper_functions:
                 helper_functions.append(helper)
-        
+
         for helper in helper_functions:
             helper(statement)
 

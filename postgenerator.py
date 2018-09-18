@@ -45,6 +45,17 @@ class PostGenerator:
 
         statement.tokens = new_tokens
         return statement
+
+    def _nearest(self, tokens, text):
+        """
+        Find the first instance of any token from the tokens list on the text string.
+        Returns -1 when there is no instance of any token in the string.
+        """
+
+        nearest_each = [text.find(token) for token in tokens]
+        found = list(filter(lambda pos: pos > -1, nearest_each))
+
+        return min(found) if found else -1
         
     def fix_format(self, string):
         """
@@ -62,7 +73,7 @@ class PostGenerator:
         for keys, tlen, new_format in formatting_guides:
             while True:
                 #Check for any occurrence of the formatting characters
-                tpos = self.rules.findfirst(string, keys)
+                tpos = self._nearest(keys, string)
                 if tpos == -1:
                     break
                 #Cut and paste the correct one

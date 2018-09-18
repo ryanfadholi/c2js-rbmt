@@ -36,7 +36,7 @@ class TaggedStatement:
     def __setitem__(self, key, value):
         self.tokens.__setitem__(key, value)
 
-    def findall(self, *args):
+    def find_all(self, *args):
         """
         Returns a list of every argument occurrences if there is only one argument,
         Returns a tuple of lists which containts every arguments occurrences otherwise

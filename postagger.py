@@ -1,5 +1,6 @@
 import re
 import transrules as rules
+import tokendicts
 
 from taggedtoken import TaggedToken
 from taggedstatement import TaggedStatement
@@ -40,6 +41,19 @@ class POSTagger:
             result.append(next_token)
 
         return result
+
+    def match(self, token):
+        """Determines the tag of the respective token (according to the token dictionary constants)"""
+        token_dicts = [tokendicts.arithmetic_operator, tokendicts.bitwise_operator, tokendicts.relational_operator, 
+            tokendicts.compound_assignment_operator, tokendicts.logical_operator, tokendicts.misc_operator, tokendicts.comments, 
+            tokendicts.conditionals, tokendicts.datatypes, tokendicts.loops, tokendicts.special_functions, tokendicts.keywords ]
+
+        for token_dict in token_dicts:
+            for key, value in token_dict.items():
+                if token == value:
+                    return key
+        
+        return "unknown"
 
     def merge_float(self, tokens):
         """
@@ -168,5 +182,5 @@ class POSTagger:
         tokens = self.tokenize(statement)
         
         #Only matches known tokens
-        matched_tokens = TaggedStatement(list(map(lambda x: TaggedToken(x, self.rules.match(x)), tokens)))
+        matched_tokens = TaggedStatement(list(map(lambda x: TaggedToken(x, self.match(x)), tokens)))
         return self.rules.identify(matched_tokens)
