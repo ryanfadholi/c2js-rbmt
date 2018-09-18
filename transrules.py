@@ -17,59 +17,6 @@ class TranslationHelper:
         self.variable_list = []
         self.function_list = []
 
-    def findall(self, text, token):
-        """
-        Find all instances of token in text.
-        Returns a list of indexes in which the token start. If there is no token instance in the text, it returns empty list.
-        (Supports overlapping cases)
-        """
-        # print(f"Token: {token}; Text: {text}")
-
-        if isinstance(token, str):
-            return self.findall_token(text, token)
-        if isinstance(token, dict):
-            findall = [self.findall_token(text, token_item) for key, token_item in token.items()]
-        elif isinstance(token, list):
-            findall = [self.findall_token(text, token_item) for token_item in token]
-
-        result = list(itertools.chain.from_iterable(findall))
-        result.sort() 
-        return result
-
-    def findall_token(self, text, token):
-        """
-        Find all instances of token in text.
-        Returns a list of indexes in which the token start. If there is no token instance in the text, it returns empty list.
-        (Supports overlapping cases)
-        """
-
-        result = []
-        token_len = len(token)
-        for i in range(len(text)):
-            if token == text[i:i+token_len]:
-                result.append(i)
-
-        return result 
-
-    def findfirst(self, text, param_tokens):
-        """
-        Find the first instance of any token from the tokens list on the text string.
-        Returns -1 when there is no instance of any token in the string.
-        """
-
-        if isinstance(param_tokens, dict):
-            findall = [text.find(token) for key, token in param_tokens.items()]
-        elif isinstance(param_tokens, list):
-            findall = [text.find(token) for token in param_tokens]
-
-        found = list(filter(lambda pos: pos > -1, findall))
-
-        return min(found) if found else -1
-
-    find_all_string = lambda self, text: self.findall(text, tokens.string_identifiers)
-    findcomment = lambda self, text: self.findfirst(text, tokens.comments)
-    find_all_comment = lambda self, text: self.findall(text, tokens.comments)
-
     def identify(self, input_tokens):
 
         id_int = re.compile(r"^\d+$")

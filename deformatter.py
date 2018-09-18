@@ -1,6 +1,7 @@
-import transrules as rules
-
 import itertools
+
+import tokendicts
+import transrules as rules
 
 from charrange import CharRange
 from collections import namedtuple
@@ -55,8 +56,8 @@ class Deformatter:
 
         Returns empty list if none are found.
         """
-        quotes_pos = self.rules.find_all_string(text)
-        comment_start_pos = self.rules.find_all_comment(text)
+        quotes_pos = self._search(tokendicts.string_identifiers, text)
+        comment_start_pos = self._search(tokendicts.comments, text)
 
         result = list(itertools.chain.from_iterable((quotes_pos, comment_start_pos)))
         return sorted(result)
@@ -75,7 +76,7 @@ class Deformatter:
         #If x is present in any CharRange from to_ignore, ignore it.
         ignored = lambda x: True in (x in char_range for char_range in to_ignore)
 
-        sep_pos = self.rules.findall(text, separator)
+        sep_pos = self._search(separator, text)
         
         if sep_pos and to_ignore:
             sep_pos = list(filter(lambda pos: not ignored(pos), sep_pos))
@@ -148,8 +149,8 @@ class Deformatter:
         if self.rules.is_singlecomment(text) or self.rules.is_multicomment(text) or self.rules.is_include(text):
             pass
         else:
-            while self.rules.findcomment(text) > -1:
-                start_cut = self.rules.findcomment(text)
+            while self._first(tokendicts.comments, text) > -1:
+                start_cut = self._first(tokendicts.comments, text)
                 cut_len = self.stmt_cutter(text[start_cut:])
                 end_cut = start_cut + cut_len
                 #text on the left side are right-stripped and the text on the right are left-stripped,
@@ -236,6 +237,46 @@ class Deformatter:
 
         raise StopIteration 
 
-if __name__ == "__main__":
-    #When run, run c2js instead
-    import c2js
+
+    def _search(self, token, text):
+        """
+        Find all instances of token(s) in text. Supports single (string) and multiple (list, dictionary) tokens.
+        Returns a list of indexes in which the token start. If there is no token instance in the text, it returns empty list.
+        (Supports overlapping cases)
+        """
+        if isinstance(token, str):
+            return self._list(token, text)
+        if isinstance(token, dict):
+            results = [self._list(token_item, text) for key, token_item in token.items()]
+        elif isinstance(token, list):
+            results = [self._list(token_item, text) for token_item in token]
+
+        flattened_results = list(itertools.chain.from_iterable(results))
+        flattened_results.sort() 
+        return flattened_results
+
+    def _list(self, token, text):
+        """
+        Find all instances of token in text. Only supports a token string.
+        Returns a list of indexes in which the token start. If there is no token instance in the text, it returns empty list.
+        (Supports overlapping cases)
+        """
+
+        result = []
+        token_len = len(token)
+        for i in range(len(text)):
+            if token == text[i:i+token_len]:
+                result.append(i)
+
+        return result 
+
+    def _first(self, tokens, text):
+        """
+        Find the first instance of any token from the tokens dictionary on the text string.
+        Returns -1 when there is no instance of any token in the string.
+        """
+
+        findall = [text.find(token) for key, token in tokens.items()]
+        found = list(filter(lambda pos: pos > -1, findall))
+
+        return min(found) if found else -1
