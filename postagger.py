@@ -175,11 +175,48 @@ class POSTagger:
 
     def tag(self, statement):
         """Tokenizes and tags each token from the statement. Returns a TaggedStatement object"""
+        id_int = re.compile(r"^\d+$")
+        id_float = re.compile(r"^\d+\.(\d+)?$")
+        id_var = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+        id_char = re.compile(r"^'.*'$", re.DOTALL)
+        id_string = re.compile(r'^".*"$', re.DOTALL)
+        
         tokens = self.tokenize(statement)
         
-        #Only matches known tokens
+        #This only matches known tokens
         matched_tokens = TaggedStatement(list(map(lambda x: TaggedToken(x, self.match(x)), tokens)))
-        return self.identify(matched_tokens)
+
+        #While this match "dynamic" tokens
+        for idx, token in enumerate(matched_tokens):
+            if token.tag == "unknown":
+                token_str = token.token
+                #Match library names (stdio.h, conio.h)
+                if token_str.lower().endswith(".h"):
+                    token.tag = tokendicts.tag_name_preproc
+                #Match integers (1234, 5454, 5)
+                elif id_int.match(token_str):
+                    token.tag = tokendicts.tag_val_int
+                #Match floating-point (1.1, 3.14, 2.)
+                elif id_float.match(token_str):
+                    token.tag = tokendicts.tag_val_float
+                #Match variable names (x, result, _hero9, y2)
+                elif id_var.match(token_str):
+                    token.tag = tokendicts.tag_name_var
+                #Match characters ('a', 'b')
+                elif id_char.match(token_str):
+                    token.tag = tokendicts.tag_val_char
+                #Match strings ("abc", "def")
+                elif id_string.match(token_str):
+                    token.tag = tokendicts.tag_val_string
+
+                #Match comment string (comments doesn't have any pattern, match based on position of comment tags)
+                if idx == 1:
+                    prev_token = matched_tokens[0].tag
+                    if prev_token == tokendicts.tag_single_comment or prev_token == tokendicts.tag_multi_comment:
+                        token.tag = "comment"
+        
+        return matched_tokens
 
     def stmt_validate(self, tokens, statement):
         """
@@ -210,6 +247,7 @@ class POSTagger:
         #What we're looking for is either single or double token; check the first character to determine which.
         cur_string_delimiter = text[0]
         found = False
+        idx = -1
 
         #Start from one to account for the first character (the first single/double quote)
         for idx, char in enumerate(text[1:], 1):
@@ -226,44 +264,5 @@ class POSTagger:
                     break
         
         return idx if found else -1
-
-    def identify(self, input_tokens):
-
-        id_int = re.compile(r"^\d+$")
-        id_float = re.compile(r"^\d+\.(\d+)?$")
-        id_var = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
-
-        id_char = re.compile(r"^'.*'$", re.DOTALL)
-        id_string = re.compile(r'^".*"$', re.DOTALL)
-
-        for idx, token in enumerate(input_tokens):
-            if token.tag == "unknown":
-                token_str = token.token
-                #Match library names (stdio.h, conio.h)
-                if token_str.lower().endswith(".h"):
-                    token.tag = tokendicts.tag_name_preproc
-                #Match integers (1234, 5454, 5)
-                elif id_int.match(token_str):
-                    token.tag = tokendicts.tag_val_int
-                #Match floating-point (1.1, 3.14, 2.)
-                elif id_float.match(token_str):
-                    token.tag = tokendicts.tag_val_float
-                #Match variable names (x, result, _hero9, y2)
-                elif id_var.match(token_str):
-                    token.tag = tokendicts.tag_name_var
-                #Match characters ('a', 'b')
-                elif id_char.match(token_str):
-                    token.tag = tokendicts.tag_val_char
-                #Match strings ("abc", "def")
-                elif id_string.match(token_str):
-                    token.tag = tokendicts.tag_val_string
-
-                #Match comment string (comments doesn't have any pattern, match based on position of comment tags)
-                if idx == 1:
-                    prev_token = input_tokens[0].tag
-                    if prev_token == tokendicts.tag_single_comment or prev_token == tokendicts.tag_multi_comment:
-                        token.tag = "comment"
-
-        return input_tokens
 
     
