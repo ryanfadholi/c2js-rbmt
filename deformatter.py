@@ -2,7 +2,6 @@ import itertools
 import tokens as tkn
 
 from charrange import CharRange
-from collections import namedtuple
 
 TEMPFILE_PATH = "temp/source.txt"
 
@@ -229,8 +228,6 @@ class Deformatter:
         if sep_pos:
             #use the first instance of the separator found (the one with smallest index)
             valid_sep_pos = min(sep_pos)
-
-        print(f"valid_sep_pos is {valid_sep_pos}")
         
         offset = len(separator) #Determine the offset, because we want to cut AFTER the separator.
         cut_pos = valid_sep_pos + offset if valid_sep_pos > -1 else -1

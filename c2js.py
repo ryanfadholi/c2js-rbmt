@@ -1,8 +1,10 @@
-import deformatter 
-import postagger 
-import sltransfer 
-import postgenerator 
+import deformatter
+import postagger
+import sltransfer
+import postgenerator
 import reformatter
+
+#TODO: Enable command-line arguments
 
 SOURCE_TEMPFILE_PATH = deformatter.TEMPFILE_PATH
 OUTPUT_TEMPFILE_PATH = postgenerator.TEMPFILE_PATH
@@ -26,8 +28,8 @@ class C2js:
         The results are then saved into another designated temporary file.
         """
         stmts = [stmt for stmt in self.deformatter.statements()]
-        tagged_stmts = map(lambda x: self.postagger.tag(x), stmts)
-        identified_stmts = list(map(lambda x: self.sltransfer.translate(x), tagged_stmts))
+        tagged_stmts = map(self.postagger.tag, stmts)
+        identified_stmts = list(map(self.sltransfer.translate, tagged_stmts))
 
         if console_print:
             for stmt in identified_stmts:

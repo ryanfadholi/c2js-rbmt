@@ -4,8 +4,8 @@ import sltransfer as slt
 from taggedtoken import TaggedToken
 
 JS_RESERVED = ["catch", "class", "console", "debugger", "delete", "export", "extends", "false", "finally", 
-                "function", "import", "in", "instanceof", "let", "new", "null", "super", "this", 
-                "throw", "true", "try", "typeof", "util", "var", "with", "yield"]
+               "function", "import", "in", "instanceof", "let", "new", "null", "super", "this", 
+               "throw", "true", "try", "typeof", "util", "var", "with", "yield"]
 
 TEMPFILE_PATH = "temp/result.txt"
 

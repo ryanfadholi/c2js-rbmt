@@ -4,6 +4,9 @@ from taggedtoken import TaggedToken
 from collections import ChainMap, namedtuple
 from pattern import Pattern
 
+#TODO: Move all tag constants to the constant file
+#TODO: Do type-conversion for input statements (otherwise everything will be string)
+
 BLOCK_START_TAG = "code-block-start"
 BLOCK_END_TAG = "code-block-end"
 CONDITIONAL_TAG = "conditional"
