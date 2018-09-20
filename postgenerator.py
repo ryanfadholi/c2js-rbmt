@@ -28,7 +28,7 @@ class PostGenerator:
             elif token.tag == td.tag_val_string:
                 #Change C-style formatting characters in the first string (assuming it's a printf format)
                 if after_output and before_comma:
-                    token.token = self.fix_format(token.token)
+                    token.token = self._reformat(token.token)
                 #Add + sign between consecutive strings
                 if is_prev_string:
                     new_tokens.append(TaggedToken("+", td.tag_op_add))
@@ -54,7 +54,7 @@ class PostGenerator:
 
         return min(found) if found else -1
         
-    def fix_format(self, string):
+    def _reformat(self, string):
         """
         Converts C formatting characters unknown by JS (for example "%f" for float) to its nearest equivalence in JS.
         """

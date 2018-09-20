@@ -45,10 +45,10 @@ class Deformatter:
         else:
             return semicolon_pos
 
-    def get_exception_tokens(self, text):
+    def _exception_tokens(self, text):
         """
         Returns a list of index of every occurrence of ', ", //, and /*.
-        (Which may sign as a start of exception range)
+        (Which may sign a start of exception range)
 
         Returns empty list if none are found.
         """
@@ -86,7 +86,7 @@ class Deformatter:
         """
         ranges = []
 
-        exception_tokens_pos = self.get_exception_tokens(text)
+        exception_tokens_pos = self._exception_tokens(text)
 
         while exception_tokens_pos:
             except_start = exception_tokens_pos[0]

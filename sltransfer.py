@@ -22,45 +22,12 @@ UNKNOWN_TAG = "unknown"
 
 class StructuralLexicalTransfer:
     def __init__(self):
-        self.CallbackPair = namedtuple("CallbackPair", ["trigger", "function"])
-        self.PatternPair = namedtuple("PatternPair", ["source", "target"])
-        self.TranslationItem = namedtuple("TranslationItem", ["key", "new_keys", "new_values"])
         
-        self.block_start_sp = Pattern(BLOCK_START_TAG, [tokens.tag_curly_left])
-        self.block_end_sp = Pattern(BLOCK_END_TAG, [tokens.tag_curly_right])
-        self.preprocessor_sp = Pattern(PREPROCESSOR_TAG, [tokens.tag_preprocessor], carryover=False)
-        self.single_comment_sp = Pattern(SINGLE_COMMENT_TAG, [tokens.tag_single_comment])
-        self.multi_comment_sp = Pattern(MULTI_COMMENT_TAG, [tokens.tag_multi_comment])
-        self.input_sp = Pattern(INPUT_TAG, [tokens.tag_input_func])
-        self.output_sp = Pattern(OUTPUT_TAG, [tokens.tag_output_func])
-        self.return_sp = Pattern(RETURN_TAG, [tokens.tag_return_kw])
-        self.function_sp = Pattern(FUNCTION_TAG, [tokens.datatypes, tokens.tag_name_var, tokens.tag_parenthesis_left], [tokens.tag_parenthesis_right])
-        self.function_definition_sp = Pattern(FUNCTION_DEFINITION_TAG, [tokens.datatypes, tokens.tag_name_var, tokens.tag_parenthesis_left], [tokens.tag_semicolon], carryover=False)
-        self.declaration_sp = Pattern(DECLARATION_TAG, [tokens.datatypes], [tokens.tag_semicolon])
-        self.conditional_sp = Pattern(CONDITIONAL_TAG, [tokens.conditionals])
-        self.loop_sp = Pattern(LOOP_TAG, [tokens.loops])
-        self.initiation_sp = Pattern(INITIATION_TAG, [tokens.tag_name_var, tokens.tag_assign])
-        self.initiation_pointer_sp = Pattern(INITIATION_TAG, [tokens.tag_op_multiply])
-
-        self.input_cb = self.CallbackPair(tokens.tag_input_func, self.fixinput)
-        self.output_cb = self.CallbackPair(tokens.tag_output_func, self.addbracket)
-        self.param_cb = self.CallbackPair(tokens.tag_function_type, self.fixparam)
-        self.pointer_cb = self.CallbackPair(tokens.tag_op_multiply, self.skippointers)
-        self.reference_cb = self.CallbackPair(tokens.tag_op_binary_and, self.helper_reference)
-
-        self.declaration_tl = self.TranslationItem(tokens.datatypes, [tokens.tag_variable_type], [tokens.variable_type])
-        self.function_tl = self.TranslationItem(tokens.datatypes, [tokens.tag_function_type], [tokens.function_type])
-        self.printf_tl = self.TranslationItem(tokens.tag_output_func, 
-            [tokens.tag_console_func, tokens.tag_dot, tokens.tag_output_func, tokens.tag_parenthesis_left, tokens.tag_util_func, tokens.tag_dot, tokens.tag_format_func], 
-            [tokens.console_func, tokens.dot, tokens.output_func_js, tokens.parenthesis_left, tokens.util_func, tokens.dot, tokens.format_func])
-        self.scanf_tl = self.TranslationItem(tokens.tag_input_func,
-            [tokens.tag_read_func, tokens.tag_dot, tokens.tag_input_func],
-            [tokens.read_func, tokens.dot, tokens.input_func_js])
         self.reference_start = [TaggedToken(tokens.curly_left, tokens.tag_curly_left), TaggedToken(tokens.ptr_access, tokens.tag_ptr_access), TaggedToken(tokens.colon, tokens.tag_colon)]
         self.reference_end = [TaggedToken(tokens.curly_right, tokens.tag_curly_right)]
         self.js_pointer = [TaggedToken(tokens.dot, tokens.tag_dot), TaggedToken(tokens.ptr_access, tokens.tag_ptr_access)]
 
-    def addbracket(self, statement):
+    def _helper_output(self, statement):
         """Adds extra brackets for output statements. (JS's output has one extra bracket from its C counterpart)"""
         obrs, cbrs, fstmts = statement.find_all(tokens.tag_parenthesis_left, tokens.tag_parenthesis_right, tokens.tag_format_func)
         to_add = []
@@ -83,8 +50,8 @@ class StructuralLexicalTransfer:
         for add_offset, pos in enumerate(to_add):
             statement.tokens.insert(pos + add_offset, TaggedToken(tokens.parenthesis_right, tokens.tag_parenthesis_right))
 
-    def fixinput(self, statement):
-        """Fixes translated input statements."""
+    def _helper_input(self, statement):
+        """Fixes translated input statements' order of tokens."""
         input_tokens = statement.find_all(tokens.tag_read_func)
         empty_string_token = TaggedToken("''", tokens.tag_val_string)
         assign_token = TaggedToken(tokens.assign, tokens.tag_assign)
@@ -150,7 +117,8 @@ class StructuralLexicalTransfer:
                 #We have processed yet another input substatement. Increment. Reiterate.
                 processed_input_count += 1
 
-    def fixparam(self, statement):
+    def _helper_parameter(self, statement):
+        """Removes data type from parameter in function declarations"""
         result = []
         declaration_passed = False
         for token in statement:
@@ -163,7 +131,8 @@ class StructuralLexicalTransfer:
 
         statement.tokens = result
 
-    def helper_reference(self, statement):
+    def _helper_reference(self, statement):
+        """Adds object-wrapping for reference-like objects in JS"""
         result = []
         is_referenced = False
         for idx, token in enumerate(statement):
@@ -181,7 +150,8 @@ class StructuralLexicalTransfer:
 
         statement.tokens = result
         
-    def skippointers(self, statement):
+    def _helper_pointer(self, statement):
+        """Adds pointer member access for pointer-emulating variables in translation result"""
         result = []
         is_lefthand = True
         is_pointer_variable = False
@@ -211,13 +181,30 @@ class StructuralLexicalTransfer:
         return True
 
     def identify(self, statement):
-        tags = list(map(lambda token: token.tag, statement))
-    
+        
+        block_start_sp = Pattern(BLOCK_START_TAG, [tokens.tag_curly_left])
+        block_end_sp = Pattern(BLOCK_END_TAG, [tokens.tag_curly_right])
+        preprocessor_sp = Pattern(PREPROCESSOR_TAG, [tokens.tag_preprocessor], carryover=False)
+        single_comment_sp = Pattern(SINGLE_COMMENT_TAG, [tokens.tag_single_comment])
+        multi_comment_sp = Pattern(MULTI_COMMENT_TAG, [tokens.tag_multi_comment])
+        input_sp = Pattern(INPUT_TAG, [tokens.tag_input_func])
+        output_sp = Pattern(OUTPUT_TAG, [tokens.tag_output_func])
+        return_sp = Pattern(RETURN_TAG, [tokens.tag_return_kw])
+        function_sp = Pattern(FUNCTION_TAG, [tokens.datatypes, tokens.tag_name_var, tokens.tag_parenthesis_left], [tokens.tag_parenthesis_right])
+        function_definition_sp = Pattern(FUNCTION_DEFINITION_TAG, [tokens.datatypes, tokens.tag_name_var, tokens.tag_parenthesis_left], [tokens.tag_semicolon], carryover=False)
+        declaration_sp = Pattern(DECLARATION_TAG, [tokens.datatypes], [tokens.tag_semicolon])
+        conditional_sp = Pattern(CONDITIONAL_TAG, [tokens.conditionals])
+        loop_sp = Pattern(LOOP_TAG, [tokens.loops])
+        initiation_sp = Pattern(INITIATION_TAG, [tokens.tag_name_var, tokens.tag_assign])
+        initiation_pointer_sp = Pattern(INITIATION_TAG, [tokens.tag_op_multiply])
+
         #NOTE: function_declaration MUST be checked BEFORE declaration! 
         #Because declaration essentially checks a subset of function_declaration, if declaration are put before it everything will be identified as declaration.
-        patterns = [self.block_start_sp, self.block_end_sp, self.preprocessor_sp, self.single_comment_sp, self.multi_comment_sp, 
-                    self.input_sp, self.output_sp, self.return_sp, self.function_sp, self.function_definition_sp, self.declaration_sp, self.conditional_sp,
-                    self.loop_sp, self.initiation_sp, self.initiation_pointer_sp]
+        patterns = [block_start_sp, block_end_sp, preprocessor_sp, single_comment_sp, multi_comment_sp, 
+                    input_sp, output_sp, return_sp, function_sp, function_definition_sp, declaration_sp, conditional_sp,
+                    loop_sp, initiation_sp, initiation_pointer_sp]
+
+        tags = list(map(lambda token: token.tag, statement))
 
         for pattern in patterns:
             if pattern.trace(tags):
@@ -248,17 +235,54 @@ class StructuralLexicalTransfer:
                     result[key] = item
         return result
 
-    def swap(self, statement, specific_translations=[], specific_helpers=[]):
-        default_helpers = [self.input_cb, self.output_cb, self.param_cb, self.pointer_cb, self.reference_cb]
-        default_translations = [self.declaration_tl, self.printf_tl, self.scanf_tl]
+    def translate(self, statement):
+        """Translates C TaggedStatement to its JS equivalent."""
 
-        #Prioritize helpers and translations from parameter. Convert them to dicts first.
+        #Define namedtuples needed by helper callbacks & translations
+        CallbackPair = namedtuple("CallbackPair", ["trigger", "function"])
+        TranslationItem = namedtuple("TranslationItem", ["key", "new_keys", "new_values"])
+
+        #Define helper callbacks here
+        input_cb = CallbackPair(tokens.tag_input_func, self._helper_input)
+        output_cb = CallbackPair(tokens.tag_output_func, self._helper_output)
+        param_cb = CallbackPair(tokens.tag_function_type, self._helper_parameter)
+        pointer_cb = CallbackPair(tokens.tag_op_multiply, self._helper_pointer)
+        reference_cb = CallbackPair(tokens.tag_op_binary_and, self._helper_reference)
+
+        #Define translations here
+        declaration_tl = TranslationItem(tokens.datatypes, [tokens.tag_variable_type], [tokens.variable_type])
+        function_tl = TranslationItem(tokens.datatypes, [tokens.tag_function_type], [tokens.function_type])
+        printf_tl = TranslationItem(tokens.tag_output_func, 
+            [tokens.tag_console_func, tokens.tag_dot, tokens.tag_output_func, tokens.tag_parenthesis_left, tokens.tag_util_func, tokens.tag_dot, tokens.tag_format_func], 
+            [tokens.console_func, tokens.dot, tokens.output_func_js, tokens.parenthesis_left, tokens.util_func, tokens.dot, tokens.format_func])
+        scanf_tl = TranslationItem(tokens.tag_input_func,
+            [tokens.tag_read_func, tokens.tag_dot, tokens.tag_input_func],
+            [tokens.read_func, tokens.dot, tokens.input_func_js])
+
+        #Join everything into lists
+        default_helpers = [input_cb, output_cb, param_cb, pointer_cb, reference_cb]
+        default_translations = [declaration_tl, printf_tl, scanf_tl]
+        specific_helpers = []
+        specific_translations = []
+
+        #Start translating!
+        statement = self.identify(statement)
+
+        #Immediately return if it's unneeded statements (e.g function declaration)
+        if not statement.carryover:
+            statement.tokens = []
+            return statement
+
+        #Add special cases of helpers/translations here
+        if statement.tag == "function-declaration":
+            specific_translations.append(function_tl)
+
+        #Prioritize special-case helpers and translations. Convert them to dicts first.
         helpers = ChainMap(self.cbdict(specific_helpers), self.cbdict(default_helpers))
         translations = ChainMap(self.tldict(specific_translations), self.tldict(default_translations))
 
-        helper_functions = []
+        #Start translating
         result = []
-
         for token in statement:
             translation = translations.get(token.tag)
             if translation is not None:
@@ -267,9 +291,11 @@ class StructuralLexicalTransfer:
                 result.extend(new_tokens)
             else:
                 result.append(token)
-
+        #Overwrite statement tokens with translation results
         statement.tokens = result
 
+        #List helper functions we need to call
+        helper_functions = []
         for token in statement:
             #If there's a helper function defined for the function, add them to the list to call later.
             helper = helpers.get(token.tag)
@@ -280,19 +306,5 @@ class StructuralLexicalTransfer:
             helper(statement)
 
         return statement
-
-    def translate(self, statement):
-        statement = self.identify(statement)
-
-        if not statement.carryover:
-            statement.tokens = []
-
-        if statement.tag == "function-declaration":
-            statement = self.swap(statement, [self.function_tl])
-        else:
-            statement = self.swap(statement)
-
-        return statement
-
 
         
