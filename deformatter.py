@@ -1,7 +1,6 @@
 import itertools
 
 import tokendicts
-import transrules as rules
 
 from charrange import CharRange
 from collections import namedtuple
@@ -9,9 +8,6 @@ from collections import namedtuple
 TEMPFILE_PATH = "temp/source.txt"
 
 class Deformatter:
-
-    def __init__(self):
-        self.rules = rules.TranslationHelper()
 
     def get_bracket_end(self, text):
         """
@@ -143,10 +139,11 @@ class Deformatter:
         Returns the statement (and any comments found) as a list.
         """
 
+        no_substmts = [tokendicts.single_comment, tokendicts.multi_comment, tokendicts.preprocessor]
         substmts = []
 
         #if it's comments or include statements, no need to reanalyze statement.
-        if self.rules.is_singlecomment(text) or self.rules.is_multicomment(text) or self.rules.is_include(text):
+        if self._starts_with(no_substmts, text):
             pass
         else:
             while self._first(tokendicts.comments, text) > -1:
@@ -168,27 +165,38 @@ class Deformatter:
         whitespace_offset = len(text) - len(line)
 
         end_pos = -1
-        if self.rules.is_singlecomment(line) or self.rules.is_include(line):
+        #if it's one-line comment or include statement...
+        if (self._starts_with(tokendicts.single_comment, line) 
+            or self._starts_with(tokendicts.preprocessor, line)):
             end_pos = self.get_statement_end(line, '\n', do_exception_checking=False)
-        elif self.rules.is_multicomment(line):
+        #if it's one line comment...
+        elif self._starts_with(tokendicts.multi_comment, line):
             end_pos = self.get_statement_end(line, '*/', do_exception_checking=False)
-        elif self.rules.is_string(line):
-            end_pos = self.rules.get_string_length(line)
-        elif self.rules.is_block_start(line):
+        #If it's string...
+        elif self._starts_with(tokendicts.string_identifiers, line):
+            end_pos = self.get_string_length(line)
+        #if it's a start of new code block...
+        elif self._starts_with(tokendicts.curly_left, line):
             end_pos = self.get_statement_end(line, '{')
-        elif self.rules.is_block_end(line):
+        #if it's the end of a code block...
+        elif self._starts_with(tokendicts.curly_right, line):
             end_pos = self.get_statement_end(line, '}')
-        elif self.rules.is_declaration(line):
+        #if it's a declaration...
+        elif self._starts_with(tokendicts.datatypes, line):
             end_pos = self.get_declaration_end(line)
-        elif self.rules.is_conditional(line):
+        #if it's conditionals...
+        elif self._starts_with(tokendicts.conditionals, line):
             end_pos = self.get_bracket_end(line)
-        elif self.rules.is_loop(line):
-            if self.rules.is_do(line):
-                end_pos = self.get_statement_end(line, "do")
-            elif self.rules.is_while(line):
-                end_pos = self.get_declaration_end(line)
-            elif self.rules.is_for(line):
-                end_pos = self.get_bracket_end(line)
+        #if it's do loop....
+        elif self._starts_with(tokendicts.dowhile_loop, line):
+            end_pos = self.get_statement_end(line, "do")
+        #if it's while loop....
+        elif self._starts_with(tokendicts.while_loop, line):
+            end_pos = self.get_declaration_end(line)
+        #if it's for loop....
+        elif self._starts_with(tokendicts.for_loop, line):
+            end_pos = self.get_bracket_end(line)
+        #If it isn't everything, default to semicolon
         else:
             end_pos = self.get_statement_end(line, ';')
 
@@ -280,3 +288,50 @@ class Deformatter:
         found = list(filter(lambda pos: pos > -1, findall))
 
         return min(found) if found else -1
+
+    def _starts_with(self, tokens, statement):
+        """
+        Returns True if a string statement starts with the tokens variable
+        (tokens might be a dict, list, or string)
+        """
+
+        if isinstance(tokens, dict):
+            return True in (statement.startswith(token) for token in tokens.values())
+        elif isinstance(tokens, list):
+            return True in (statement.startswith(token) for token in tokens)
+        elif isinstance(tokens, str):
+            return statement.startswith(tokens)
+
+        return ValueError("Token is not a string, list, or dictionary")
+
+    def get_string_length(self, text):
+        """
+        Returns an index in which the first string in the text ends. Returns -1 if no string are ending.
+        (The text parameter must start with either single or double quotes)
+        """
+        
+        #Do a sanity check; is the text really a string?
+        if(not self._starts_with(tokendicts.string_identifiers, text)):
+            print(f"ERROR! The text ({text}) is not a string, but skip_text() is called on it.")
+            return -1
+
+        #What we're looking for is either single or double token; check the first character to determine which.
+        cur_string_delimiter = text[0]
+        found = False
+
+        #Start from one to account for the first character (the first single/double quote)
+        for idx, char in enumerate(text[1:], 1):
+            #If the current token is the same as the one starting the string
+            #(either single or double quote)
+            if char == cur_string_delimiter:
+                #If the last character in current string is backslash, it means
+                #that the delimiter is escaped; continue.
+                if text[idx-1] == "\\":
+                    pass
+                #else it means that the current string is ending. Break from loop
+                else:
+                    found = True
+                    break
+        
+        return idx if found else -1
+

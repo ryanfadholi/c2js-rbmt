@@ -1,5 +1,4 @@
 import tokendicts as td
-import transrules as tr
 import sltransfer as slt
 
 from taggedtoken import TaggedToken
@@ -11,9 +10,7 @@ JS_RESERVED = ["catch", "class", "console", "debugger", "delete", "export", "ext
 TEMPFILE_PATH = "temp/result.txt"
 
 class PostGenerator:
-    def __init__(self):
-        self.rules = tr.TranslationHelper()
-
+    
     def fix(self, statement):
         """Corrects JS-side translation errors."""
         after_output = False

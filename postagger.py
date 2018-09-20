@@ -1,5 +1,4 @@
 import re
-import transrules as rules
 import tokendicts
 
 from taggedtoken import TaggedToken
@@ -10,9 +9,6 @@ RULE_DIGIT = re.compile(r"^\d+$")
 RULE_WHITESPACE = re.compile(r"^\s+$")
 
 class POSTagger:
-
-    def __init__(self):
-        self.rules = rules.TranslationHelper()
 
     #Check if there is single-quote/double-quote token in the statement.
     quote_token_exists = lambda self, tokens: '"' in tokens or "'" in tokens
@@ -30,7 +26,7 @@ class POSTagger:
 
             #If the string starts with a sequence of known token, e.g ++, +=, cut as needed.
             #Otherwise treat the first character as a standalone symbol.
-            for token in self.rules.multichar_symbol_tokens:
+            for token in tokendicts.multichar_symbol:
                 if(string.startswith(token)):
                     cut_len = len(token)
                     break
@@ -107,7 +103,7 @@ class POSTagger:
             if idx < limit or RULE_WHITESPACE.match(token):
                 pass
             elif token == "'" or token == '"':
-                str_length = self.rules.get_string_length(tokens[idx:])
+                str_length = self.get_string_length(tokens[idx:])
                 limit = idx + str_length + 1 #Extra 1 is the offset of single/double quotes
                 result_tokens.append("".join(tokens[idx:limit]))
             else:
@@ -124,9 +120,9 @@ class POSTagger:
 
         Returns the same list, but with some parts merged (when needed)
         """
-        if self.rules.is_singlecomment(tokens):
+        if self.stmt_validate(tokendicts.single_comment, tokens):
             return [tokens[0], "".join(tokens[1:])] 
-        elif self.rules.is_multicomment(tokens):
+        elif self.stmt_validate(tokendicts.multi_comment, tokens):
             return [tokens[0], "".join(tokens[1:-1]), tokens[-1]]
         else:
             #If it's not a comment statement, assume it's a statement containing a string or dots.
@@ -168,8 +164,8 @@ class POSTagger:
         """
 
         #If there's quote in the statement, or it's a comment statement, set as True.
-        is_ws_sensitive = self.quote_token_exists(statement) or self.rules.is_singlecomment(statement) or self.rules.is_multicomment(statement)
-        
+        is_ws_sensitive = (self.quote_token_exists(statement) or 
+                            self.stmt_validate([tokendicts.single_comment, tokendicts.multi_comment], statement))        
         tokens = self.split(statement, preserve_whitespace=is_ws_sensitive)
 
         if is_ws_sensitive or self.dot_token_exists(statement):
@@ -183,4 +179,91 @@ class POSTagger:
         
         #Only matches known tokens
         matched_tokens = TaggedStatement(list(map(lambda x: TaggedToken(x, self.match(x)), tokens)))
-        return self.rules.identify(matched_tokens)
+        return self.identify(matched_tokens)
+
+    def stmt_validate(self, tokens, statement):
+        """
+        Returns True if the list of A template function to check if a statement (either as a string or a list of string)
+        starts with the tokens variable (tokens might be a dict, list, or string)
+        """
+        if isinstance(statement, list):
+            start_token = None
+            if statement:
+                start_token = statement[0]
+            return start_token in tokens
+        elif isinstance(statement, str):
+            return True in (statement.startswith(token) for token in tokens)
+        else:
+            raise ValueError("Statement is neither a list or string object")
+
+    def get_string_length(self, text):
+        """
+        Returns an index in which the first string in the text ends. Returns -1 if no string are ending.
+        (The text parameter must start with either single or double quotes)
+        """
+        
+        #Do a sanity check; is the text really a string?
+        if(not self.stmt_validate(tokendicts.string_identifiers, text)):
+            print(f"ERROR! The text ({text}) is not a string, but skip_text() is called on it.")
+            return -1
+
+        #What we're looking for is either single or double token; check the first character to determine which.
+        cur_string_delimiter = text[0]
+        found = False
+
+        #Start from one to account for the first character (the first single/double quote)
+        for idx, char in enumerate(text[1:], 1):
+            #If the current token is the same as the one starting the string
+            #(either single or double quote)
+            if char == cur_string_delimiter:
+                #If the last character in current string is backslash, it means
+                #that the delimiter is escaped; continue.
+                if text[idx-1] == "\\":
+                    pass
+                #else it means that the current string is ending. Break from loop
+                else:
+                    found = True
+                    break
+        
+        return idx if found else -1
+
+    def identify(self, input_tokens):
+
+        id_int = re.compile(r"^\d+$")
+        id_float = re.compile(r"^\d+\.(\d+)?$")
+        id_var = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+        id_char = re.compile(r"^'.*'$", re.DOTALL)
+        id_string = re.compile(r'^".*"$', re.DOTALL)
+
+        for idx, token in enumerate(input_tokens):
+            if token.tag == "unknown":
+                token_str = token.token
+                #Match library names (stdio.h, conio.h)
+                if token_str.lower().endswith(".h"):
+                    token.tag = tokendicts.tag_name_preproc
+                #Match integers (1234, 5454, 5)
+                elif id_int.match(token_str):
+                    token.tag = tokendicts.tag_val_int
+                #Match floating-point (1.1, 3.14, 2.)
+                elif id_float.match(token_str):
+                    token.tag = tokendicts.tag_val_float
+                #Match variable names (x, result, _hero9, y2)
+                elif id_var.match(token_str):
+                    token.tag = tokendicts.tag_name_var
+                #Match characters ('a', 'b')
+                elif id_char.match(token_str):
+                    token.tag = tokendicts.tag_val_char
+                #Match strings ("abc", "def")
+                elif id_string.match(token_str):
+                    token.tag = tokendicts.tag_val_string
+
+                #Match comment string (comments doesn't have any pattern, match based on position of comment tags)
+                if idx == 1:
+                    prev_token = input_tokens[0].tag
+                    if prev_token == tokendicts.tag_single_comment or prev_token == tokendicts.tag_multi_comment:
+                        token.tag = "comment"
+
+        return input_tokens
+
+    
