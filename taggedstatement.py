@@ -1,7 +1,8 @@
 import copy
 
 class TaggedStatement:
-    def __init__(self, tokens = None, statement_type = "None"):
+    
+    def __init__(self, tokens=None, statement_type="None"):
         if tokens is None:
             tokens = []
 
@@ -15,7 +16,7 @@ class TaggedStatement:
 
     def __iter__(self):
         return iter(self.tokens)
-        
+
     def __str__(self):
         result = ""
         result += f"Statement Type: {self.tag}\n"
@@ -27,7 +28,7 @@ class TaggedStatement:
                 result  += ", "
             result += str(token)
             comma_flag = True
-            
+
         return result
 
     def __getitem__(self, key):

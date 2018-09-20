@@ -81,7 +81,7 @@ op_binary_and = "&"; tag_op_binary_and = "op-binary-and"
 op_binary_or = "|"; tag_op_binary_or = "op-binary-or"
 op_binary_xor = "^"; tag_op_binary_xor = "op-binary-xor"
 op_binary_flip = "~"; tag_op_binary_flip = "op-binary-flip"
-op_lshift = "<<"; tag_op_left_shift = "op-left-shift" 
+op_lshift = "<<"; tag_op_left_shift = "op-left-shift"
 op_rshift = ">>"; tag_op_right_shift = "op-right-shift"
 
 #Every dynamically-determined tokens key goes here
@@ -94,9 +94,9 @@ tag_val_string = "string-value"
 
 #lists every tokens with more than one character
 multichar_symbol = [
-    op_comp_lshift, op_comp_rshift, single_comment, multi_comment, multi_comment_end, op_eq, 
-    op_not_eq, op_gt_eq, op_lt_eq, op_and, op_or, op_increment, op_decrement, 
-    op_comp_add, op_comp_minus, op_comp_multiply, op_comp_divide, 
+    op_comp_lshift, op_comp_rshift, single_comment, multi_comment, multi_comment_end, op_eq,
+    op_not_eq, op_gt_eq, op_lt_eq, op_and, op_or, op_increment, op_decrement,
+    op_comp_add, op_comp_minus, op_comp_multiply, op_comp_divide,
     op_comp_modulo, op_comp_and, op_comp_or, op_comp_xor, op_lshift, op_rshift
 ]
 

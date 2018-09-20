@@ -1,4 +1,4 @@
-import tokendicts as td
+import tokens
 import sltransfer as slt
 
 from taggedtoken import TaggedToken
@@ -11,7 +11,7 @@ TEMPFILE_PATH = "temp/result.txt"
 
 class PostGenerator:
     
-    def fix(self, statement):
+    def _fix(self, statement):
         """Corrects JS-side translation errors."""
         after_output = False
         before_comma = True
@@ -20,24 +20,24 @@ class PostGenerator:
         new_tokens = []
         for token in statement:
             #Get flag-changing tokens out first.
-            if token.tag == td.tag_output_func:
+            if token.tag == tokens.tag_output_func:
                 after_output = True
                 before_comma = True
-            elif token.tag == td.tag_comma:
+            elif token.tag == tokens.tag_comma:
                 before_comma = False
-            elif token.tag == td.tag_val_string:
+            elif token.tag == tokens.tag_val_string:
                 #Change C-style formatting characters in the first string (assuming it's a printf format)
                 if after_output and before_comma:
                     token.token = self._reformat(token.token)
                 #Add + sign between consecutive strings
                 if is_prev_string:
-                    new_tokens.append(TaggedToken("+", td.tag_op_add))
+                    new_tokens.append(TaggedToken("+", tokens.tag_op_add))
             #Fix "reserved" token strings
-            elif token.tag == td.tag_name_var:
+            elif token.tag == tokens.tag_name_var:
                 if token.token in JS_RESERVED:
                     token.token = 'a' + token.token
             
-            is_prev_string = True if token.tag == td.tag_val_string else False
+            is_prev_string = True if token.tag == tokens.tag_val_string else False
             new_tokens.append(token)
 
         statement.tokens = new_tokens
@@ -79,7 +79,7 @@ class PostGenerator:
 
         return string
 
-    def identify_libs(self, statements):
+    def _requirements(self, statements):
         """Returns a list of libraries required for statements to run correctly."""
         input_lib = False
         output_lib = False
@@ -92,13 +92,13 @@ class PostGenerator:
 
         to_write = []
         if input_lib:
-            to_write.append("var readlineSync = require('readlineSync')")
+            to_write.append("var readlineSync = require('readline-sync')")
         if output_lib:
             to_write.append("var util = require('util')")
 
         return to_write
 
-    def join(self, tokens):
+    def _join(self, tokens):
         """Joins a list of tokens into string."""
         result = ""
 
@@ -117,7 +117,7 @@ class PostGenerator:
         block_depth = 0
         with open(TEMPFILE_PATH, "w") as output:
 
-            libs = self.identify_libs(statements)
+            libs = self._requirements(statements)
             for lib in libs:
                 output.write(lib)
                 output.write("\n")
@@ -127,7 +127,7 @@ class PostGenerator:
                 if statement.tag == slt.BLOCK_END_TAG:
                     block_depth -= 1
 
-                line = self.join(self.fix(statement).tokens)
+                line = self._join(self._fix(statement).tokens)
                 if line: #Only writes if the line is not empty
                     output.write("    " * block_depth)
                     output.write(line)

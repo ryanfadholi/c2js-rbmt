@@ -80,7 +80,7 @@ class C2jsView(QMainWindow):
 
         if filename:
             #Loads file
-            self.c2js.load(filename)
+            self.c2js.load(filepath)
             with open(c2js.SOURCE_TEMPFILE_PATH, 'r') as output:
                 data = output.read()
                 self.source_text.setPlainText(data)

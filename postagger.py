@@ -1,5 +1,5 @@
 import re
-import tokendicts
+import tokens as tkn
 
 from taggedtoken import TaggedToken
 from taggedstatement import TaggedStatement
@@ -14,7 +14,7 @@ class POSTagger:
         """
         Splits and returns valid symbol tokens from a string of symbol characters.
         Unknown symbols will be treated as single-character token.
-        
+
         For example, "++);" would return ["++", ")", ";"]
         """
         result = []
@@ -22,7 +22,7 @@ class POSTagger:
 
             #If the string starts with a sequence of known token, e.g ++, +=, cut as needed.
             #Otherwise treat the first character as a standalone symbol.
-            for token in tokendicts.multichar_symbol:
+            for token in tkn.multichar_symbol:
                 if(string.startswith(token)):
                     cut_len = len(token)
                     break
@@ -79,9 +79,9 @@ class POSTagger:
 
     def _match(self, token):
         """Determines the tag of the respective token (according to the token dictionary constants)"""
-        token_dicts = [tokendicts.arithmetic_operator, tokendicts.bitwise_operator, tokendicts.relational_operator, 
-            tokendicts.compound_assignment_operator, tokendicts.logical_operator, tokendicts.misc_operator, tokendicts.comments, 
-            tokendicts.conditionals, tokendicts.datatypes, tokendicts.loops, tokendicts.special_functions, tokendicts.keywords ]
+        token_dicts = [tkn.arithmetic_operator, tkn.bitwise_operator, tkn.relational_operator, 
+            tkn.compound_assignment_operator, tkn.logical_operator, tkn.misc_operator, tkn.comments, 
+            tkn.conditionals, tkn.datatypes, tkn.loops, tkn.special_functions, tkn.keywords ]
 
         for token_dict in token_dicts:
             for key, value in token_dict.items():
@@ -97,7 +97,7 @@ class POSTagger:
         """
         
         #Do a sanity check; is the text really a string?
-        if(not self._starts_with(tokendicts.string_identifiers, text)):
+        if(not self._starts_with(tkn.string_identifiers, text)):
             print(f"ERROR! The text ({text}) is not a string, but skip_text() is called on it.")
             return -1
 
@@ -131,9 +131,9 @@ class POSTagger:
 
         Returns the same list, but with some parts merged (when needed)
         """
-        if self._starts_with(tokendicts.single_comment, tokens):
+        if self._starts_with(tkn.single_comment, tokens):
             return [tokens[0], "".join(tokens[1:])] 
-        elif self._starts_with(tokendicts.multi_comment, tokens):
+        elif self._starts_with(tkn.multi_comment, tokens):
             return [tokens[0], "".join(tokens[1:-1]), tokens[-1]]
         else:
             #If it's not a comment statement, assume it's a statement containing a string or dots.
@@ -216,7 +216,7 @@ class POSTagger:
 
         #If there's quote in the statement, or it's a comment statement, set as True.
         is_ws_sensitive = (self._has_quote(statement) or 
-                            self._starts_with([tokendicts.single_comment, tokendicts.multi_comment], statement))        
+                            self._starts_with([tkn.single_comment, tkn.multi_comment], statement))        
         tokens = self._split(statement, preserve_whitespace=is_ws_sensitive)
 
         if is_ws_sensitive or self._has_dot(statement):
@@ -244,27 +244,27 @@ class POSTagger:
                 token_str = token.token
                 #Match library names (stdio.h, conio.h)
                 if token_str.lower().endswith(".h"):
-                    token.tag = tokendicts.tag_name_preproc
+                    token.tag = tkn.tag_name_preproc
                 #Match integers (1234, 5454, 5)
                 elif id_int.match(token_str):
-                    token.tag = tokendicts.tag_val_int
+                    token.tag = tkn.tag_val_int
                 #Match floating-point (1.1, 3.14, 2.)
                 elif id_float.match(token_str):
-                    token.tag = tokendicts.tag_val_float
+                    token.tag = tkn.tag_val_float
                 #Match variable names (x, result, _hero9, y2)
                 elif id_var.match(token_str):
-                    token.tag = tokendicts.tag_name_var
+                    token.tag = tkn.tag_name_var
                 #Match characters ('a', 'b')
                 elif id_char.match(token_str):
-                    token.tag = tokendicts.tag_val_char
+                    token.tag = tkn.tag_val_char
                 #Match strings ("abc", "def")
                 elif id_string.match(token_str):
-                    token.tag = tokendicts.tag_val_string
+                    token.tag = tkn.tag_val_string
 
                 #Match comment string (comments doesn't have any pattern, match based on position of comment tags)
                 if idx == 1:
                     prev_token = matched_tokens[0].tag
-                    if prev_token == tokendicts.tag_single_comment or prev_token == tokendicts.tag_multi_comment:
+                    if prev_token == tkn.tag_single_comment or prev_token == tkn.tag_multi_comment:
                         token.tag = "comment"
         
         return matched_tokens

@@ -1,4 +1,4 @@
-import tokendicts as tokens
+import tokens
 from taggedtoken import TaggedToken
 
 from collections import ChainMap, namedtuple
@@ -21,11 +21,13 @@ SINGLE_COMMENT_TAG = "single-line-comment"
 UNKNOWN_TAG = "unknown"
 
 class StructuralLexicalTransfer:
-    def __init__(self):
-        
-        self.reference_start = [TaggedToken(tokens.curly_left, tokens.tag_curly_left), TaggedToken(tokens.ptr_access, tokens.tag_ptr_access), TaggedToken(tokens.colon, tokens.tag_colon)]
-        self.reference_end = [TaggedToken(tokens.curly_right, tokens.tag_curly_right)]
-        self.js_pointer = [TaggedToken(tokens.dot, tokens.tag_dot), TaggedToken(tokens.ptr_access, tokens.tag_ptr_access)]
+
+    def _callback_dict(self, callbacks):
+        """Converts a list of CallbackPairs to a dictionary, with its trigger as keys and its function as the values"""
+        result = {}
+        for callback in callbacks:
+            result[callback.trigger] = callback.function
+        return result
 
     def _helper_output(self, statement):
         """Adds extra brackets for output statements. (JS's output has one extra bracket from its C counterpart)"""
@@ -133,28 +135,35 @@ class StructuralLexicalTransfer:
 
     def _helper_reference(self, statement):
         """Adds object-wrapping for reference-like objects in JS"""
+        reference_start = [TaggedToken(tokens.curly_left, tokens.tag_curly_left), TaggedToken(tokens.ptr_access, tokens.tag_ptr_access), TaggedToken(tokens.colon, tokens.tag_colon)]
+        reference_end = [TaggedToken(tokens.curly_right, tokens.tag_curly_right)]
+        
         result = []
         is_referenced = False
+
         for idx, token in enumerate(statement):
             if token.tag == tokens.tag_op_binary_and:
                 if idx == 0 or statement[idx-1].tag not in tokens.possible_lefthand_operations:    
                     is_referenced = True
                     continue
             if is_referenced:
-                result.extend(self.reference_start)
+                result.extend(reference_start)
                 result.append(token)
-                result.extend(self.reference_end)
+                result.extend(reference_end)
                 is_referenced = False
                 continue
             result.append(token)
 
         statement.tokens = result
-        
+
     def _helper_pointer(self, statement):
         """Adds pointer member access for pointer-emulating variables in translation result"""
+        js_pointer = [TaggedToken(tokens.dot, tokens.tag_dot), TaggedToken(tokens.ptr_access, tokens.tag_ptr_access)]
+
         result = []
         is_lefthand = True
         is_pointer_variable = False
+        
         for idx, token in enumerate(statement):    
             if token.tag == tokens.tag_op_multiply:
                 if idx == 0 or statement[idx-1].tag not in tokens.possible_lefthand_operations:
@@ -165,23 +174,12 @@ class StructuralLexicalTransfer:
             result.append(token)
             if is_pointer_variable:
                 if not ((statement.tag == DECLARATION_TAG and is_lefthand) or statement.tag == FUNCTION_TAG):
-                    result.extend(self.js_pointer)
+                    result.extend(js_pointer)
                 is_pointer_variable = False
         statement.tokens = result
 
-    def trace(self, pattern, statement):
-        """Matches statement to the given pattern."""
-        for ptoken, stoken in zip(pattern, statement):
-            if ptoken is None:
-                pass
-            else:
-                if ptoken != stoken:
-                    return False
-            
-        return True
-
-    def identify(self, statement):
-        
+    def _identify(self, statement):
+        """Identifies statement type"""
         block_start_sp = Pattern(BLOCK_START_TAG, [tokens.tag_curly_left])
         block_end_sp = Pattern(BLOCK_END_TAG, [tokens.tag_curly_right])
         preprocessor_sp = Pattern(PREPROCESSOR_TAG, [tokens.tag_preprocessor], carryover=False)
@@ -217,14 +215,7 @@ class StructuralLexicalTransfer:
 
         return statement
 
-    def cbdict(self, callbacks):
-        """Converts a list of CallbackPairs to a dictionary, with its trigger as keys and its function as the values"""
-        result = {}
-        for callback in callbacks:
-            result[callback.trigger] = callback.function
-        return result
-
-    def tldict(self, translations):
+    def _translation_dict(self, translations):
         """Converts a list of TranslationItems to a dictionary"""
         result = {}
         for item in translations:
@@ -266,7 +257,7 @@ class StructuralLexicalTransfer:
         specific_translations = []
 
         #Start translating!
-        statement = self.identify(statement)
+        statement = self._identify(statement)
 
         #Immediately return if it's unneeded statements (e.g function declaration)
         if not statement.carryover:
@@ -278,8 +269,8 @@ class StructuralLexicalTransfer:
             specific_translations.append(function_tl)
 
         #Prioritize special-case helpers and translations. Convert them to dicts first.
-        helpers = ChainMap(self.cbdict(specific_helpers), self.cbdict(default_helpers))
-        translations = ChainMap(self.tldict(specific_translations), self.tldict(default_translations))
+        helpers = ChainMap(self._callback_dict(specific_helpers), self._callback_dict(default_helpers))
+        translations = ChainMap(self._translation_dict(specific_translations), self._translation_dict(default_translations))
 
         #Start translating
         result = []
@@ -306,5 +297,3 @@ class StructuralLexicalTransfer:
             helper(statement)
 
         return statement
-
-        
