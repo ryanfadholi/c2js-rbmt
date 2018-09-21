@@ -1,3 +1,5 @@
+import argparse
+
 import deformatter
 import postagger
 import sltransfer
@@ -8,6 +10,9 @@ import reformatter
 
 SOURCE_TEMPFILE_PATH = deformatter.TEMPFILE_PATH
 OUTPUT_TEMPFILE_PATH = postgenerator.TEMPFILE_PATH
+
+DEFAULT_SOURCE_FILE = "source.c"
+DEFAULT_RESULT_FILE = "result.js"
 
 class C2js:
     def __init__(self):
@@ -47,7 +52,15 @@ class C2js:
 
 
 if __name__ == "__main__":
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("source_path", help="C file to process", nargs='?', default=DEFAULT_SOURCE_FILE, type=str)
+    parser.add_argument("result_path", help="Result file destination", nargs='?', default=DEFAULT_RESULT_FILE, type=str)
+    parser.add_argument("-np", "--no_print", help="Disable statement print", action="store_true")
+    args = parser.parse_args()
+
     instance = C2js()
-    instance.load("example.c")
-    instance.process(True)
-    instance.save("new_result.js")
+    instance.load(args.source_path)
+    console_print = not args.no_print
+    instance.process(console_print)
+    instance.save(args.result_path)
