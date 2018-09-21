@@ -1,5 +1,5 @@
 class Pattern:
-    def __init__(self, tag, start=[], end=[], carryover=True):
+    def __init__(self, tag, start=None, end=None, carryover=True):
         if not isinstance(start, list):
             start = []
             print("Start parameter is not list, using empty list instead")

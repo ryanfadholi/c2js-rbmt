@@ -1,5 +1,3 @@
-import copy
-
 class TaggedStatement:
     
     def __init__(self, tokens=None, statement_type="None"):
@@ -8,7 +6,7 @@ class TaggedStatement:
 
         #Ensure copy
         self.carryover = True
-        self.tokens = copy.copy(tokens)
+        self.tokens = tokens
         self.tag = statement_type
 
     def __len__(self):

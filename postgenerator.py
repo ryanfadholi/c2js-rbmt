@@ -1,13 +1,11 @@
+import constants
 import tokens
-import sltransfer as slt
 
 from taggedtoken import TaggedToken
 
 JS_RESERVED = ["catch", "class", "console", "debugger", "delete", "export", "extends", "false", "finally", 
                "function", "import", "in", "instanceof", "let", "new", "null", "super", "this", 
                "throw", "true", "try", "typeof", "util", "var", "with", "yield"]
-
-TEMPFILE_PATH = "temp/result.txt"
 
 class PostGenerator:
     
@@ -98,9 +96,9 @@ class PostGenerator:
         output_lib = False
 
         for statement in statements:
-            if statement.tag == slt.INPUT_TAG:
+            if statement.tag == constants.INPUT_TAG:
                 input_lib = True
-            elif statement.tag == slt.OUTPUT_TAG:
+            elif statement.tag == constants.OUTPUT_TAG:
                 output_lib = True
 
         to_write = []
@@ -115,7 +113,7 @@ class PostGenerator:
         """Writes a list of TaggedStatement into the designated temporary file."""
         #Decides how many spaces the program should give before writing a line, 1 block depth equals 4 spaces.
         block_depth = 0
-        with open(TEMPFILE_PATH, "w") as output:
+        with open(constants.OUTPUT_TEMPFILE_PATH, "w") as output:
 
             libs = self._requirements(statements)
             for lib in libs:
@@ -124,7 +122,7 @@ class PostGenerator:
 
             for statement in statements:
                 #Reduce spaces when code block closes.
-                if statement.tag == slt.BLOCK_END_TAG:
+                if statement.tag == constants.BLOCK_END_TAG:
                     block_depth -= 1
 
                 line = self._join(self._fix(statement).tokens)
@@ -133,11 +131,11 @@ class PostGenerator:
                     output.write(line)
                     output.write("\n")
                     #Add an empty line for each block ends
-                    if statement.tag == slt.BLOCK_END_TAG:
+                    if statement.tag == constants.BLOCK_END_TAG:
                         output.write("\n")
 
                 #Add spaces AFTER code block opens, so increment after writing current line.
-                if statement.tag == slt.BLOCK_START_TAG:
+                if statement.tag == constants.BLOCK_START_TAG:
                     block_depth += 1
 
             #Run main function at the end of the script!
