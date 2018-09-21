@@ -43,6 +43,19 @@ class PostGenerator:
         statement.tokens = new_tokens
         return statement
 
+    def _join(self, token_list):
+        """Joins a list of tokens into string."""
+        result = ""
+
+        fspacing = False
+        for token in token_list:
+            if fspacing and token.bspacing:
+                result += " "
+            result += token.token
+            fspacing = token.fspacing
+        
+        return result
+
     def _nearest(self, tokens, text):
         """
         Find the first instance of any token from the tokens list on the text string.
@@ -97,19 +110,6 @@ class PostGenerator:
             to_write.append("var util = require('util')")
 
         return to_write
-
-    def _join(self, tokens):
-        """Joins a list of tokens into string."""
-        result = ""
-
-        fspacing = False
-        for token in tokens:
-            if fspacing and token.bspacing:
-                result += " "
-            result += token.token
-            fspacing = token.fspacing
-        
-        return result
 
     def write(self, statements):
         """Writes a list of TaggedStatement into the designated temporary file."""

@@ -19,12 +19,12 @@ class C2jsView(QMainWindow):
         super().__init__()
     
         #Create the main instance...
-        self.c2js = c2js.C2js()
+        self._c2js = c2js.C2js()
 
         #Setup the layout, and run!
         main_layout = QWidget(self)
-        self.open_button = QPushButton(OPEN_BUTTON_LABEL)
-        self.save_button = QPushButton(SAVE_BUTTON_LABEL)
+        self._open_button = QPushButton(OPEN_BUTTON_LABEL)
+        self._save_button = QPushButton(SAVE_BUTTON_LABEL)
         btnrow = QHBoxLayout()
         txtrow = QHBoxLayout()
 
@@ -44,14 +44,14 @@ class C2jsView(QMainWindow):
         self.source_text.setLineWrapMode(QPlainTextEdit.NoWrap)
 
         #Setup the buttons, disable the save_button first
-        self.open_button.clicked.connect(self.open)
-        self.save_button.clicked.connect(self.save)
-        self.save_button.setEnabled(False)
+        self._open_button.clicked.connect(self.open)
+        self._save_button.clicked.connect(self.save)
+        self._save_button.setEnabled(False)
 
         #Setup the horizontal button row, with "stretch" spaces after buttons
-        btnrow.addWidget(self.open_button)
+        btnrow.addWidget(self._open_button)
         btnrow.addStretch(1)
-        btnrow.addWidget(self.save_button)
+        btnrow.addWidget(self._save_button)
         btnrow.addStretch(1)
 
         #Setup the horizontal text row
@@ -80,21 +80,21 @@ class C2jsView(QMainWindow):
 
         if filename:
             #Loads file
-            self.c2js.load(filepath)
+            self._c2js.load(filepath)
             with open(c2js.SOURCE_TEMPFILE_PATH, 'r') as output:
                 data = output.read()
                 self.source_text.setPlainText(data)
             self.statusBar().showMessage(f"{filename} succesfully loaded. Processing...")
 
             #Process
-            self.c2js.process()
+            self._c2js.process()
             with open(c2js.OUTPUT_TEMPFILE_PATH, 'r') as output:
                 data = output.read()
                 self.result_text.setPlainText(data)
             self.statusBar().showMessage(f"{filename} succesfully translated. Press Save to create the Javascript file.")
             
             #Enable the save button.
-            self.save_button.setEnabled(True)
+            self._save_button.setEnabled(True)
         else:
             self.statusBar().showMessage(INVALID_PATH_MESSAGE)
 
@@ -104,7 +104,7 @@ class C2jsView(QMainWindow):
         _path, filename = os.path.split(filepath)
 
         if filename:
-            self.c2js.save(filepath)
+            self._c2js.save(filepath)
             self.statusBar().showMessage(f"{filename} successfully saved.")
         else:
             self.statusBar().showMessage(INVALID_PATH_MESSAGE)

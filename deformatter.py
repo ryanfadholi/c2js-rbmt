@@ -76,31 +76,6 @@ class Deformatter:
 
         return ranges
 
-    def _extract_substmt(self, text):
-        """
-        Extracts comments inserted inside a statement.
-        Returns the statement (and any comments found) as a list.
-        """
-
-        no_substmts = [tkn.single_comment, tkn.multi_comment, tkn.preprocessor]
-        substmts = []
-
-        #if it's comments or include statements, no need to reanalyze statement.
-        if self._starts_with(no_substmts, text):
-            pass
-        else:
-            while self._first(tkn.comments, text) > -1:
-                start_cut = self._first(tkn.comments, text)
-                cut_len = self._next(text[start_cut:])
-                end_cut = start_cut + cut_len
-                #text on the left side are right-stripped and the text on the right are left-stripped,
-                #to cut any extra whitespace/next lines between them.
-                comment, text = text[start_cut:end_cut], text[:start_cut].rstrip() + " " + text[end_cut:].lstrip()
-                substmts.append(comment)
-
-        substmts.append(text)
-        return map(lambda text: text.strip(), substmts)
-
     def _first(self, tokens, text):
         """
         Find the first instance of any token from the tokens dictionary on the text string.
@@ -264,6 +239,31 @@ class Deformatter:
         
         return idx if found else -1
 
+    def _substatements(self, text):
+        """
+        Extracts comments inserted inside a statement.
+        Returns the statement (and any comments found) as a list.
+        """
+
+        no_substmts = [tkn.single_comment, tkn.multi_comment, tkn.preprocessor]
+        substmts = []
+
+        #if it's comments or include statements, no need to reanalyze statement.
+        if self._starts_with(no_substmts, text):
+            pass
+        else:
+            while self._first(tkn.comments, text) > -1:
+                start_cut = self._first(tkn.comments, text)
+                cut_len = self._next(text[start_cut:])
+                end_cut = start_cut + cut_len
+                #text on the left side are right-stripped and the text on the right are left-stripped,
+                #to cut any extra whitespace/next lines between them.
+                comment, text = text[start_cut:end_cut], text[:start_cut].rstrip() + " " + text[end_cut:].lstrip()
+                substmts.append(comment)
+
+        substmts.append(text)
+        return map(lambda text: text.strip(), substmts)
+
     def lines(self):
         """Reads temporary file per-line."""
 
@@ -301,7 +301,7 @@ class Deformatter:
                     break
                 else:
                     next_stmt, cur_line = cur_line[:cut_pos], cur_line[cut_pos:]
-                    for stmt in self._extract_substmt(next_stmt.strip()):
+                    for stmt in self._substatements(next_stmt.strip()):
                         #Scrap empty strings.
                         if len(stmt) > 0:
                             yield stmt
