@@ -1,4 +1,6 @@
+import constants
 import tokens
+
 from taggedtoken import TaggedToken
 
 from collections import ChainMap, namedtuple
@@ -6,22 +8,6 @@ from pattern import Pattern
 
 #TODO: Move all tag constants to the constant file
 #TODO: Do type-conversion for input statements (otherwise everything will be string)
-
-BLOCK_START_TAG = "code-block-start"
-BLOCK_END_TAG = "code-block-end"
-CONDITIONAL_TAG = "conditional"
-DECLARATION_TAG = "variable-declaration"
-FUNCTION_TAG = "function-declaration"
-FUNCTION_DEFINITION_TAG = "function-definition"
-INITIATION_TAG = "variable-initiation"
-INPUT_TAG = "input"
-LOOP_TAG = "loop"
-MULTI_COMMENT_TAG = "multi-line-comment"
-OUTPUT_TAG = "output"
-PREPROCESSOR_TAG = "include-library"
-RETURN_TAG = "return-statement"
-SINGLE_COMMENT_TAG = "single-line-comment"
-UNKNOWN_TAG = "unknown"
 
 class StructuralLexicalTransfer:
 
@@ -176,28 +162,50 @@ class StructuralLexicalTransfer:
                 is_lefthand = False
             result.append(token)
             if is_pointer_variable:
-                if not ((statement.tag == DECLARATION_TAG and is_lefthand) or statement.tag == FUNCTION_TAG):
+                if not ((statement.tag == constants.DECLARATION_TAG and is_lefthand) 
+                         or statement.tag == constants.FUNCTION_TAG):
                     result.extend(js_pointer)
                 is_pointer_variable = False
         statement.tokens = result
 
     def _identify(self, statement):
         """Identifies statement type"""
-        block_start_sp = Pattern(BLOCK_START_TAG, [tokens.tag_curly_left])
-        block_end_sp = Pattern(BLOCK_END_TAG, [tokens.tag_curly_right])
-        preprocessor_sp = Pattern(PREPROCESSOR_TAG, [tokens.tag_preprocessor], carryover=False)
-        single_comment_sp = Pattern(SINGLE_COMMENT_TAG, [tokens.tag_single_comment])
-        multi_comment_sp = Pattern(MULTI_COMMENT_TAG, [tokens.tag_multi_comment])
-        input_sp = Pattern(INPUT_TAG, [tokens.tag_input_func])
-        output_sp = Pattern(OUTPUT_TAG, [tokens.tag_output_func])
-        return_sp = Pattern(RETURN_TAG, [tokens.tag_return_kw])
-        function_sp = Pattern(FUNCTION_TAG, [tokens.datatypes, tokens.tag_name_var, tokens.tag_parenthesis_left], [tokens.tag_parenthesis_right])
-        function_definition_sp = Pattern(FUNCTION_DEFINITION_TAG, [tokens.datatypes, tokens.tag_name_var, tokens.tag_parenthesis_left], [tokens.tag_semicolon], carryover=False)
-        declaration_sp = Pattern(DECLARATION_TAG, [tokens.datatypes], [tokens.tag_semicolon])
-        conditional_sp = Pattern(CONDITIONAL_TAG, [tokens.conditionals])
-        loop_sp = Pattern(LOOP_TAG, [tokens.loops])
-        initiation_sp = Pattern(INITIATION_TAG, [tokens.tag_name_var, tokens.tag_assign])
-        initiation_pointer_sp = Pattern(INITIATION_TAG, [tokens.tag_op_multiply])
+        block_start_sp = Pattern(constants.BLOCK_START_TAG, 
+                                 [tokens.tag_curly_left])
+        block_end_sp = Pattern(constants.BLOCK_END_TAG, 
+                               [tokens.tag_curly_right])
+        conditional_sp = Pattern(constants.CONDITIONAL_TAG, 
+                                 [tokens.conditionals])
+        declaration_sp = Pattern(constants.DECLARATION_TAG, 
+                                 [tokens.datatypes], 
+                                 [tokens.tag_semicolon])
+        function_definition_sp = Pattern(constants.FUNCTION_DEFINITION_TAG, 
+                                         [tokens.datatypes, tokens.tag_name_var, tokens.tag_parenthesis_left], 
+                                         [tokens.tag_semicolon], 
+                                         carryover=False)
+        function_sp = Pattern(constants.FUNCTION_TAG, 
+                              [tokens.datatypes, tokens.tag_name_var, tokens.tag_parenthesis_left], 
+                              [tokens.tag_parenthesis_right])
+        initiation_pointer_sp = Pattern(constants.INITIATION_TAG, 
+                                        [tokens.tag_op_multiply])
+        initiation_sp = Pattern(constants.INITIATION_TAG, 
+                                [tokens.tag_name_var, tokens.tag_assign])
+        input_sp = Pattern(constants.INPUT_TAG, 
+                           [tokens.tag_input_func])
+        loop_sp = Pattern(constants.LOOP_TAG, 
+                          [tokens.loops])                    
+        multi_comment_sp = Pattern(constants.MULTI_COMMENT_TAG, 
+                                   [tokens.tag_multi_comment])
+        output_sp = Pattern(constants.OUTPUT_TAG, 
+                            [tokens.tag_output_func])
+        preprocessor_sp = Pattern(constants.PREPROCESSOR_TAG, 
+                                  [tokens.tag_preprocessor], 
+                                  carryover=False)
+        return_sp = Pattern(constants.RETURN_TAG, 
+                            [tokens.tag_return_kw])
+        single_comment_sp = Pattern(constants.SINGLE_COMMENT_TAG, 
+                                    [tokens.tag_single_comment])
+        
 
         #NOTE: function_declaration MUST be checked BEFORE declaration! 
         #Because declaration essentially checks a subset of function_declaration, if declaration are put before it everything will be identified as declaration.

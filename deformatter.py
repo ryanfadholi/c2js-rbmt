@@ -1,9 +1,9 @@
 import itertools
+
+import constants
 import tokens as tkn
 
 from charrange import CharRange
-
-TEMPFILE_PATH = "temp/source.txt"
 
 class Deformatter:
 
@@ -267,7 +267,7 @@ class Deformatter:
     def lines(self):
         """Reads temporary file per-line."""
 
-        with open(TEMPFILE_PATH) as file:
+        with open(constants.INPUT_TEMPFILE_PATH) as file:
             for line in file:
                 yield line
 
@@ -280,7 +280,7 @@ class Deformatter:
         with open(filepath, "r") as file_input:
             
             raw_input = file_input.read()
-            with open(TEMPFILE_PATH, "w") as temp_file:
+            with open(constants.INPUT_TEMPFILE_PATH, "w") as temp_file:
                 temp_file.write(raw_input)
 
     def statements(self, filepath=None):
