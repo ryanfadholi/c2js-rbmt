@@ -6,11 +6,6 @@ import sltransfer
 import postgenerator
 import reformatter
 
-#TODO: Enable command-line arguments
-
-SOURCE_TEMPFILE_PATH = deformatter.TEMPFILE_PATH
-OUTPUT_TEMPFILE_PATH = postgenerator.TEMPFILE_PATH
-
 DEFAULT_SOURCE_FILE = "source.c"
 DEFAULT_RESULT_FILE = "result.js"
 
@@ -61,6 +56,6 @@ if __name__ == "__main__":
 
     instance = C2js()
     instance.load(args.source_path)
-    console_print = not args.no_print
-    instance.process(console_print)
+    do_print = not args.no_print
+    instance.process(do_print)
     instance.save(args.result_path)

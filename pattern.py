@@ -1,11 +1,11 @@
 class Pattern:
     def __init__(self, tag, start=None, end=None, carryover=True):
-        if not isinstance(start, list):
+        
+        #Default arguments
+        if start is None:
             start = []
-            print("Start parameter is not list, using empty list instead")
-        elif not isinstance(end, list):
+        if end is None:
             end = []
-            print("End parameter is not list, using empty list instead")
         
         self.tag = tag
         self.start = [] + start
@@ -23,7 +23,7 @@ class Pattern:
         for ptrn, tag in zip(self.fit(tags), tags):
             if ptrn is None:
                 match = True
-            elif isinstance(ptrn, list) or isinstance(ptrn, dict):
+            elif isinstance(ptrn, (list, dict)):
                 match = tag in ptrn
             else:
                 match = ptrn == tag

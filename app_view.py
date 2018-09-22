@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (QApplication,  QFileDialog, QHBoxLayout, QMainWindo
     QPlainTextEdit, QPushButton, QSizePolicy, QVBoxLayout, QWidget)
 
 import c2js 
+import constants
 
 APP_TITLE = 'C-to-Javascript Translator'
 INVALID_PATH_MESSAGE = "Invalid path found, operation cancelled."
@@ -81,14 +82,14 @@ class C2jsView(QMainWindow):
         if filename:
             #Loads file
             self._c2js.load(filepath)
-            with open(c2js.SOURCE_TEMPFILE_PATH, 'r') as output:
+            with open(constants.INPUT_TEMPFILE_PATH, 'r') as output:
                 data = output.read()
                 self.source_text.setPlainText(data)
             self.statusBar().showMessage(f"{filename} succesfully loaded. Processing...")
 
             #Process
             self._c2js.process()
-            with open(c2js.OUTPUT_TEMPFILE_PATH, 'r') as output:
+            with open(constants.OUTPUT_TEMPFILE_PATH, 'r') as output:
                 data = output.read()
                 self.result_text.setPlainText(data)
             self.statusBar().showMessage(f"{filename} succesfully translated. Press Save to create the Javascript file.")
