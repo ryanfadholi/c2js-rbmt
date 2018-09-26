@@ -6,9 +6,6 @@ from taggedtoken import TaggedToken
 from collections import ChainMap, namedtuple
 from pattern import Pattern
 
-#TODO: Move all tag constants to the constant file
-#TODO: Do type-conversion for input statements (otherwise everything will be string)
-
 class StructuralLexicalTransfer:
 
     def _callback_dict(self, callbacks):
@@ -46,7 +43,10 @@ class StructuralLexicalTransfer:
         input_tokens = statement.find_all(tokens.tag_read_func)
         empty_string_token = TaggedToken("''", tokens.tag_val_string)
         assign_token = TaggedToken(tokens.assign, tokens.tag_assign)
+        close_parenthesis_token = TaggedToken(tokens.parenthesis_right, tokens.tag_parenthesis_right)
         dot_token = TaggedToken(tokens.dot, tokens.tag_dot)
+        number_type_token = TaggedToken(tokens.number_type, tokens.tag_number_type)
+        open_parenthesis_token = TaggedToken(tokens.parenthesis_left, tokens.tag_parenthesis_left)
         ptr_access_token = TaggedToken(tokens.ptr_access, tokens.tag_ptr_access)
 
         if input_tokens:
@@ -69,6 +69,7 @@ class StructuralLexicalTransfer:
                 closed_bracket_pos = -1
                 closed_bracket_count = 0
                 open_bracket_count = 0
+                number_expected = False
                 variable_found = False
                 variable_pointer = False
                 variable_token = None
@@ -79,6 +80,17 @@ class StructuralLexicalTransfer:
                         open_bracket_count += 1
                     elif token.tag == tokens.tag_parenthesis_right:
                         closed_bracket_count += 1
+                    #If it's string, process to determine whether the input needs type-casting or not.
+                    elif token.tag == tokens.tag_val_string:
+                        identifier_string = token.token
+                        is_identifier = False
+                        for char in identifier_string:
+                            if is_identifier:
+                                if char in ['d','f','h','i','l']:
+                                    number_expected = True
+                            if char == '%':
+                                is_identifier = True
+                                continue
                     #If a variable is encountered, capture it, as it needs to be rewitten later. Only capture once, thus set the found flag.
                     elif token.tag == tokens.tag_name_var and not variable_found:
                         variable_token = token
@@ -96,14 +108,23 @@ class StructuralLexicalTransfer:
                 #From: readlineSync.question("%d", &x);
                 #To  : x = readlineSync.question('');
 
-                #First get all tokens before the "readlineSync", and append it with variable captured above and an assignment operator
-                statement.tokens = (statement.tokens[:question_pos] + [variable_token]
+                statement.tokens = (
+                    #First get all tokens before the "readlineSync", and the variable captured above                
+                    (statement.tokens[:question_pos] + [variable_token])
+                    #Add pointer access if the variable is a pointer.
                     + ([dot_token, ptr_access_token] if variable_pointer else [])
-                    + [assign_token] 
-                #Next get all the remaining tokens, and insert an empty string token between the readlineSync.question calling parenthesis, 
-                #overwriting any tokens inside of it.
-                    + statement.tokens[question_pos:open_bracket_pos+1] + [empty_string_token] + statement.tokens[closed_bracket_pos:])
-                
+                    #Assignment operator
+                    + ([assign_token]) 
+                    #Add typecasting if needed
+                    + ([number_type_token, open_parenthesis_token] if number_expected else [])
+                    #Next get all the remaining tokens, and insert an empty string token between the readlineSync.question calling parenthesis, 
+                    #overwriting any tokens inside of it.
+                    + (statement.tokens[question_pos:open_bracket_pos+1] + [empty_string_token])
+                    #Add closing parenthesis after the empty string token if you typecasted.
+                    + ([close_parenthesis_token] if number_expected else [])
+                    #Finally, append all tokens after the original closed bracket.
+                    + (statement.tokens[closed_bracket_pos:])
+                )
 
                 #We have processed yet another input substatement. Increment. Reiterate.
                 processed_input_count += 1

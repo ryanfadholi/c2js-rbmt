@@ -1,5 +1,5 @@
 NO_BACKSPACING_TOKEN = [")", "}", ";", ".", ",", "[", "]", "*/", "++", "--"]
-NO_FRONTSPACING_TOKEN = ["(", ".", "//", "/*", "{", "}", "log", "format", "question", "if", "for", "while"]        
+NO_FRONTSPACING_TOKEN = ["(", ".", "//", "/*", "{", "}", "Number", "log", "format", "question", "if", "for", "while"]        
 
 class TaggedToken:
     def __init__(self, token, tag):
