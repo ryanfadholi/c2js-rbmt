@@ -3,8 +3,6 @@ import itertools
 import constants
 import tokens as tkn
 
-from charrange import CharRange
-
 class Deformatter:
 
     def _bracket_end(self, text):
@@ -45,7 +43,8 @@ class Deformatter:
 
     def _exceptions(self, text):
         """
-        Returns a list of CharRanges of every strings and comments in the text.
+        Returns a list of tuples representing ranges of every strings 
+        and comments in the text.
         Returns empty list if no strings or comments are found.
         """
         quotes_pos = self._search(tkn.string_identifiers, text)
@@ -68,7 +67,7 @@ class Deformatter:
             else:
                 except_end = except_start + except_length
 
-            new_range = CharRange(except_start, except_end)
+            new_range = (except_start, except_end)
             ranges.append(new_range)
 
             #Dump every exception tokens inside the defined range.
@@ -153,8 +152,8 @@ class Deformatter:
         
         if do_exception_checking:
             to_ignore = self._exceptions(text)
-            #If x is present in any CharRange from to_ignore, ignore it.
-            ignored = lambda x: True in (x in char_range for char_range in to_ignore)
+            #If x is in range of any tuple inside to_ignore, ignore it.
+            ignored = lambda x: True in (char_range[0] <= x <= char_range[1] for char_range in to_ignore)
             results = list(filter(lambda pos: not ignored(pos), results))
 
         return sorted(results)
@@ -308,7 +307,7 @@ class Deformatter:
             
             prev_line = cur_line
 
-        if len(prev_line) > 0:
+        if len(prev_line.strip()) > 0:
             yield prev_line.strip()
 
         return

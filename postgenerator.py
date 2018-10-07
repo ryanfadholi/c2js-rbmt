@@ -54,13 +54,13 @@ class PostGenerator:
         
         return result
 
-    def _nearest(self, tokens, text):
+    def _nearest(self, statement_tokens, text):
         """
-        Find the first instance of any token from the tokens list on the text string.
+        Find the first instance of any token from the statement_tokens list on the text string.
         Returns -1 when there is no instance of any token in the string.
         """
 
-        nearest_each = [text.find(token) for token in tokens]
+        nearest_each = [text.find(token) for token in statement_tokens]
         found = list(filter(lambda pos: pos > -1, nearest_each))
 
         return min(found) if found else -1

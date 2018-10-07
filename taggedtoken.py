@@ -10,7 +10,7 @@ class TaggedToken:
         self.fspacing = False if token in NO_FRONTSPACING_TOKEN else True
 
     def __repr__(self):
-        return f"{self.tag} - {repr(self.token)}"
+        return f"{repr(self.token)} - {self.tag}"
 
     def __str__(self):
-        return f"{self.tag} - {repr(self.token)}"
+        return f"{repr(self.token)} - {self.tag}"

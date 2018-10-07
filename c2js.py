@@ -21,21 +21,37 @@ class C2js:
         """Loads the given source_path contents to a temporary file."""
         self._deformatter.read(source_path)
 
-    def process(self, console_print=False):
+    def process(self, console_print=False, verbose=False):
         """
         Processes the contents of the designated temporary file
         (Must be prepared first by the load() method)
         The results are then saved into another designated temporary file.
         """
+        verbose_print = console_print and verbose
+
         stmts = [stmt for stmt in self._deformatter.statements()]
         tagged_stmts = map(self._postagger.tag, stmts)
         identified_stmts = list(map(self._sltransfer.translate, tagged_stmts))
+        self._postgenerator.write(identified_stmts)
 
-        if console_print:
+        #Print dem steps
+        if verbose_print:
+            print("Deformatter results:")
+            print(stmts)
+
+            print("---------------------------------------")
+            print("Part-of-Speech results:")
+            hasilpos = list(tagged_stmts)
+            for hasil in hasilpos:
+                print(hasil)
+
+            print("----------------------------------------")
+            print("Structural & Lexical Transfer results:")
             for stmt in identified_stmts:
                 print(stmt)
-
-        self._postgenerator.write(identified_stmts)
+        elif console_print:
+            for stmt in identified_stmts:
+                print(stmt)
 
     def save(self, output_path):
         """
