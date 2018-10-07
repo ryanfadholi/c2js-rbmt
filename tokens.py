@@ -1,6 +1,7 @@
 #Javascript keywords & functions
 variable_type = "var";  tag_variable_type = "variable-type"
 function_type = "function"; tag_function_type = "function-type"
+number_type = "Number"; tag_number_type = "number-type"
 console_func = "console"; tag_console_func = "console-function"
 util_func = "util"; tag_util_func = "utility-module"
 format_func = "format"; tag_format_func = "format-function"
