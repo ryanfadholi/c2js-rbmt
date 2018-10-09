@@ -234,7 +234,7 @@ class StructuralLexicalTransfer:
                     input_sp, output_sp, return_sp, function_sp, function_definition_sp, declaration_sp, conditional_sp,
                     loop_sp, initiation_sp, initiation_pointer_sp]
 
-        tags = list(map(lambda token: token.tag, statement))
+        tags = [token.tag for token in statement]
 
         for pattern in patterns:
             if pattern.trace(tags):

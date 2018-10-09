@@ -236,7 +236,7 @@ class POSTagger:
         tokens = self.tokenize(statement)
         
         #This only matches known tokens
-        matched_tokens = TaggedStatement(list(map(lambda x: TaggedToken(x, self._match(x)), tokens)))
+        matched_tokens = TaggedStatement([TaggedToken(token, self._match(token)) for token in tokens])
 
         #While this match the rest ("dynamic" tokens)
         for idx, token in enumerate(matched_tokens):

@@ -128,7 +128,6 @@ class Deformatter:
         else:
             end_pos = self._statement_end(';', line)
 
-        
         cut_pos = whitespace_offset + end_pos if end_pos > -1 else -1
         return cut_pos
 

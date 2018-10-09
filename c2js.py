@@ -29,9 +29,9 @@ class C2js:
         """
         verbose_print = console_print and verbose
 
-        stmts = [stmt for stmt in self._deformatter.statements()]
-        tagged_stmts = map(self._postagger.tag, stmts)
-        identified_stmts = list(map(self._sltransfer.translate, tagged_stmts))
+        stmts = self._deformatter.statements()
+        tagged_stmts = (self._postagger.tag(stmt) for stmt in stmts)
+        identified_stmts = [self._sltransfer.translate(tagged_stmt) for tagged_stmt in tagged_stmts]
         self._postgenerator.write(identified_stmts)
 
         #Print dem steps
