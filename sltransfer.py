@@ -224,9 +224,9 @@ class StructuralLexicalTransfer:
                                   carryover=False)
         return_sp = Pattern(constants.RETURN_TAG, 
                             [tokens.tag_return_kw])
-        single_comment_sp = Pattern(constants.SINGLE_COMMENT_TAG, 
+        single_comment_sp = Pattern(constants.SINGLE_COMMENT_TAG,
                                     [tokens.tag_single_comment])
-        
+
 
         #NOTE: function_declaration MUST be checked BEFORE declaration! 
         #Because declaration essentially checks a subset of function_declaration, if declaration are put before it everything will be identified as declaration.
@@ -243,6 +243,8 @@ class StructuralLexicalTransfer:
                     statement.carryover = False
                 break
         else:
+            print("THIS IS IT!!!")
+            print(statement)
             statement.tag = "unknown"
 
         return statement

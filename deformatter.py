@@ -32,7 +32,8 @@ class Deformatter:
         Returns an index where the declaration statement ends. Returns -1 if the statement isn't ending yet.
         Declaration could mean a variable or function declaration,
         and the function will adapt depending on what it assumes the declaration is.
-        """        
+        """
+        #TODO: FIX FOR ARRAY DECLARATIONS! 
         curlybrace_pos = self._statement_end("{", text)
         semicolon_pos = self._statement_end(";", text)
 
@@ -94,7 +95,7 @@ class Deformatter:
 
         end_pos = -1
         #if it's one-line comment or include statement...
-        if (self._starts_with(tkn.single_comment, line) 
+        if (self._starts_with(tkn.single_comment, line)
             or self._starts_with(tkn.preprocessor, line)):
             end_pos = self._statement_end('\n', line, do_exception_checking=False)
         #if it's one line comment...
@@ -293,7 +294,7 @@ class Deformatter:
         for line in self.lines():
             cur_line = prev_line + line
             while len(cur_line) > 0:
-                cut_pos = self._next(cur_line)  
+                cut_pos = self._next(cur_line)
 
                 if cut_pos == -1:
                     break

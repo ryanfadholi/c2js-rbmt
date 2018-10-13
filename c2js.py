@@ -33,6 +33,12 @@ class C2js:
         identified_stmts = [self._sltransfer.translate(tagged_stmt) for tagged_stmt in tagged_stmts]
         self._postgenerator.write(identified_stmts)
 
+        #DELET THIS START
+        for statement in self._deformatter.statements():
+            print(statement)
+            print("********************")
+        #DELET THIS END
+
         #Print dem steps
         if verbose_print:
             print("---------------------------------------")
@@ -69,5 +75,5 @@ if __name__ == "__main__":
     instance = C2js()
     instance.load(args.source_path)
     do_print = not args.no_print
-    instance.process(do_print)
+    instance.process()
     instance.save(args.result_path)
