@@ -12,8 +12,35 @@ class StructuralLexicalTransfer:
         """Converts a list of CallbackPairs to a dictionary, with its trigger as keys and its function as the values"""
         result = {}
         for callback in callbacks:
-            result[callback.trigger] = callback.function
+            trigger = callback.trigger
+            if isinstance(trigger, str):
+                result[trigger] = callback.function
+            elif isinstance(trigger, (dict, list)):
+                for trig in trigger:
+                    result[trig] = callback.function
         return result
+
+    def _helper_declaration(self, statement):
+        is_lefthand = True
+        skip = False
+        result = []
+
+        for token in statement:
+            tag = token.tag
+
+            if tag == tokens.tag_assign:
+                is_lefthand = False
+
+            if is_lefthand and tag == tokens.tag_bracket_left:
+                skip = True
+
+            if not skip:
+                result.append(token)
+
+            if is_lefthand and tag == tokens.tag_bracket_right:
+                skip = False
+
+        statement.tokens = result
 
     def _helper_output(self, statement):
         """Adds extra brackets for output statements. (JS's output has one extra bracket from its C counterpart)"""
@@ -243,7 +270,7 @@ class StructuralLexicalTransfer:
                     statement.carryover = False
                 break
         else:
-            print("THIS IS IT!!!")
+            print("NOTICE - UNIDENTIFIED STATEMENT:")
             print(statement)
             statement.tag = "unknown"
 
@@ -268,6 +295,7 @@ class StructuralLexicalTransfer:
         TranslationItem = namedtuple("TranslationItem", ["key", "new_keys", "new_values"])
 
         #Define helper callbacks here
+        array_decl_cb = CallbackPair(tokens.tag_bracket_left, self._helper_declaration)
         input_cb = CallbackPair(tokens.tag_input_func, self._helper_input)
         output_cb = CallbackPair(tokens.tag_output_func, self._helper_output)
         param_cb = CallbackPair(tokens.tag_function_type, self._helper_parameter)
@@ -275,6 +303,8 @@ class StructuralLexicalTransfer:
         reference_cb = CallbackPair(tokens.tag_op_binary_and, self._helper_reference)
 
         #Define translations here
+        array_prefill_start_tl = TranslationItem(tokens.tag_curly_left, [tokens.tag_bracket_left], [tokens.bracket_left])
+        array_prefill_end_tl = TranslationItem(tokens.tag_curly_right, [tokens.tag_bracket_right], [tokens.bracket_right])
         declaration_tl = TranslationItem(tokens.datatypes, [tokens.tag_variable_type], [tokens.variable_type])
         function_tl = TranslationItem(tokens.datatypes, [tokens.tag_function_type], [tokens.function_type])
         printf_tl = TranslationItem(tokens.tag_output_func, 
@@ -299,8 +329,12 @@ class StructuralLexicalTransfer:
             return statement
 
         #Add special cases of helpers/translations here
-        if statement.tag == "function-declaration":
+        if statement.tag == constants.FUNCTION_TAG:
+            specific_helpers.append(array_decl_cb)
             specific_translations.append(function_tl)
+        elif statement.tag == constants.DECLARATION_TAG:
+            specific_helpers.append(array_decl_cb)
+            specific_translations.extend([array_prefill_start_tl, array_prefill_end_tl])
 
         #Prioritize special-case helpers and translations. Convert them to dicts first.
         helpers = ChainMap(self._callback_dict(specific_helpers), self._callback_dict(default_helpers))
@@ -325,6 +359,7 @@ class StructuralLexicalTransfer:
             #If there's a helper function defined for the function, add them to the list to call later.
             helper = helpers.get(token.tag)
             if helper is not None and helper not in helper_functions:
+
                 helper_functions.append(helper)
 
         for helper in helper_functions:

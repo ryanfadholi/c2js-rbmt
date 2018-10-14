@@ -33,12 +33,18 @@ class Deformatter:
         Declaration could mean a variable or function declaration,
         and the function will adapt depending on what it assumes the declaration is.
         """
-        #TODO: FIX FOR ARRAY DECLARATIONS! 
         curlybrace_pos = self._statement_end("{", text)
         semicolon_pos = self._statement_end(";", text)
+        assignment_pos = self._statement_end("=", text)
 
+        #If there's curly brace and it's placed before a semicolon: 
         if curlybrace_pos > 0 and curlybrace_pos < semicolon_pos:
+            #If there's assignment before the curly brace, it's a pre-filled array
+            if assignment_pos > 0 and assignment_pos < curlybrace_pos:
+                return semicolon_pos
+            #Else it's a function declaration
             return self._bracket_end(text)
+        #If there's no curly brace or a semicolon comes before it, it's a normal variable declaration.
         else:
             return semicolon_pos
 

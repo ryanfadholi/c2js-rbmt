@@ -21,37 +21,20 @@ class C2js:
         """Loads the given source_path contents to a temporary file."""
         self._deformatter.read(source_path)
 
-    def process(self, console_print=False, verbose=False):
+    def process(self, console_print=False):
         """
         Processes the contents of the designated temporary file
         (Must be prepared first by the load() method)
         The results are then saved into another designated temporary file.
         """
-        verbose_print = console_print and verbose
 
-        tagged_stmts = (self._postagger.tag(stmt) for stmt in self._deformatter.statements())
-        identified_stmts = [self._sltransfer.translate(tagged_stmt) for tagged_stmt in tagged_stmts]
+        # tagged_stmts = (self._postagger.tag(stmt) for stmt in self._deformatter.statements())
+        # identified_stmts = [self._sltransfer.translate(tagged_stmt) for tagged_stmt in tagged_stmts]
+
+        identified_stmts = [self._sltransfer.translate(self._postagger.tag(stmt)) for stmt in self._deformatter.statements()]
         self._postgenerator.write(identified_stmts)
 
-        #DELET THIS START
-        for statement in self._deformatter.statements():
-            print(statement)
-            print("********************")
-        #DELET THIS END
-
-        #Print dem steps
-        if verbose_print:
-            print("---------------------------------------")
-            print("Part-of-Speech results:")
-            hasilpos = list(tagged_stmts)
-            for hasil in hasilpos:
-                print(hasil)
-
-            print("----------------------------------------")
-            print("Structural & Lexical Transfer results:")
-            for stmt in identified_stmts:
-                print(stmt)
-        elif console_print:
+        if console_print:
             for stmt in identified_stmts:
                 print(stmt)
 
@@ -75,5 +58,5 @@ if __name__ == "__main__":
     instance = C2js()
     instance.load(args.source_path)
     do_print = not args.no_print
-    instance.process()
+    instance.process(do_print)
     instance.save(args.result_path)
