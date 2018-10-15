@@ -37,7 +37,7 @@ class Deformatter:
         semicolon_pos = self._statement_end(";", text)
         assignment_pos = self._statement_end("=", text)
 
-        #If there's curly brace and it's placed before a semicolon: 
+        #If there's curly brace and it's placed before a semicolon:
         if curlybrace_pos > 0 and curlybrace_pos < semicolon_pos:
             #If there's assignment before the curly brace, it's a pre-filled array
             if assignment_pos > 0 and assignment_pos < curlybrace_pos:
@@ -50,7 +50,7 @@ class Deformatter:
 
     def _exceptions(self, text):
         """
-        Returns a list of tuples representing ranges of every strings 
+        Returns a list of tuples representing ranges of every strings
         and comments in the text.
         Returns empty list if no strings or comments are found.
         """

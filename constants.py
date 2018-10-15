@@ -1,4 +1,5 @@
 #Temporary file paths
+
 INPUT_TEMPFILE_PATH = "temp/source.txt"
 OUTPUT_TEMPFILE_PATH = "temp/result.txt"
 
@@ -18,3 +19,4 @@ PREPROCESSOR_TAG = "include-library"
 RETURN_TAG = "return-statement"
 SINGLE_COMMENT_TAG = "single-line-comment"
 UNKNOWN_TAG = "unknown"
+

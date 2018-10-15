@@ -82,7 +82,8 @@ class StructuralLexicalTransfer:
             while True:
 
                 #Rerun the positioning check for every loop, as the position may change after the previous loop.
-                obrs, input_tokens = statement.find_all(tokens.tag_parenthesis_left, tokens.tag_read_func)
+                obrs, input_tokens = statement.find_all(tokens.tag_parenthesis_left, 
+                                                        tokens.tag_read_func)
                 #If we have processed the same number of input tokens as there is input tokens in the statement, end the loop.
                 if processed_input_count == len(input_tokens):
                     break
@@ -234,22 +235,22 @@ class StructuralLexicalTransfer:
         function_sp = Pattern(constants.FUNCTION_TAG, 
                               [tokens.datatypes, tokens.tag_name_var, tokens.tag_parenthesis_left], 
                               [tokens.tag_parenthesis_right])
-        initiation_pointer_sp = Pattern(constants.INITIATION_TAG, 
+        initiation_pointer_sp = Pattern(constants.INITIATION_TAG,
                                         [tokens.tag_op_multiply])
-        initiation_sp = Pattern(constants.INITIATION_TAG, 
+        initiation_sp = Pattern(constants.INITIATION_TAG,
                                 [tokens.tag_name_var, tokens.tag_assign])
-        input_sp = Pattern(constants.INPUT_TAG, 
+        input_sp = Pattern(constants.INPUT_TAG,
                            [tokens.tag_input_func])
-        loop_sp = Pattern(constants.LOOP_TAG, 
-                          [tokens.loops])                    
-        multi_comment_sp = Pattern(constants.MULTI_COMMENT_TAG, 
+        loop_sp = Pattern(constants.LOOP_TAG,
+                          [tokens.loops])
+        multi_comment_sp = Pattern(constants.MULTI_COMMENT_TAG,
                                    [tokens.tag_multi_comment])
-        output_sp = Pattern(constants.OUTPUT_TAG, 
+        output_sp = Pattern(constants.OUTPUT_TAG,
                             [tokens.tag_output_func])
-        preprocessor_sp = Pattern(constants.PREPROCESSOR_TAG, 
-                                  [tokens.tag_preprocessor], 
+        preprocessor_sp = Pattern(constants.PREPROCESSOR_TAG,
+                                  [tokens.tag_preprocessor],
                                   carryover=False)
-        return_sp = Pattern(constants.RETURN_TAG, 
+        return_sp = Pattern(constants.RETURN_TAG,
                             [tokens.tag_return_kw])
         single_comment_sp = Pattern(constants.SINGLE_COMMENT_TAG,
                                     [tokens.tag_single_comment])

@@ -1,4 +1,6 @@
 import argparse
+import os
+import sys
 
 import deformatter
 import postagger
@@ -21,22 +23,29 @@ class C2js:
         """Loads the given source_path contents to a temporary file."""
         self._deformatter.read(source_path)
 
-    def process(self, console_print=False):
+    def process(self, console_print=False, test_mode=True):
         """
         Processes the contents of the designated temporary file
         (Must be prepared first by the load() method)
         The results are then saved into another designated temporary file.
         """
 
-        # tagged_stmts = (self._postagger.tag(stmt) for stmt in self._deformatter.statements())
-        # identified_stmts = [self._sltransfer.translate(tagged_stmt) for tagged_stmt in tagged_stmts]
+        if test_mode:
+            #suppress notices & warnings from modules
+            sys.stdout = open(os.devnull, 'w')
 
-        identified_stmts = [self._sltransfer.translate(self._postagger.tag(stmt)) for stmt in self._deformatter.statements()]
-        self._postgenerator.write(identified_stmts)
+        statements = [self._sltransfer.translate(self._postagger.tag(stmt)) 
+                      for stmt in self._deformatter.statements()]
+        self._postgenerator.write(statements)
+
+        if test_mode:
+            #re-enable console output
+            sys.stdout = sys.__stdout__
+
 
         if console_print:
-            for stmt in identified_stmts:
-                print(stmt)
+            for statement in statements:
+                print(statement)
 
     def save(self, output_path):
         """
