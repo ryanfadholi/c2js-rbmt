@@ -226,8 +226,10 @@ class StructuralLexicalTransfer:
         conditional_sp = Pattern(constants.CONDITIONAL_TAG, 
                                  [tokens.conditionals])
         declaration_sp = Pattern(constants.DECLARATION_TAG, 
-                                 [tokens.datatypes], 
+                                 [tokens.datatypes],
                                  [tokens.tag_semicolon])
+        function_call_sp = Pattern(constants.FUNCTION_CALL_TAG,
+                                    [tokens.tag_name_var, tokens.tag_parenthesis_left])
         function_definition_sp = Pattern(constants.FUNCTION_DEFINITION_TAG, 
                                          [tokens.datatypes, tokens.tag_name_var, tokens.tag_parenthesis_left], 
                                          [tokens.tag_semicolon], 
@@ -235,6 +237,16 @@ class StructuralLexicalTransfer:
         function_sp = Pattern(constants.FUNCTION_TAG, 
                               [tokens.datatypes, tokens.tag_name_var, tokens.tag_parenthesis_left], 
                               [tokens.tag_parenthesis_right])
+        post_decrement_sp = Pattern(constants.DECREMENT_INCREMENT_TAG, 
+                                end=[tokens.tag_op_decrement, tokens.tag_semicolon])
+        post_increment_sp = Pattern(constants.DECREMENT_INCREMENT_TAG, 
+                                end=[tokens.tag_op_increment, tokens.tag_semicolon])
+        pre_decrement_sp = Pattern(constants.DECREMENT_INCREMENT_TAG, 
+                                [tokens.tag_op_decrement], 
+                                [tokens.tag_semicolon])
+        pre_increment_sp = Pattern(constants.DECREMENT_INCREMENT_TAG, 
+                                    [tokens.tag_op_increment], 
+                                    [tokens.tag_semicolon])
         initiation_pointer_sp = Pattern(constants.INITIATION_TAG,
                                         [tokens.tag_op_multiply])
         initiation_sp = Pattern(constants.INITIATION_TAG,
@@ -259,8 +271,9 @@ class StructuralLexicalTransfer:
         #NOTE: function_declaration MUST be checked BEFORE declaration! 
         #Because declaration essentially checks a subset of function_declaration, if declaration are put before it everything will be identified as declaration.
         patterns = [block_start_sp, block_end_sp, preprocessor_sp, single_comment_sp, multi_comment_sp, 
-                    input_sp, output_sp, return_sp, function_sp, function_definition_sp, declaration_sp, conditional_sp,
-                    loop_sp, initiation_sp, initiation_pointer_sp]
+                    input_sp, output_sp, return_sp, function_sp, function_call_sp, function_definition_sp, declaration_sp, conditional_sp,
+                    loop_sp, initiation_sp, initiation_pointer_sp, post_decrement_sp, post_increment_sp, pre_decrement_sp,
+                    pre_increment_sp]
 
         tags = [token.tag for token in statement]
 
