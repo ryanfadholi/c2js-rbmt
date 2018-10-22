@@ -13,6 +13,9 @@ import tokens
 DEFAULT_SOURCE_FILE = "source.c"
 DEFAULT_RESULT_FILE = "result.js"
 
+#TODO: Write dedicated tags() function in tagged_statement that returns tag only to simplify tag-checking?
+#TODO: Fix %.2f/%3d etc conversions
+
 class C2js:
     def __init__(self):
         self._deformatter = deformatter.Deformatter()
@@ -52,6 +55,9 @@ class C2js:
         self._postgenerator.write(statements)
 
         if console_print:
+            #DELET
+            for statement in [self._postagger.tag(stmt) for stmt in self._deformatter.statements()]:
+                print(statement)
             for statement in statements:
                 print(statement)
 

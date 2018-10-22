@@ -1,19 +1,20 @@
 var readlineSync = require('readline-sync')
 var util = require('util')
+
 /* ({Test}) */
 function main ()
 {
-    for(i = 0; i < 10; console.log(util.format("%d", i)))
+    for(i = 0; i < 10; process.stdout.write (util.format("%d", i)))
     {
         i++;
     }
 
-    console.log(util.format("Hello World!"));
-    console.log(util.format("Hello" + "HaroHappi" + "Poppin'Party"));
+    process.stdout.write (util.format("Hello World!"));
+    process.stdout.write (util.format("Hello" + "HaroHappi" + "Poppin'Party"));
     var alet = 1;
     var r = 2.2;
     var r2 = 2.;
-    console.log(util.format("This is a floating point number: %d", 2.23));
+    process.stdout.write (util.format("This is a floating point number: %d", 2.23));
     /*
     __++ ** --&$
     This a multiline comment asdasdsadasdasdasdasdasdsa
@@ -39,13 +40,13 @@ function main ()
 
     for(i = (0 + 1); i < 5; i++)
     {
-        console.log(util.format("%d %d %d", i, i, i));
-        console.log(util.format("This \" is; an arbitrarily; long string; *designed to test* the string joiner %d. %s ", i, "Whoaaa. is this another string???"));
-        console.log(util.format("Hmmmm \" I escaped \
+        process.stdout.write (util.format("%d %d %d", i, i, i));
+        process.stdout.write (util.format("This \" is; an arbitrarily; long string; *designed to test* the string joiner %d. %s ", i, "Whoaaa. is this another string???"));
+        process.stdout.write (util.format("Hmmmm \" I escaped \
     some string here %s", '\''));
     }
 
-    for(console.log(util.format("%d" + "%d\n", i, i)); i < 10; console.log(util.format("%d\n", i)))
+    for(process.stdout.write (util.format("%d" + "%d\n", i, i)); i < 10; process.stdout.write (util.format("%d\n", i)))
     {
         i++;
     }
@@ -69,11 +70,11 @@ function main ()
     var b = {ptr : c};
     b.ptr = 10;
     var d = b.ptr * c.ptr;
-    console.log(util.format("%d" + "%d\n", b.ptr, d.ptr));
-    console.log(util.format("%d %d %s\n" + "%d", b.ptr, d.ptr));
-    console.log(util.format("((abcd"));
-    console.log(util.format("(abcd"));
-    console.log(util.format("abcd"));
+    process.stdout.write (util.format("%d" + "%d\n", b.ptr, d.ptr));
+    process.stdout.write (util.format("%d %d %s\n" + "%d", b.ptr, d.ptr));
+    process.stdout.write (util.format("((abcd"));
+    process.stdout.write (util.format("(abcd"));
+    process.stdout.write (util.format("abcd"));
     b.ptr = Number(readlineSync.question(''));
     d = Number(readlineSync.question(''));
     return 0;
@@ -81,12 +82,12 @@ function main ()
 
 function mantap ()
 {
-    console.log(util.format("Halloooooooo"));
+    process.stdout.write (util.format("Halloooooooo"));
 }
 
 function cetak (a)
 {
-    console.log(util.format("%d", a.ptr));
+    process.stdout.write (util.format("%d", a.ptr));
 }
 
 main();

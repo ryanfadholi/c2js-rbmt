@@ -6,6 +6,10 @@ from taggedtoken import TaggedToken
 from collections import ChainMap, namedtuple
 from pattern import Pattern
 
+ARRAY_JS_DECL = [TaggedToken(tokens.assign, tokens.tag_assign),
+                 TaggedToken(tokens.bracket_left, tokens.tag_bracket_left),
+                 TaggedToken(tokens.bracket_right, tokens.tag_bracket_right)]
+
 class StructuralLexicalTransfer:
 
     def _callback_dict(self, callbacks):
@@ -22,7 +26,14 @@ class StructuralLexicalTransfer:
 
     def _helper_declaration(self, statement):
         is_lefthand = True
+        is_prefilled_value = False
+        prefilled_depth = 0
+
+        print("Called statement:")
+        print(statement)
+
         skip = False
+        skipped = False
         result = []
 
         for token in statement:
@@ -33,12 +44,31 @@ class StructuralLexicalTransfer:
 
             if is_lefthand and tag == tokens.tag_bracket_left:
                 skip = True
+                skipped = True
+            #right-hand bracket means hard-coded array values
+            elif not is_lefthand and tag == tokens.tag_bracket_left:
+                is_prefilled_value = True
+                prefilled_depth += 1
 
             if not skip:
+                #if the comma is inside a hard-coded value, skip this step
+                if ((tag == tokens.tag_comma or tag == tokens.tag_semicolon) and 
+                    not is_prefilled_value):
+                    #If there's no declaration and there's skipped brackets 
+                    if is_lefthand and skipped:
+                        result.extend(ARRAY_JS_DECL)
+                    is_lefthand = True
+                    skipped = False
+
                 result.append(token)
 
             if is_lefthand and tag == tokens.tag_bracket_right:
                 skip = False
+            elif not is_lefthand and tag == tokens.tag_bracket_right:
+                prefilled_depth -= 1
+                if prefilled_depth == 0:
+                    is_prefilled_value = False
+            
 
         statement.tokens = result
 
@@ -94,16 +124,32 @@ class StructuralLexicalTransfer:
                 cur_open_brackets = list(filter(lambda pos: pos > question_pos, obrs))
                 open_bracket_pos = min(cur_open_brackets)
                 next_input_part = statement[open_bracket_pos:]
+                member_access_tokens = []
+                bracket_depth = 0                
                 closed_bracket_pos = -1
                 closed_bracket_count = 0
                 open_bracket_count = 0
                 number_expected = False
                 variable_found = False
+                variable_member_access = False
                 variable_pointer = False
                 variable_token = None
 
                 #And finally start iterating!
                 for idx, token in enumerate(next_input_part):
+
+                    #Handles array inputs
+                    if variable_member_access:
+                        member_access_tokens.append(token)
+                        
+                        if token.tag == tokens.tag_bracket_left:
+                            bracket_depth += 1
+                        elif token.tag == tokens.tag_bracket_right:
+                            bracket_depth -= 1
+                        
+                        if bracket_depth == 0:
+                            variable_member_access = False
+
                     if token.tag == tokens.tag_parenthesis_left:
                         open_bracket_count += 1
                     elif token.tag == tokens.tag_parenthesis_right:
@@ -126,6 +172,10 @@ class StructuralLexicalTransfer:
                         #If previous token is not "&", this variable is a pointer variable
                         if next_input_part[idx-1].tag != tokens.tag_op_binary_and:
                             variable_pointer = True
+                    elif token.tag == tokens.tag_bracket_left and variable_found:
+                        variable_member_access = True
+                        bracket_depth += 1
+                        member_access_tokens.append(token)
 
                     #If a bracket is encountered and the set(s) is complete, stop iteration.
                     if open_bracket_count == closed_bracket_count and open_bracket_count > 0:
@@ -139,6 +189,8 @@ class StructuralLexicalTransfer:
                 statement.tokens = (
                     #First get all tokens before the "readlineSync", and the variable captured above                
                     (statement.tokens[:question_pos] + [variable_token])
+                    #Add array positional information if exists
+                    + (member_access_tokens)
                     #Add pointer access if the variable is a pointer.
                     + ([dot_token, ptr_access_token] if variable_pointer else [])
                     #Assignment operator
@@ -161,12 +213,30 @@ class StructuralLexicalTransfer:
         """Removes data type from parameter in function declarations"""
         result = []
         declaration_passed = False
+        function_name_passed = False
+        is_main = False
+        is_main_parameter = False
         for token in statement:
-            if token.tag == tokens.tag_function_type:
-                if declaration_passed:
-                    continue
-                else:
-                    declaration_passed = True
+            
+            if is_main:
+                if is_main_parameter:
+                    if token.tag == tokens.tag_parenthesis_right:
+                        is_main_parameter = False
+                    else:
+                        continue
+                if token.tag == tokens.tag_parenthesis_left:
+                    is_main_parameter = True
+            else:
+                if token.tag == tokens.tag_function_type:
+                    if declaration_passed:
+                        continue
+                    else:
+                        declaration_passed = True
+                elif token.tag == tokens.tag_name_var and not function_name_passed:
+                    if token.token == "main":
+                        is_main = True
+                    function_name_passed = True
+
             result.append(token)
 
         statement.tokens = result
@@ -322,15 +392,20 @@ class StructuralLexicalTransfer:
         declaration_tl = TranslationItem(tokens.datatypes, [tokens.tag_variable_type], [tokens.variable_type])
         function_tl = TranslationItem(tokens.datatypes, [tokens.tag_function_type], [tokens.function_type])
         printf_tl = TranslationItem(tokens.tag_output_func, 
-            [tokens.tag_console_func, tokens.tag_dot, tokens.tag_output_func, tokens.tag_parenthesis_left, tokens.tag_util_func, tokens.tag_dot, tokens.tag_format_func], 
-            [tokens.console_func, tokens.dot, tokens.output_func_js, tokens.parenthesis_left, tokens.util_func, tokens.dot, tokens.format_func])
+            [tokens.tag_process_func, tokens.tag_dot, tokens.tag_stdout_func,  tokens.tag_dot, tokens.tag_output_func
+                , tokens.tag_parenthesis_left, tokens.tag_util_func, tokens.tag_dot, tokens.tag_format_func],
+            [tokens.process_func, tokens.dot, tokens.stdout_func,  tokens.dot, tokens.output_func_js
+                , tokens.parenthesis_left, tokens.util_func, tokens.dot, tokens.format_func])
         scanf_tl = TranslationItem(tokens.tag_input_func,
             [tokens.tag_read_func, tokens.tag_dot, tokens.tag_input_func],
             [tokens.read_func, tokens.dot, tokens.input_func_js])
+        sizeof_tl = TranslationItem(tokens.tag_sizeof_func,
+            [tokens.tag_sizeof_lib, tokens.tag_dot, tokens.tag_sizeof_func],
+            [tokens.sizeof_func, tokens.dot, tokens.sizeof_func])
 
         #Join everything into lists
         default_helpers = [input_cb, output_cb, param_cb, pointer_cb, reference_cb]
-        default_translations = [declaration_tl, printf_tl, scanf_tl]
+        default_translations = [declaration_tl, printf_tl, scanf_tl, sizeof_tl]
         specific_helpers = []
         specific_translations = []
 
@@ -373,7 +448,6 @@ class StructuralLexicalTransfer:
             #If there's a helper function defined for the function, add them to the list to call later.
             helper = helpers.get(token.tag)
             if helper is not None and helper not in helper_functions:
-
                 helper_functions.append(helper)
 
         for helper in helper_functions:

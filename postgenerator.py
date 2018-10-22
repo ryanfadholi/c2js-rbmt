@@ -94,6 +94,7 @@ class PostGenerator:
         """Returns a list of libraries required for statements to run correctly."""
         input_lib = False
         output_lib = False
+        sizeof_lib = False
 
         for statement in statements:
             if statement.tag == constants.INPUT_TAG:
@@ -101,11 +102,19 @@ class PostGenerator:
             elif statement.tag == constants.OUTPUT_TAG:
                 output_lib = True
 
+            if not sizeof_lib:
+                for token in statement:
+                    if token.tag == tokens.tag_sizeof_func:
+                        sizeof_lib = True
+                        break
+
         to_write = []
         if input_lib:
             to_write.append("var readlineSync = require('readline-sync')")
         if output_lib:
             to_write.append("var util = require('util')")
+        if sizeof_lib:
+            to_write.append("var sizeof = require('sizeof')")
 
         return to_write
 
@@ -118,6 +127,8 @@ class PostGenerator:
             libs = self._requirements(statements)
             for lib in libs:
                 output.write(lib)
+                output.write("\n")
+            if libs:
                 output.write("\n")
 
             for statement in statements:

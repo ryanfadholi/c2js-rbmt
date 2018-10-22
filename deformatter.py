@@ -48,6 +48,20 @@ class Deformatter:
         else:
             return semicolon_pos
 
+    def _else_end(self, text):
+        """
+        Returns an index where the declaration statement ends. Returns -1 if the statement isn't ending yet.
+        Declaration could mean a variable or function declaration,
+        and the function will adapt depending on what it assumes the declaration is.
+        """
+        if_token_pos = self._statement_end("if", text)
+        semicolon_pos = self._statement_end(";", text)
+
+        if if_token_pos > 0 and if_token_pos < semicolon_pos:
+            return self._bracket_end(text)
+        
+        return self._statement_end("else", text)
+
     def _exceptions(self, text):
         """
         Returns a list of tuples representing ranges of every strings
@@ -119,9 +133,11 @@ class Deformatter:
         #if it's a declaration...
         elif self._starts_with(tkn.datatypes, line):
             end_pos = self._declaration_end(line)
-        #if it's conditionals...
-        elif self._starts_with(tkn.conditionals, line):
+        #if it's "if" keyword...
+        elif self._starts_with(tkn.if_conditional, line):
             end_pos = self._bracket_end(line)
+        elif self._starts_with(tkn.else_conditional, line):
+            end_pos = self._else_end(line)
         #if it's do loop....
         elif self._starts_with(tkn.dowhile_loop, line):
             end_pos = self._statement_end("do", line)

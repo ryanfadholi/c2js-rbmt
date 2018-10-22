@@ -81,7 +81,7 @@ class POSTagger:
         """Determines the tag of the respective token (according to the token dictionary constants)"""
         token_dicts = [tkn.arithmetic_operator, tkn.bitwise_operator, tkn.relational_operator, 
             tkn.compound_assignment_operator, tkn.logical_operator, tkn.misc_operator, tkn.comments, 
-            tkn.conditionals, tkn.datatypes, tkn.loops, tkn.special_functions, tkn.keywords ]
+            tkn.conditionals, tkn.datatypes, tkn.loops, tkn.special_functions, tkn.keywords]
 
         for token_dict in token_dicts:
             for key, value in token_dict.items():

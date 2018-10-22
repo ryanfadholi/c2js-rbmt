@@ -2,7 +2,8 @@
 variable_type = "var";  tag_variable_type = "variable-type"
 function_type = "function"; tag_function_type = "function-type"
 number_type = "Number"; tag_number_type = "number-type"
-console_func = "console"; tag_console_func = "console-function"
+process_func = "process"; tag_process_func = "process-module"
+stdout_func = "stdout"; tag_stdout_func = "stdout-module"
 util_func = "util"; tag_util_func = "utility-module"
 format_func = "format"; tag_format_func = "format-function"
 read_func = "readlineSync"; tag_read_func = "readline-module"
@@ -23,8 +24,9 @@ dowhile_loop = "do"; tag_dowhile_loop = "dowhile-loop"
 for_loop = "for"; tag_for_loop = "for-loop"
 while_loop = "while"; tag_while_loop = "while-loop"
 
-output_func = "printf"; output_func_js = "log"; tag_output_func = "output-function"
+output_func = "printf"; output_func_js = "write"; tag_output_func = "output-function"
 input_func = "scanf"; input_func_js = "question"; tag_input_func = "input-function"
+sizeof_func = "sizeof"; tag_sizeof_lib = "sizeof-module"; tag_sizeof_func = "sizeof-function"
 
 include_kw = "include"; tag_include_kw = "include-keyword"
 return_kw = "return"; tag_return_kw = "return-keyword"
@@ -204,7 +206,8 @@ loops = {
 
 special_functions = {
     tag_output_func : output_func,
-    tag_input_func : input_func
+    tag_input_func : input_func,
+    tag_sizeof_func : sizeof_func
 }
 
 keywords = {
