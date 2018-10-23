@@ -64,7 +64,7 @@ class PostGenerator:
         found = list(filter(lambda pos: pos > -1, nearest_each))
 
         return min(found) if found else -1
-        
+    
     def _reformat(self, string):
         """
         Converts C formatting characters unknown by JS (for example "%f" for float) to its nearest equivalence in JS.
@@ -94,6 +94,7 @@ class PostGenerator:
         """Returns a list of libraries required for statements to run correctly."""
         input_lib = False
         output_lib = False
+        rand_lib = False
         sizeof_lib = False
 
         for statement in statements:
@@ -102,11 +103,13 @@ class PostGenerator:
             elif statement.tag == constants.OUTPUT_TAG:
                 output_lib = True
 
-            if not sizeof_lib:
+            if False in [rand_lib, sizeof_lib]:
                 for token in statement:
-                    if token.tag == tokens.tag_sizeof_func:
+                    if token.tag == tokens.tag_rand_func:
+                        rand_lib = True
+                    elif token.tag == tokens.tag_sizeof_func:
                         sizeof_lib = True
-                        break
+                        
 
         to_write = []
         if input_lib:
@@ -115,6 +118,11 @@ class PostGenerator:
             to_write.append("var util = require('util')")
         if sizeof_lib:
             to_write.append("var sizeof = require('sizeof')")
+        if rand_lib:
+            to_write.append("function rand() {")
+            to_write.append("   return Math.floor(Math.random() * Math.floor(32767));")
+            to_write.append("}")
+
 
         return to_write
 

@@ -29,9 +29,6 @@ class StructuralLexicalTransfer:
         is_prefilled_value = False
         prefilled_depth = 0
 
-        print("Called statement:")
-        print(statement)
-
         skip = False
         skipped = False
         result = []
@@ -69,6 +66,31 @@ class StructuralLexicalTransfer:
                 if prefilled_depth == 0:
                     is_prefilled_value = False
             
+
+        statement.tokens = result
+
+    def _helper_divide(self, statement, variables):
+        variable_type = variables[statement[0].token]
+        is_integer = (variable_type == tokens.tag_int_type) 
+        result = []
+
+        print(f"TERPANGGYL, {is_integer}")
+
+        floor_start = [TaggedToken(tokens.math_func, tokens.tag_math_func),
+                       TaggedToken(tokens.dot, tokens.tag_dot),
+                       TaggedToken(tokens.floor_func, tokens.tag_floor_func),
+                       TaggedToken(tokens.parenthesis_left, tokens.tag_parenthesis_left)]
+
+        floor_end = [TaggedToken(tokens.parenthesis_right, tokens.tag_parenthesis_right)]
+
+        for token in statement:
+            if is_integer and token.tag == tokens.tag_semicolon:
+                result.extend(floor_end)
+
+            result.append(token)
+            
+            if is_integer and token.tag == tokens.tag_assign:
+                result.extend(floor_start)
 
         statement.tokens = result
 
@@ -298,6 +320,9 @@ class StructuralLexicalTransfer:
         declaration_sp = Pattern(constants.DECLARATION_TAG, 
                                  [tokens.datatypes],
                                  [tokens.tag_semicolon])
+        define_sp = Pattern(constants.DEFINE_TAG,
+                            [tokens.tag_preprocessor, tokens.tag_define_kw],
+                            carryover=False)
         function_call_sp = Pattern(constants.FUNCTION_CALL_TAG,
                                     [tokens.tag_name_var, tokens.tag_parenthesis_left])
         function_definition_sp = Pattern(constants.FUNCTION_DEFINITION_TAG, 
@@ -330,7 +355,7 @@ class StructuralLexicalTransfer:
         output_sp = Pattern(constants.OUTPUT_TAG,
                             [tokens.tag_output_func])
         preprocessor_sp = Pattern(constants.PREPROCESSOR_TAG,
-                                  [tokens.tag_preprocessor],
+                                  [tokens.tag_preprocessor, tokens.tag_include_kw],
                                   carryover=False)
         return_sp = Pattern(constants.RETURN_TAG,
                             [tokens.tag_return_kw])
@@ -340,7 +365,7 @@ class StructuralLexicalTransfer:
 
         #NOTE: function_declaration MUST be checked BEFORE declaration! 
         #Because declaration essentially checks a subset of function_declaration, if declaration are put before it everything will be identified as declaration.
-        patterns = [block_start_sp, block_end_sp, preprocessor_sp, single_comment_sp, multi_comment_sp, 
+        patterns = [block_start_sp, block_end_sp, preprocessor_sp, define_sp, single_comment_sp, multi_comment_sp, 
                     input_sp, output_sp, return_sp, function_sp, function_call_sp, function_definition_sp, declaration_sp, conditional_sp,
                     loop_sp, initiation_sp, initiation_pointer_sp, post_decrement_sp, post_increment_sp, pre_decrement_sp,
                     pre_increment_sp]
@@ -371,8 +396,13 @@ class StructuralLexicalTransfer:
                     result[key] = item
         return result
 
-    def translate(self, statement):
+    def translate(self, statement, preprocessors=None, variables=None):
         """Translates C TaggedStatement to its JS equivalent."""
+
+        if preprocessors is None:
+            preprocessors = {}
+        if variables is None:
+            variables = {}
 
         #Define namedtuples needed by helper callbacks & translations
         CallbackPair = namedtuple("CallbackPair", ["trigger", "function"])
@@ -380,7 +410,8 @@ class StructuralLexicalTransfer:
 
         #Define helper callbacks here
         array_decl_cb = CallbackPair(tokens.tag_bracket_left, self._helper_declaration)
-        input_cb = CallbackPair(tokens.tag_input_func, self._helper_input)
+        division_cb = CallbackPair(tokens.tag_op_divide, lambda statement: self._helper_divide(statement, variables))
+        input_cb = CallbackPair(tokens.tag_input_func, self._helper_input(statement))
         output_cb = CallbackPair(tokens.tag_output_func, self._helper_output)
         param_cb = CallbackPair(tokens.tag_function_type, self._helper_parameter)
         pointer_cb = CallbackPair(tokens.tag_op_multiply, self._helper_pointer)
@@ -402,15 +433,59 @@ class StructuralLexicalTransfer:
         sizeof_tl = TranslationItem(tokens.tag_sizeof_func,
             [tokens.tag_sizeof_lib, tokens.tag_dot, tokens.tag_sizeof_func],
             [tokens.sizeof_func, tokens.dot, tokens.sizeof_func])
+        sqrt_tl  = TranslationItem(tokens.tag_sqrt_func,
+            [tokens.tag_math_func, tokens.tag_dot, tokens.tag_sqrt_func],
+            [tokens.math_func, tokens.dot, tokens.sqrt_func])
 
         #Join everything into lists
         default_helpers = [input_cb, output_cb, param_cb, pointer_cb, reference_cb]
-        default_translations = [declaration_tl, printf_tl, scanf_tl, sizeof_tl]
+        default_translations = [declaration_tl, printf_tl, scanf_tl, sizeof_tl, sqrt_tl]
         specific_helpers = []
         specific_translations = []
 
         #Start translating!
         statement = self._identify(statement)
+
+        #Build variables dictionary while you're at it
+        if statement.tag in [constants.FUNCTION_TAG, constants.FUNCTION_DEFINITION_TAG]:
+            datatype = statement[0].tag
+            variable = statement[1].token
+            variables[variable] = datatype
+            variable_expected = False
+            for token in statement:
+                if token.tag in tokens.datatypes:
+                    datatype = token.tag
+                    variable_expected = True
+                if token.tag == tokens.tag_name_var and variable_expected:
+                    variables[token.token] = datatype
+                    variable_expected = False
+        elif statement.tag == constants.DECLARATION_TAG:
+            is_lefthand = True
+            in_bracket = False
+            bracket_count = 0
+            datatype = statement[0].tag
+            for token in statement:
+                if token.tag == tokens.tag_assign:
+                    is_lefthand = False
+                elif token.tag == tokens.tag_comma:
+                    is_lefthand = True
+                elif token.tag == tokens.tag_bracket_left:
+                    in_bracket = True
+                    bracket_count += 1
+                elif token.tag == tokens.tag_bracket_right:
+                    bracket_count -= 1
+                    if bracket_count == 0:
+                        in_bracket = False
+                elif token.tag == tokens.tag_name_var:
+                    if is_lefthand and not in_bracket:
+                        variables[token.token] = datatype
+
+        #Add preprocessor if it's define statement
+        if statement.tag == constants.DEFINE_TAG:
+            #Keyword is placed after preprocessor tag ('#') and define k
+            keyword = statement[2].token
+            to_replace = statement[3:]
+            preprocessors[keyword] = to_replace
 
         #Immediately return if it's unneeded statements (e.g function declaration)
         if not statement.carryover:
@@ -424,10 +499,23 @@ class StructuralLexicalTransfer:
         elif statement.tag == constants.DECLARATION_TAG:
             specific_helpers.append(array_decl_cb)
             specific_translations.extend([array_prefill_start_tl, array_prefill_end_tl])
+        elif statement.tag == constants.INITIATION_TAG:
+            specific_helpers.append(division_cb)
 
         #Prioritize special-case helpers and translations. Convert them to dicts first.
         helpers = ChainMap(self._callback_dict(specific_helpers), self._callback_dict(default_helpers))
         translations = ChainMap(self._translation_dict(specific_translations), self._translation_dict(default_translations))
+
+        #Process preprocessors
+        if preprocessors:
+            result = []
+            for token in statement:
+                preprocess_value = preprocessors.get(token.token)
+                if preprocess_value is not None:
+                    result.extend(preprocess_value)
+                else:
+                    result.append(token)
+        statement.tokens = result
 
         #Start translating
         result = []
@@ -439,6 +527,7 @@ class StructuralLexicalTransfer:
                 result.extend(new_tokens)
             else:
                 result.append(token)
+
         #Overwrite statement tokens with translation results
         statement.tokens = result
 

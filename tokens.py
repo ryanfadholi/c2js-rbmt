@@ -8,6 +8,8 @@ util_func = "util"; tag_util_func = "utility-module"
 format_func = "format"; tag_format_func = "format-function"
 read_func = "readlineSync"; tag_read_func = "readline-module"
 ptr_access = "ptr"; tag_ptr_access = "pointer-access"
+math_func = "Math"; tag_math_func = "math-module"
+floor_func = "floor"; tag_floor_func = "floor-function"
 
 if_conditional = "if"; tag_if_conditional = "if-cond"
 else_conditional = "else"; tag_else_conditional = "else-cond"
@@ -26,8 +28,11 @@ while_loop = "while"; tag_while_loop = "while-loop"
 
 output_func = "printf"; output_func_js = "write"; tag_output_func = "output-function"
 input_func = "scanf"; input_func_js = "question"; tag_input_func = "input-function"
+rand_func = "rand"; tag_rand_func = "random-function"
 sizeof_func = "sizeof"; tag_sizeof_lib = "sizeof-module"; tag_sizeof_func = "sizeof-function"
+sqrt_func = "sqrt"; tag_sqrt_func = "sqrt-function"
 
+define_kw = "define"; tag_define_kw = "define-keyword"
 include_kw = "include"; tag_include_kw = "include-keyword"
 return_kw = "return"; tag_return_kw = "return-keyword"
 
@@ -111,7 +116,7 @@ string_identifiers = [
     single_quote, double_quote
 ]
 
-possible_lefthand_operations = [tag_name_var, tag_val_char, tag_val_float, tag_val_int, tag_val_string, tag_parenthesis_right]
+possible_lefthand_operations = [tag_name_var, tag_val_char, tag_val_float, tag_val_int, tag_val_string, tag_parenthesis_right, tag_bracket_right]
 
 arithmetic_operator = {
     tag_op_add : op_add,
@@ -207,10 +212,13 @@ loops = {
 special_functions = {
     tag_output_func : output_func,
     tag_input_func : input_func,
-    tag_sizeof_func : sizeof_func
+    tag_rand_func : rand_func,
+    tag_sizeof_func : sizeof_func,
+    tag_sqrt_func : sqrt_func
 }
 
 keywords = {
+    tag_define_kw : define_kw,
     tag_include_kw : include_kw,
     tag_return_kw : return_kw
 }

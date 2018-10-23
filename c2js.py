@@ -16,6 +16,8 @@ DEFAULT_RESULT_FILE = "result.js"
 #TODO: Write dedicated tags() function in tagged_statement that returns tag only to simplify tag-checking?
 #TODO: Fix %.2f/%3d etc conversions
 
+#TODO: Translate x /= y to x = x / y and apply divide helper to it
+
 class C2js:
     def __init__(self):
         self._deformatter = deformatter.Deformatter()
@@ -45,21 +47,24 @@ class C2js:
         count_comment = 0
         count_etc = 0
 
+        #preprocessor & variable list (for translate)
+        preprocessors = {}
+        variables = {}
+
         if test_mode:
             #suppress notices & warnings from modules
             sys.stdout = open(os.devnull, 'w')
             console_print = False
 
-        statements = [self._sltransfer.translate(self._postagger.tag(stmt)) 
+        statements = [self._sltransfer.translate(self._postagger.tag(stmt), preprocessors, variables) 
                       for stmt in self._deformatter.statements()]
         self._postgenerator.write(statements)
 
         if console_print:
-            #DELET
-            for statement in [self._postagger.tag(stmt) for stmt in self._deformatter.statements()]:
-                print(statement)
             for statement in statements:
                 print(statement)
+            print("Variables:")
+            print(variables)
 
         if test_mode:
             #re-enable console output
