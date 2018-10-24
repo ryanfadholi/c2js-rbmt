@@ -55,7 +55,7 @@ class POSTagger:
                 result.append("".join(tokens[index:index+to_join]))
                 index += to_join
             #Merge dots of library names in include statements.
-            elif tokens[0] == "#" and tokens[index+1] == ".":
+            elif tokens[0] == "#" and tokens[1] == tkn.include_kw and tokens[index+1] == ".":
                 result.append("".join(tokens[index:index+3]))
                 index += 3                
             else:

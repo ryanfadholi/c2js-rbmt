@@ -29,8 +29,13 @@ while_loop = "while"; tag_while_loop = "while-loop"
 output_func = "printf"; output_func_js = "write"; tag_output_func = "output-function"
 input_func = "scanf"; input_func_js = "question"; tag_input_func = "input-function"
 rand_func = "rand"; tag_rand_func = "random-function"
+pow_func = "pow"; tag_pow_func = "power-function"
 sizeof_func = "sizeof"; tag_sizeof_lib = "sizeof-module"; tag_sizeof_func = "sizeof-function"
 sqrt_func = "sqrt"; tag_sqrt_func = "sqrt-function"
+
+cos_func = "cos"; tag_cos_func = "cos-function"
+sin_func = "sin"; tag_sin_func = "sin-function"
+tan_func = "tan"; tag_tan_func = "tan-function"
 
 define_kw = "define"; tag_define_kw = "define-keyword"
 include_kw = "include"; tag_include_kw = "include-keyword"
@@ -212,9 +217,14 @@ loops = {
 special_functions = {
     tag_output_func : output_func,
     tag_input_func : input_func,
+    tag_pow_func : pow_func,
     tag_rand_func : rand_func,
     tag_sizeof_func : sizeof_func,
-    tag_sqrt_func : sqrt_func
+    tag_sqrt_func : sqrt_func,
+    
+    tag_cos_func : cos_func,
+    tag_tan_func : tan_func,
+    tag_sin_func : sin_func
 }
 
 keywords = {

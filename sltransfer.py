@@ -69,12 +69,39 @@ class StructuralLexicalTransfer:
 
         statement.tokens = result
 
-    def _helper_divide(self, statement, variables):
-        variable_type = variables[statement[0].token]
-        is_integer = (variable_type == tokens.tag_int_type) 
-        result = []
+    # def _helper_divide(self, statement, variables):
+    #     variable_type = variables[statement[0].token]
+    #     is_integer = (variable_type == tokens.tag_int_type) 
+    #     result = []
 
-        print(f"TERPANGGYL, {is_integer}")
+    #     floor_start = [TaggedToken(tokens.math_func, tokens.tag_math_func),
+    #                    TaggedToken(tokens.dot, tokens.tag_dot),
+    #                    TaggedToken(tokens.floor_func, tokens.tag_floor_func),
+    #                    TaggedToken(tokens.parenthesis_left, tokens.tag_parenthesis_left)]
+
+    #     floor_end = [TaggedToken(tokens.parenthesis_right, tokens.tag_parenthesis_right)]
+
+    #     for token in statement:
+    #         if is_integer and token.tag == tokens.tag_semicolon:
+    #             result.extend(floor_end)
+
+    #         result.append(token)
+            
+    #         if is_integer and token.tag == tokens.tag_assign:
+    #             result.extend(floor_start)
+
+    #     statement.tokens = result
+
+    def _helper_divide(self, statement, variables):
+        
+        print("Called for:")
+        print(statement)
+
+        cur_idx = -1
+        op_found = False
+
+        wrap_start = []
+        wrap_end = []
 
         floor_start = [TaggedToken(tokens.math_func, tokens.tag_math_func),
                        TaggedToken(tokens.dot, tokens.tag_dot),
@@ -83,14 +110,75 @@ class StructuralLexicalTransfer:
 
         floor_end = [TaggedToken(tokens.parenthesis_right, tokens.tag_parenthesis_right)]
 
-        for token in statement:
-            if is_integer and token.tag == tokens.tag_semicolon:
-                result.extend(floor_end)
+        for idx, token in enumerate(statement):
+            if token.tag == tokens.tag_op_divide:
+                #raise flag
+                cur_idx = idx
+                op_found = True
 
+            #start traceback
+            if op_found:
+                cur_start = -1
+                cur_end = -1
+                is_assignment = False
+                pr_count = 0
+                trace_idx = cur_idx - 1
+
+                while(trace_idx > -1):
+                    cur_token = statement[trace_idx]
+                    if cur_token.tag in [tokens.tag_comma, tokens.tag_semicolon]:
+                        break
+                    elif cur_token.tag == tokens.tag_assign:
+                        is_assignment = True
+                        cur_start = trace_idx
+                        break
+                    elif cur_token.tag == tokens.tag_parenthesis_left:
+                        pr_count += 1
+                    elif cur_token.tag == tokens.tag_parenthesis_right:
+                        pr_count -= 1
+                    trace_idx -= 1
+
+                if is_assignment:
+                    variable_type = variables[statement[trace_idx-1].token]
+                    is_integer = (variable_type == tokens.tag_int_type)
+                        
+                    #start tracing forward
+                    ftrace_idx = cur_idx + 1
+                    while(ftrace_idx < len(statement)):
+                        cur_token = statement[ftrace_idx]
+                        if cur_token.tag == tokens.tag_parenthesis_left:
+                            pr_count += 1
+                        elif cur_token.tag == tokens.tag_parenthesis_right:
+                            if pr_count == 0:
+                                cur_end = ftrace_idx
+                                break
+                            pr_count -= 1
+                        elif cur_token.tag in [tokens.tag_comma, tokens.tag_semicolon]:
+                            cur_end = ftrace_idx
+                            break
+                        ftrace_idx += 1
+                
+                if is_integer:
+                    wrap_start.append(cur_start)
+                    wrap_end.append(cur_end)
+
+                #reset flags
+                op_found = False
+
+        print("wraps:")
+        print(wrap_start)
+        print(wrap_end)
+
+        result = []
+        for idx, token in enumerate(statement):
+            if idx in wrap_end:
+                result.extend(floor_end)
+        
             result.append(token)
-            
-            if is_integer and token.tag == tokens.tag_assign:
+
+            if idx in wrap_start:
                 result.extend(floor_start)
+        
 
         statement.tokens = result
 
@@ -128,11 +216,13 @@ class StructuralLexicalTransfer:
         open_parenthesis_token = TaggedToken(tokens.parenthesis_left, tokens.tag_parenthesis_left)
         ptr_access_token = TaggedToken(tokens.ptr_access, tokens.tag_ptr_access)
 
+        print("Current statementASDF:")
+        print(statement)
+
         if input_tokens:
             #At start, we haven't processed anything.
             processed_input_count = 0
             while True:
-
                 #Rerun the positioning check for every loop, as the position may change after the previous loop.
                 obrs, input_tokens = statement.find_all(tokens.tag_parenthesis_left, 
                                                         tokens.tag_read_func)
@@ -227,6 +317,9 @@ class StructuralLexicalTransfer:
                     #Finally, append all tokens after the original closed bracket.
                     + (statement.tokens[closed_bracket_pos:])
                 )
+
+                print("Operation result:")
+                print(statement)
 
                 #We have processed yet another input substatement. Increment. Reiterate.
                 processed_input_count += 1
@@ -411,7 +504,7 @@ class StructuralLexicalTransfer:
         #Define helper callbacks here
         array_decl_cb = CallbackPair(tokens.tag_bracket_left, self._helper_declaration)
         division_cb = CallbackPair(tokens.tag_op_divide, lambda statement: self._helper_divide(statement, variables))
-        input_cb = CallbackPair(tokens.tag_input_func, self._helper_input(statement))
+        input_cb = CallbackPair(tokens.tag_input_func, self._helper_input)
         output_cb = CallbackPair(tokens.tag_output_func, self._helper_output)
         param_cb = CallbackPair(tokens.tag_function_type, self._helper_parameter)
         pointer_cb = CallbackPair(tokens.tag_op_multiply, self._helper_pointer)
@@ -422,6 +515,9 @@ class StructuralLexicalTransfer:
         array_prefill_end_tl = TranslationItem(tokens.tag_curly_right, [tokens.tag_bracket_right], [tokens.bracket_right])
         declaration_tl = TranslationItem(tokens.datatypes, [tokens.tag_variable_type], [tokens.variable_type])
         function_tl = TranslationItem(tokens.datatypes, [tokens.tag_function_type], [tokens.function_type])
+        pow_tl  = TranslationItem(tokens.tag_pow_func,
+            [tokens.tag_math_func, tokens.tag_dot, tokens.tag_pow_func],
+            [tokens.math_func, tokens.dot, tokens.pow_func])
         printf_tl = TranslationItem(tokens.tag_output_func, 
             [tokens.tag_process_func, tokens.tag_dot, tokens.tag_stdout_func,  tokens.tag_dot, tokens.tag_output_func
                 , tokens.tag_parenthesis_left, tokens.tag_util_func, tokens.tag_dot, tokens.tag_format_func],
@@ -436,10 +532,20 @@ class StructuralLexicalTransfer:
         sqrt_tl  = TranslationItem(tokens.tag_sqrt_func,
             [tokens.tag_math_func, tokens.tag_dot, tokens.tag_sqrt_func],
             [tokens.math_func, tokens.dot, tokens.sqrt_func])
+        
+        cos_tl  = TranslationItem(tokens.tag_cos_func,
+            [tokens.tag_math_func, tokens.tag_dot, tokens.tag_cos_func],
+            [tokens.math_func, tokens.dot, tokens.cos_func])
+        sin_tl  = TranslationItem(tokens.tag_sin_func,
+            [tokens.tag_math_func, tokens.tag_dot, tokens.tag_sin_func],
+            [tokens.math_func, tokens.dot, tokens.sin_func])
+        tan_tl  = TranslationItem(tokens.tag_tan_func,
+            [tokens.tag_math_func, tokens.tag_dot, tokens.tag_tan_func],
+            [tokens.math_func, tokens.dot, tokens.tan_func])
 
         #Join everything into lists
-        default_helpers = [input_cb, output_cb, param_cb, pointer_cb, reference_cb]
-        default_translations = [declaration_tl, printf_tl, scanf_tl, sizeof_tl, sqrt_tl]
+        default_helpers = [division_cb, input_cb, output_cb, param_cb, pointer_cb, reference_cb]
+        default_translations = [declaration_tl, pow_tl, printf_tl, scanf_tl, sizeof_tl, sqrt_tl, cos_tl, sin_tl, tan_tl]
         specific_helpers = []
         specific_translations = []
 
@@ -483,8 +589,20 @@ class StructuralLexicalTransfer:
         #Add preprocessor if it's define statement
         if statement.tag == constants.DEFINE_TAG:
             #Keyword is placed after preprocessor tag ('#') and define k
+            print("DEFINE STATEMENT:")
+            print(statement)
             keyword = statement[2].token
             to_replace = statement[3:]
+            #Unroll defines itself
+            if preprocessors:
+                result = []
+                for token in to_replace:
+                    preprocess_value = preprocessors.get(token.token)
+                    if preprocess_value is not None:
+                        result.extend(preprocess_value)
+                    else:
+                        result.append(token)
+                to_replace = result
             preprocessors[keyword] = to_replace
 
         #Immediately return if it's unneeded statements (e.g function declaration)
@@ -499,8 +617,6 @@ class StructuralLexicalTransfer:
         elif statement.tag == constants.DECLARATION_TAG:
             specific_helpers.append(array_decl_cb)
             specific_translations.extend([array_prefill_start_tl, array_prefill_end_tl])
-        elif statement.tag == constants.INITIATION_TAG:
-            specific_helpers.append(division_cb)
 
         #Prioritize special-case helpers and translations. Convert them to dicts first.
         helpers = ChainMap(self._callback_dict(specific_helpers), self._callback_dict(default_helpers))
@@ -515,7 +631,7 @@ class StructuralLexicalTransfer:
                     result.extend(preprocess_value)
                 else:
                     result.append(token)
-        statement.tokens = result
+            statement.tokens = result
 
         #Start translating
         result = []

@@ -72,7 +72,7 @@ class PostGenerator:
 
         #Define the mappings
         kdigits_three = (["%lli"], 4, "%d")
-        kdigits_two = (["%hi", "%li"], 3, "%d")
+        kdigits_two = (["%hi", "%li", "%lf"], 3, "%d")
         kdigits_one = (["%f", "%i"], 2, "%d")
         kchar = (["%c"], 2, "%s")
 

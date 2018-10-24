@@ -65,6 +65,8 @@ class C2js:
                 print(statement)
             print("Variables:")
             print(variables)
+            print("Preprocessors:")
+            print(preprocessors)
 
         if test_mode:
             #re-enable console output
