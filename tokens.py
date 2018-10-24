@@ -9,7 +9,7 @@ format_func = "format"; tag_format_func = "format-function"
 read_func = "readlineSync"; tag_read_func = "readline-module"
 ptr_access = "ptr"; tag_ptr_access = "pointer-access"
 math_func = "Math"; tag_math_func = "math-module"
-floor_func = "floor"; tag_floor_func = "floor-function"
+trunc_func = "trunc"; tag_trunc_func = "truncate-function"
 
 if_conditional = "if"; tag_if_conditional = "if-cond"
 else_conditional = "else"; tag_else_conditional = "else-cond"
