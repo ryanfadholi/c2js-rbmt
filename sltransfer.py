@@ -13,10 +13,9 @@ ARRAY_JS_DECL = [TaggedToken(tokens.assign, tokens.tag_assign),
 class StructuralLexicalTransfer:
 
     def __init__(self):
-        self.func_context = None
-        self.preprocessors = {}
-        self.variables = {}
-        self.context_depth = 0
+        self._func_context = None
+        self._preprocessors = {}
+        self._variables = {}
 
     def _callback_dict(self, callbacks):
         """Converts a list of CallbackPairs to a dictionary, with its trigger as keys and its function as the values"""
@@ -76,26 +75,24 @@ class StructuralLexicalTransfer:
         statement.tokens = result
 
     def _capture_last_variable(self, input_tokens):
+        return self._capture_variable_tokens(input_tokens)[0].token
+
+    def _capture_variable_tokens(self, input_tokens):
         bracket_depth = 0
+        results = []
+        
         for token in reversed(input_tokens):
+            results.append(token)
             if token.tag == tokens.tag_name_var and bracket_depth == 0:
-                return token.token
+                break
             elif token.tag == tokens.tag_bracket_right:
                 bracket_depth += 1
             elif token.tag == tokens.tag_bracket_left:
                 bracket_depth -= 1
-        return None
-
-    def _capture_variable_tokens(self, input_tokens):
-        results = []
-        for token in reversed(input_tokens):
-            results.append(token)
-            if token.tag == tokens.tag_name_var:
-                break
         results.reverse()
         return results
 
-    def _helper_comp(self, statement, variables):
+    def _helper_comp(self, statement):
                 
         assign_token = TaggedToken(tokens.assign, tokens.tag_assign)
         divide_token = TaggedToken(tokens.op_divide, tokens.tag_op_divide)
@@ -119,10 +116,10 @@ class StructuralLexicalTransfer:
         statement.tokens = results
 
         if div_expanded or mul_expanded:
-            self._helper_divide(statement,variables)
+            self._helper_divide(statement)
 
 
-    def _helper_divide(self, statement, variables):
+    def _helper_divide(self, statement):
         cur_idx = -1
         op_found = False
 
@@ -148,7 +145,7 @@ class StructuralLexicalTransfer:
                 cur_start = -1
                 cur_end = -1
                 is_assignment = False
-                is_integer = False
+                is_round = False
                 pr_count = 0
                 trace_idx = cur_idx - 1
 
@@ -168,9 +165,9 @@ class StructuralLexicalTransfer:
 
                 if is_assignment:
                     last_variable = self._capture_last_variable(statement[:trace_idx])
-                    variable_type = variables[last_variable]
+                    variable_type = self._variables[last_variable]
 
-                    is_integer = (variable_type == tokens.tag_int_type)
+                    is_round = (variable_type in tokens.round_datatypes)
                         
                     #start tracing forward
                     ftrace_idx = cur_idx + 1
@@ -192,7 +189,7 @@ class StructuralLexicalTransfer:
                                 break
                         ftrace_idx += 1
                 
-                if is_integer:
+                if is_round:
                     wrap_start.append(cur_start)
                     wrap_end.append(cur_end)
 
@@ -402,7 +399,7 @@ class StructuralLexicalTransfer:
 
         statement.tokens = result
 
-    def _helper_return(self, statement, variables):
+    def _helper_return(self, statement):
         trunc_start = [TaggedToken(tokens.math_func, tokens.tag_math_func),
                        TaggedToken(tokens.dot, tokens.tag_dot),
                        TaggedToken(tokens.trunc_func, tokens.tag_trunc_func),
@@ -410,9 +407,9 @@ class StructuralLexicalTransfer:
 
         trunc_end = [TaggedToken(tokens.parenthesis_right, tokens.tag_parenthesis_right)]
 
-        function_type = variables[self.func_context]
-        is_integer = (function_type == tokens.tag_int_type)
-        if is_integer:
+        function_type = self._variables[self._func_context]
+        is_round = (function_type in tokens.round_datatypes)
+        if is_round:
             results = []
             after_return = False
             for token in statement:
@@ -425,7 +422,7 @@ class StructuralLexicalTransfer:
                     after_return = True
             statement.tokens = results
 
-    def _helper_pointer(self, statement, variables):
+    def _helper_pointer(self, statement):
         """Adds pointer member access for pointer-emulating variables in translation result"""
         js_pointer = [TaggedToken(tokens.dot, tokens.tag_dot), TaggedToken(tokens.ptr_access, tokens.tag_ptr_access)]
 
@@ -452,7 +449,7 @@ class StructuralLexicalTransfer:
         statement.tokens = result
 
         if is_multiply_exists:
-            self._helper_divide(statement, variables)
+            self._helper_divide(statement)
 
     def _identify(self, statement):
         """Identifies statement type"""
@@ -542,18 +539,12 @@ class StructuralLexicalTransfer:
         return result
 
     def reset(self):
-        self.context_depth = 0
-        self.func_context = None
-        self.preprocessors = {}
-        self.variables = {}
+        self._func_context = None
+        self._preprocessors = {}
+        self._variables = {}
 
-    def translate(self, statement, preprocessors=None, variables=None):
+    def translate(self, statement):
         """Translates C TaggedStatement to its JS equivalent."""
-
-        if preprocessors is None:
-            preprocessors = {}
-        if variables is None:
-            variables = {}
 
         #Define namedtuples needed by helper callbacks & translations
         CallbackPair = namedtuple("CallbackPair", ["trigger", "function"])
@@ -561,15 +552,15 @@ class StructuralLexicalTransfer:
 
         #Define helper callbacks here
         array_decl_cb = CallbackPair(tokens.tag_bracket_left, self._helper_declaration)
-        comp_div_cb = CallbackPair(tokens.tag_op_comp_divide, lambda statement: self._helper_comp(statement, variables))
-        comp_mul_cb = CallbackPair(tokens.tag_op_comp_multiply, lambda statement: self._helper_comp(statement, variables))
-        division_cb = CallbackPair(tokens.tag_op_divide, lambda statement: self._helper_divide(statement, variables))
+        comp_div_cb = CallbackPair(tokens.tag_op_comp_divide, self._helper_comp)
+        comp_mul_cb = CallbackPair(tokens.tag_op_comp_multiply, self._helper_comp)
+        division_cb = CallbackPair(tokens.tag_op_divide, self._helper_divide)
         input_cb = CallbackPair(tokens.tag_input_func, self._helper_input)
         output_cb = CallbackPair(tokens.tag_output_func, self._helper_output)
         param_cb = CallbackPair(tokens.tag_function_type, self._helper_parameter)
-        pointer_cb = CallbackPair(tokens.tag_op_multiply, lambda statement: self._helper_pointer(statement, variables))
+        pointer_cb = CallbackPair(tokens.tag_op_multiply, self._helper_pointer)
         reference_cb = CallbackPair(tokens.tag_op_binary_and, self._helper_reference)
-        return_cb = CallbackPair(tokens.tag_return_kw, lambda statement: self._helper_return(statement, variables))
+        return_cb = CallbackPair(tokens.tag_return_kw, self._helper_return)
     
 
         #Define translations here
@@ -614,18 +605,54 @@ class StructuralLexicalTransfer:
         #Start translating!
         statement = self._identify(statement)
 
+        #Add preprocessor if it's define statement
+        if statement.tag == constants.DEFINE_TAG:
+            #Keyword is placed after preprocessor tag ('#') and define keyword
+            keyword = statement[2].token
+            to_replace = statement[3:]
+            #Unroll define itself
+            if self._preprocessors:
+                result = []
+                for token in to_replace:
+                    preprocess_value = self._preprocessors.get(token.token)
+                    if preprocess_value is not None:
+                        result.extend(preprocess_value)
+                    else:
+                        result.append(token)
+                to_replace = result
+            self._preprocessors[keyword] = to_replace
+
+        #Process preprocessors
+        if self._preprocessors:
+            result = []
+            for token in statement:
+                preprocess_value = self._preprocessors.get(token.token)
+                if preprocess_value is not None:
+                    result.extend(preprocess_value)
+                else:
+                    result.append(token)
+            statement.tokens = result
+
+        #Immediately return if it's unneeded statements (e.g function declaration)
+        if not statement.carryover:
+            statement.tokens = []
+            return statement
+      
+        if statement.tag == constants.FUNCTION_TAG:
+            self._func_context = statement[1].token
+
         #Build variables dictionary while you're at it
         if statement.tag in [constants.FUNCTION_TAG, constants.FUNCTION_DEFINITION_TAG]:
             datatype = statement[0].tag
             variable = statement[1].token
-            variables[variable] = datatype
+            self._variables[variable] = datatype
             variable_expected = False
             for token in statement:
                 if token.tag in tokens.datatypes:
                     datatype = token.tag
                     variable_expected = True
                 if token.tag == tokens.tag_name_var and variable_expected:
-                    variables[token.token] = datatype
+                    self._variables[token.token] = datatype
                     variable_expected = False
         elif statement.tag == constants.DECLARATION_TAG:
             is_lefthand = True
@@ -646,32 +673,7 @@ class StructuralLexicalTransfer:
                         in_bracket = False
                 elif token.tag == tokens.tag_name_var:
                     if is_lefthand and not in_bracket:
-                        variables[token.token] = datatype
-
-        #Add preprocessor if it's define statement
-        if statement.tag == constants.DEFINE_TAG:
-            #Keyword is placed after preprocessor tag ('#') and define keyword
-            keyword = statement[2].token
-            to_replace = statement[3:]
-            #Unroll define itself
-            if preprocessors:
-                result = []
-                for token in to_replace:
-                    preprocess_value = preprocessors.get(token.token)
-                    if preprocess_value is not None:
-                        result.extend(preprocess_value)
-                    else:
-                        result.append(token)
-                to_replace = result
-            preprocessors[keyword] = to_replace
-      
-        if statement.tag == constants.FUNCTION_TAG:
-            self.func_context = statement[1].token
-
-        #Immediately return if it's unneeded statements (e.g function declaration)
-        if not statement.carryover:
-            statement.tokens = []
-            return statement
+                        self._variables[token.token] = datatype
 
         #Add special cases of helpers/translations here
         if statement.tag == constants.FUNCTION_TAG:
@@ -684,17 +686,6 @@ class StructuralLexicalTransfer:
         #Prioritize special-case helpers and translations. Convert them to dicts first.
         helpers = ChainMap(self._callback_dict(specific_helpers), self._callback_dict(default_helpers))
         translations = ChainMap(self._translation_dict(specific_translations), self._translation_dict(default_translations))
-
-        #Process preprocessors
-        if preprocessors:
-            result = []
-            for token in statement:
-                preprocess_value = preprocessors.get(token.token)
-                if preprocess_value is not None:
-                    result.extend(preprocess_value)
-                else:
-                    result.append(token)
-            statement.tokens = result
 
         #Start translating
         result = []

@@ -123,6 +123,8 @@ string_identifiers = [
 
 possible_lefthand_operations = [tag_name_var, tag_val_char, tag_val_float, tag_val_int, tag_val_string, tag_parenthesis_right, tag_bracket_right]
 
+round_datatypes = [tag_int_type, tag_long_type, tag_short_type]
+
 arithmetic_operator = {
     tag_op_add : op_add,
     tag_op_minus : op_minus,
