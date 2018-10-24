@@ -69,29 +69,6 @@ class StructuralLexicalTransfer:
 
         statement.tokens = result
 
-    # def _helper_divide(self, statement, variables):
-    #     variable_type = variables[statement[0].token]
-    #     is_integer = (variable_type == tokens.tag_int_type) 
-    #     result = []
-
-    #     floor_start = [TaggedToken(tokens.math_func, tokens.tag_math_func),
-    #                    TaggedToken(tokens.dot, tokens.tag_dot),
-    #                    TaggedToken(tokens.floor_func, tokens.tag_floor_func),
-    #                    TaggedToken(tokens.parenthesis_left, tokens.tag_parenthesis_left)]
-
-    #     floor_end = [TaggedToken(tokens.parenthesis_right, tokens.tag_parenthesis_right)]
-
-    #     for token in statement:
-    #         if is_integer and token.tag == tokens.tag_semicolon:
-    #             result.extend(floor_end)
-
-    #         result.append(token)
-            
-    #         if is_integer and token.tag == tokens.tag_assign:
-    #             result.extend(floor_start)
-
-    #     statement.tokens = result
-
     def _helper_divide(self, statement, variables):
         
         print("Called for:")
