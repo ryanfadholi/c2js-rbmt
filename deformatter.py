@@ -201,14 +201,41 @@ class Deformatter:
         (tokens might be a dict, list, or string)
         """
 
+        matches = False
+        matched = ""
         if isinstance(tokens, dict):
-            return True in (statement.startswith(token) for token in tokens.values())
+            for token in tokens.values():
+                if statement.startswith(token):
+                    matches = True
+                    matched = token
+                    break
         elif isinstance(tokens, list):
-            return True in (statement.startswith(token) for token in tokens)
+            for token in tokens:
+                if statement.startswith(token):
+                    matches = True
+                    matched = token
+                    break
         elif isinstance(tokens, str):
-            return statement.startswith(tokens)
+            if statement.startswith(tokens):
+                    matches = True
+                    matched = tokens
+        else:
+            return ValueError("Token is not a string, list, or dictionary")
 
-        return ValueError("Token is not a string, list, or dictionary")
+        if matches:
+            #if it's keyword (e.g "for", "if"), check if it's actually only a subset of variable.
+            if matched.isalpha():
+                match_len = len(matched)
+                #If the statement only contains exactly the keyword
+                if match_len == len(statement):
+                    pass
+                #get character put directly after the keyword.
+                else:
+                    next_char = statement[match_len]
+                    if next_char in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_":
+                        matches = False
+        
+        return matches
 
     def _statement_end(self, separator, text, do_exception_checking=True):
         """

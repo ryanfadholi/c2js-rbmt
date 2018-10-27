@@ -93,39 +93,59 @@ class StructuralLexicalTransfer:
         return results
 
     def _helper_comp(self, statement):
-                
+        add_token = TaggedToken(tokens.op_add, tokens.tag_op_add)        
         assign_token = TaggedToken(tokens.assign, tokens.tag_assign)
         divide_token = TaggedToken(tokens.op_divide, tokens.tag_op_divide)
+        minus_token = TaggedToken(tokens.op_minus, tokens.tag_op_minus)
+        modulo_token = TaggedToken(tokens.op_modulo, tokens.tag_op_modulo)
         multiply_token = TaggedToken(tokens.op_multiply, tokens.tag_op_multiply)
-        div_expanded = False
-        mul_expanded = False
+
+        expanded = False
+        to_expand = []
 
         results = []
         for idx, token in enumerate(statement):
-            if token.tag == tokens.tag_op_comp_divide:
-                variable_tokens = self._capture_variable_tokens(statement[:idx])
-                results.extend([assign_token] + variable_tokens + [divide_token])
-                div_expanded = True
-                continue
+            if token.tag == tokens.tag_op_comp_add:
+                to_expand = [add_token]
+                expanded = True
+            elif token.tag == tokens.tag_op_comp_minus:
+                to_expand = [minus_token]
+                expanded = True
+            elif token.tag == tokens.tag_op_comp_divide:
+                to_expand = [divide_token]
+                expanded = True
             elif token.tag == tokens.tag_op_comp_multiply:
+                to_expand = [multiply_token]
+                expanded = True
+            elif token.tag == tokens.tag_op_comp_modulo:
+                to_expand = [modulo_token]
+                expanded = True
+            elif token.tag == tokens.tag_op_comp_multiply:
+                to_expand = [multiply_token]
+                expanded = True
+            
+            if expanded:
                 variable_tokens = self._capture_variable_tokens(statement[:idx])
-                results.extend([assign_token] + variable_tokens + [multiply_token])
-                mul_expanded = True
-                continue
-            results.append(token)
+                results.extend([assign_token] + variable_tokens + to_expand)
+                expanded = False
+            else:
+                results.append(token)
         statement.tokens = results
 
-        if div_expanded or mul_expanded:
-            self._helper_divide(statement)
+        self._helper_assign(statement)
 
+    def _helper_assign(self, statement):
+        print("Assign Helper is called!")
+        # print("Assign helper")
+        print(statement)
+        asg_found = False
+        is_round = False
 
-    def _helper_divide(self, statement):
-        cur_idx = -1
-        op_found = False
+        cur_start = -1
 
         wrap_start = []
         wrap_end = []
-
+        
         trunc_start = [TaggedToken(tokens.math_func, tokens.tag_math_func),
                        TaggedToken(tokens.dot, tokens.tag_dot),
                        TaggedToken(tokens.trunc_func, tokens.tag_trunc_func),
@@ -134,78 +154,79 @@ class StructuralLexicalTransfer:
         trunc_end = [TaggedToken(tokens.parenthesis_right, tokens.tag_parenthesis_right)]
 
         for idx, token in enumerate(statement):
-            if (token.tag == tokens.tag_op_divide or 
-                token.tag == tokens.tag_op_multiply):
-                #raise flag
-                cur_idx = idx
-                op_found = True
+            if token.tag == tokens.tag_assign:
+                cur_start = idx
+                asg_found = True
+            
+            if asg_found:
+                #Reset counters & flags
+                br_count = 0 #bracket counter
+                pr_count = 0 #parenthesis counter
 
-            #start traceback
-            if op_found:
-                cur_start = -1
-                cur_end = -1
-                is_assignment = False
-                is_round = False
-                pr_count = 0
-                trace_idx = cur_idx - 1
+                is_arr_def = False
+                is_ptr_def = False
+                var_passed = False
 
-                while(trace_idx > -1):
-                    cur_token = statement[trace_idx]
-                    if cur_token.tag in [tokens.tag_comma, tokens.tag_semicolon]:
-                        break
-                    elif cur_token.tag == tokens.tag_assign:
-                        is_assignment = True
-                        cur_start = trace_idx
-                        break
+                last_variable = self._capture_last_variable(statement[:idx])
+                variable_type = self._variables[last_variable]
+
+                is_round = (variable_type in tokens.round_datatypes)
+                        
+                #start tracing forward
+                ftrace_idx = idx + 1
+                while(ftrace_idx < len(statement)):
+                    cur_token = statement[ftrace_idx]
+                    if cur_token.tag == tokens.tag_bracket_left:
+                        #If there's no variables before it, it's array definition
+                        if not var_passed:
+                            is_arr_def = True
+                            break
+                        br_count += 1
+                    elif cur_token.tag == tokens.tag_bracket_right:
+                        if br_count == 0:
+                            break
+                        br_count -= 1
                     elif cur_token.tag == tokens.tag_parenthesis_left:
                         pr_count += 1
                     elif cur_token.tag == tokens.tag_parenthesis_right:
-                        pr_count -= 1
-                    trace_idx -= 1
-
-                if is_assignment:
-                    last_variable = self._capture_last_variable(statement[:trace_idx])
-                    variable_type = self._variables[last_variable]
-
-                    is_round = (variable_type in tokens.round_datatypes)
-                        
-                    #start tracing forward
-                    ftrace_idx = cur_idx + 1
-                    while(ftrace_idx < len(statement)):
-                        cur_token = statement[ftrace_idx]
-                        if cur_token.tag == tokens.tag_parenthesis_left:
-                            pr_count += 1
-                        elif cur_token.tag == tokens.tag_parenthesis_right:
-                            if pr_count == 0:
-                                cur_end = ftrace_idx
-                                break
-                            pr_count -= 1
-                        elif cur_token.tag == tokens.tag_semicolon:
-                            cur_end = ftrace_idx
+                        if pr_count == 0:
                             break
-                        elif cur_token.tag == tokens.tag_comma:
-                            if pr_count == 0:
-                                cur_end = ftrace_idx
-                                break
-                        ftrace_idx += 1
+                        pr_count -= 1
+                    elif cur_token.tag == tokens.tag_semicolon:
+                        break
+                    elif cur_token.tag == tokens.tag_comma:
+                        if pr_count == 0:
+                            break
+                    #special cases
+                    elif cur_token.tag == tokens.tag_name_var:
+                        var_passed = True
+                    elif cur_token.tag == tokens.tag_curly_left:
+                        is_ptr_def = True
+                        break
+
+                    ftrace_idx += 1
+                cur_end = ftrace_idx
                 
-                if is_round:
+                #do nothing if it's array/pointer
+                if is_arr_def or is_ptr_def:
+                    pass
+                elif is_round:
                     wrap_start.append(cur_start)
                     wrap_end.append(cur_end)
 
-                #reset flags
-                op_found = False
+                asg_found = False
 
         results = []
         for idx, token in enumerate(statement):
-            if idx in wrap_end:
+            while idx in wrap_end:
                 results.extend(trunc_end)
-        
+                wrap_end.remove(idx)
+
             results.append(token)
 
-            if idx in wrap_start:
+            while idx in wrap_start:
                 results.extend(trunc_start)
-        
+                wrap_start.remove(idx)
         statement.tokens = results
 
     def _helper_output(self, statement):
@@ -426,6 +447,8 @@ class StructuralLexicalTransfer:
         """Adds pointer member access for pointer-emulating variables in translation result"""
         js_pointer = [TaggedToken(tokens.dot, tokens.tag_dot), TaggedToken(tokens.ptr_access, tokens.tag_ptr_access)]
 
+        print("Pointer Helper is called!")
+
         result = []
         is_lefthand = True
         is_multiply_exists = False
@@ -447,9 +470,6 @@ class StructuralLexicalTransfer:
                     result.extend(js_pointer)
                 is_pointer_variable = False
         statement.tokens = result
-
-        if is_multiply_exists:
-            self._helper_divide(statement)
 
     def _identify(self, statement):
         """Identifies statement type"""
@@ -484,6 +504,8 @@ class StructuralLexicalTransfer:
         pre_increment_sp = Pattern(constants.DECREMENT_INCREMENT_TAG, 
                                     [tokens.tag_op_increment], 
                                     [tokens.tag_semicolon])
+        initiation_compound_sp = Pattern(constants.INITIATION_TAG,
+                                [tokens.tag_name_var, tokens.compound_assignment_operator])
         initiation_pointer_sp = Pattern(constants.INITIATION_TAG,
                                         [tokens.tag_op_multiply])
         initiation_sp = Pattern(constants.INITIATION_TAG,
@@ -504,13 +526,12 @@ class StructuralLexicalTransfer:
         single_comment_sp = Pattern(constants.SINGLE_COMMENT_TAG,
                                     [tokens.tag_single_comment])
 
-
         #NOTE: function_declaration MUST be checked BEFORE declaration! 
         #Because declaration essentially checks a subset of function_declaration, if declaration are put before it everything will be identified as declaration.
         patterns = [block_start_sp, block_end_sp, preprocessor_sp, define_sp, single_comment_sp, multi_comment_sp, 
                     input_sp, output_sp, return_sp, function_sp, function_call_sp, function_definition_sp, declaration_sp, conditional_sp,
-                    loop_sp, initiation_sp, initiation_pointer_sp, post_decrement_sp, post_increment_sp, pre_decrement_sp,
-                    pre_increment_sp]
+                    loop_sp, initiation_sp, initiation_compound_sp, initiation_pointer_sp, post_decrement_sp, post_increment_sp, 
+                    pre_decrement_sp, pre_increment_sp]
 
         tags = [token.tag for token in statement]
 
@@ -552,16 +573,18 @@ class StructuralLexicalTransfer:
 
         #Define helper callbacks here
         array_decl_cb = CallbackPair(tokens.tag_bracket_left, self._helper_declaration)
+        assign_cb = CallbackPair(tokens.tag_assign, self._helper_assign)
+        comp_add_cb = CallbackPair(tokens.tag_op_comp_add, self._helper_comp)
         comp_div_cb = CallbackPair(tokens.tag_op_comp_divide, self._helper_comp)
+        comp_mod_cb = CallbackPair(tokens.tag_op_comp_modulo, self._helper_comp)
+        comp_min_cb = CallbackPair(tokens.tag_op_comp_minus, self._helper_comp)
         comp_mul_cb = CallbackPair(tokens.tag_op_comp_multiply, self._helper_comp)
-        division_cb = CallbackPair(tokens.tag_op_divide, self._helper_divide)
         input_cb = CallbackPair(tokens.tag_input_func, self._helper_input)
         output_cb = CallbackPair(tokens.tag_output_func, self._helper_output)
         param_cb = CallbackPair(tokens.tag_function_type, self._helper_parameter)
         pointer_cb = CallbackPair(tokens.tag_op_multiply, self._helper_pointer)
         reference_cb = CallbackPair(tokens.tag_op_binary_and, self._helper_reference)
         return_cb = CallbackPair(tokens.tag_return_kw, self._helper_return)
-    
 
         #Define translations here
         array_prefill_start_tl = TranslationItem(tokens.tag_curly_left, [tokens.tag_bracket_left], [tokens.bracket_left])
@@ -597,7 +620,9 @@ class StructuralLexicalTransfer:
             [tokens.math_func, tokens.dot, tokens.tan_func])
 
         #Join everything into lists
-        default_helpers = [comp_div_cb, comp_mul_cb, division_cb, input_cb, output_cb, param_cb, pointer_cb, reference_cb, return_cb]
+        #NOTE: assign_cb must be put AFTER pointer_cb! Assign_cb assumes that pointer_cb has done its job.
+        default_helpers = [comp_add_cb, comp_div_cb, comp_min_cb, comp_mod_cb, comp_mul_cb, input_cb, output_cb, 
+                           param_cb, pointer_cb, assign_cb, reference_cb, return_cb]
         default_translations = [declaration_tl, pow_tl, printf_tl, scanf_tl, sizeof_tl, sqrt_tl, cos_tl, sin_tl, tan_tl]
         specific_helpers = []
         specific_translations = []
@@ -623,15 +648,20 @@ class StructuralLexicalTransfer:
             self._preprocessors[keyword] = to_replace
 
         #Process preprocessors
+        keyword_replaced = False
         if self._preprocessors:
             result = []
             for token in statement:
                 preprocess_value = self._preprocessors.get(token.token)
                 if preprocess_value is not None:
                     result.extend(preprocess_value)
+                    keyword_replaced = True
                 else:
                     result.append(token)
             statement.tokens = result
+            #Try re-iden
+            if statement.tag == constants.UNKNOWN_TAG and keyword_replaced:
+                statement = self._identify(statement)
 
         #Immediately return if it's unneeded statements (e.g function declaration)
         if not statement.carryover:
@@ -708,6 +738,24 @@ class StructuralLexicalTransfer:
             helper = helpers.get(token.tag)
             if helper is not None and helper not in helper_functions:
                 helper_functions.append(helper)
+
+        #NOTE: Prioritize pointer and reference helper - assignment and compound operator helpers assumes their job is done.
+        #Then prioritize helper_output even higher, as it is programmed as if reference helper has not done its job yet.
+        if self._helper_pointer in helper_functions:
+            helper_functions.insert(0, 
+                                    helper_functions.pop(
+                                                         helper_functions.index(self._helper_pointer)))
+        
+        if self._helper_reference in helper_functions:
+            helper_functions.insert(0, 
+                                    helper_functions.pop(
+                                                         helper_functions.index(self._helper_reference)))
+                                                    
+        if self._helper_input in helper_functions:
+            helper_functions.insert(0, 
+                                    helper_functions.pop(
+                                                         helper_functions.index(self._helper_input)))
+                                        
 
         for helper in helper_functions:
             helper(statement)
