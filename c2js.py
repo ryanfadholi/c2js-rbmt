@@ -78,7 +78,7 @@ class C2js:
                     count_func_calls += 1
                 elif statement.tag in [constants.INPUT_TAG, constants.OUTPUT_TAG]:
                     count_io += 1
-                elif statement.tag == constants.CONDITIONAL_TAG:
+                elif statement.tag == [constants.CONDITIONAL_TAG, constants.SWITCH_TAG, constants.CASE_TAG]:
                     count_cond += 1
                 elif statement.tag == constants.LOOP_TAG:
                     count_loop += 1

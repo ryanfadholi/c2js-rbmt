@@ -48,11 +48,29 @@ class Deformatter:
         else:
             return semicolon_pos
 
-    def _else_end(self, text):
+    def _while_end(self, text):
         """
         Returns an index where the declaration statement ends. Returns -1 if the statement isn't ending yet.
         Declaration could mean a variable or function declaration,
         and the function will adapt depending on what it assumes the declaration is.
+        """
+        bracket_end = self._bracket_end(text)
+        semicolon_pos = self._statement_end(";", text)
+
+        for char in text[bracket_end:]:
+            if char == ";":
+                return semicolon_pos
+            elif char == "\n" or char == " ":
+                continue
+            else:
+                #If there's no curly brace or a semicolon comes before it, it's a normal variable declaration.
+                return bracket_end
+
+        return -1
+
+    def _else_end(self, text):
+        """
+        Returns an index where the else statement ends. Supports both "else" and "else if" statements.
         """
         if_token_pos = self._statement_end("if", text)
         semicolon_pos = self._statement_end(";", text)
@@ -138,12 +156,20 @@ class Deformatter:
             end_pos = self._bracket_end(line)
         elif self._starts_with(tkn.else_conditional, line):
             end_pos = self._else_end(line)
+        #if it's switch keyword...
+        elif self._starts_with(tkn.switch_kw, line):
+            end_pos = self._bracket_end(line)
+        #if it's case/default keyword...
+        elif self._starts_with(tkn.case_kw, line):
+            end_pos = self._statement_end(":", line)
+        elif self._starts_with(tkn.default_kw, line):
+            end_pos = self._statement_end(":", line)
         #if it's do loop....
         elif self._starts_with(tkn.dowhile_loop, line):
             end_pos = self._statement_end("do", line)
         #if it's while loop....
         elif self._starts_with(tkn.while_loop, line):
-            end_pos = self._declaration_end(line)
+            end_pos = self._while_end(line)
         #if it's for loop....
         elif self._starts_with(tkn.for_loop, line):
             end_pos = self._bracket_end(line)

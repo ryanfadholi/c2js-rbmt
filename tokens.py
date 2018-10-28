@@ -37,9 +37,14 @@ cos_func = "cos"; tag_cos_func = "cos-function"
 sin_func = "sin"; tag_sin_func = "sin-function"
 tan_func = "tan"; tag_tan_func = "tan-function"
 
+break_kw = "break"; tag_break_kw = "break-keyword"
+case_kw = "case"; tag_case_kw = "switch-case"
+continue_kw = "continue"; tag_continue_kw = "continue-keyword"
+default_kw = "default"; tag_default_kw = "default-keyword"
 define_kw = "define"; tag_define_kw = "define-keyword"
 include_kw = "include"; tag_include_kw = "include-keyword"
 return_kw = "return"; tag_return_kw = "return-keyword"
+switch_kw = "switch"; tag_switch_kw = "switch-keyword"
 
 single_comment = "//"; tag_single_comment = "single-comment" 
 multi_comment = "/*"; tag_multi_comment = "multi-comment"
@@ -197,7 +202,7 @@ comments = {
  
 conditionals = {
     tag_if_conditional : if_conditional,
-    tag_else_conditional : else_conditional
+    tag_else_conditional : else_conditional,
 }
 
 datatypes = {
@@ -230,7 +235,14 @@ special_functions = {
 }
 
 keywords = {
+    tag_break_kw : break_kw,
+    tag_case_kw : case_kw,
+    tag_continue_kw : continue_kw,
+    tag_default_kw : default_kw,
     tag_define_kw : define_kw,
     tag_include_kw : include_kw,
-    tag_return_kw : return_kw
+    tag_return_kw : return_kw,
+    tag_switch_kw : switch_kw 
 }
+
+

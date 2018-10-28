@@ -1,5 +1,6 @@
 import constants
 import tokens
+import os
 
 from taggedtoken import TaggedToken
 
@@ -151,7 +152,7 @@ class PostGenerator:
                     output.write("\n")
                     #Add an empty line for each block ends
                     if statement.tag == constants.BLOCK_END_TAG:
-                        output.write("\n")
+                        output.write("\n")        
 
                 #Add spaces AFTER code block opens, so increment after writing current line.
                 if statement.tag == constants.BLOCK_START_TAG:

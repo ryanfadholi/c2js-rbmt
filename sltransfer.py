@@ -135,9 +135,6 @@ class StructuralLexicalTransfer:
         self._helper_assign(statement)
 
     def _helper_assign(self, statement):
-        print("Assign Helper is called!")
-        # print("Assign helper")
-        print(statement)
         asg_found = False
         is_round = False
 
@@ -433,10 +430,16 @@ class StructuralLexicalTransfer:
         if is_round:
             results = []
             after_return = False
+            open_bracket = 0
             for token in statement:
-                if token.tag in [tokens.tag_comma, tokens.tag_semicolon] and after_return:
+                if (token.tag in [tokens.tag_comma, tokens.tag_semicolon] and after_return
+                    and not open_bracket):
                     results.extend(trunc_end)
                     after_return = False
+                elif token.tag == tokens.tag_parenthesis_left:
+                    open_bracket += 1
+                elif token.tag == tokens.tag_parenthesis_right:
+                    open_bracket -= 1
                 results.append(token)
                 if token.tag == tokens.tag_return_kw:
                     results.extend(trunc_start)
@@ -446,8 +449,6 @@ class StructuralLexicalTransfer:
     def _helper_pointer(self, statement):
         """Adds pointer member access for pointer-emulating variables in translation result"""
         js_pointer = [TaggedToken(tokens.dot, tokens.tag_dot), TaggedToken(tokens.ptr_access, tokens.tag_ptr_access)]
-
-        print("Pointer Helper is called!")
 
         result = []
         is_lefthand = True
@@ -477,11 +478,19 @@ class StructuralLexicalTransfer:
                                  [tokens.tag_curly_left])
         block_end_sp = Pattern(constants.BLOCK_END_TAG, 
                                [tokens.tag_curly_right])
+        break_sp = Pattern(constants.BREAK_TAG,
+                                [tokens.tag_break_kw])
+        case_sp = Pattern(constants.CASE_TAG,
+                                 [tokens.tag_case_kw])
         conditional_sp = Pattern(constants.CONDITIONAL_TAG, 
                                  [tokens.conditionals])
+        continue_sp = Pattern(constants.CONTINUE_TAG,
+                                [tokens.tag_continue_kw])
         declaration_sp = Pattern(constants.DECLARATION_TAG, 
                                  [tokens.datatypes],
                                  [tokens.tag_semicolon])
+        default_case_sp = Pattern(constants.CASE_TAG,
+                                 [tokens.tag_default_kw])
         define_sp = Pattern(constants.DEFINE_TAG,
                             [tokens.tag_preprocessor, tokens.tag_define_kw],
                             carryover=False)
@@ -490,20 +499,10 @@ class StructuralLexicalTransfer:
         function_definition_sp = Pattern(constants.FUNCTION_DEFINITION_TAG, 
                                          [tokens.datatypes, tokens.tag_name_var, tokens.tag_parenthesis_left], 
                                          [tokens.tag_semicolon], 
-                                         carryover=False)
+                                         carryover=False, ignored=[tokens.tag_op_multiply])
         function_sp = Pattern(constants.FUNCTION_TAG, 
                               [tokens.datatypes, tokens.tag_name_var, tokens.tag_parenthesis_left], 
-                              [tokens.tag_parenthesis_right])
-        post_decrement_sp = Pattern(constants.DECREMENT_INCREMENT_TAG, 
-                                end=[tokens.tag_op_decrement, tokens.tag_semicolon])
-        post_increment_sp = Pattern(constants.DECREMENT_INCREMENT_TAG, 
-                                end=[tokens.tag_op_increment, tokens.tag_semicolon])
-        pre_decrement_sp = Pattern(constants.DECREMENT_INCREMENT_TAG, 
-                                [tokens.tag_op_decrement], 
-                                [tokens.tag_semicolon])
-        pre_increment_sp = Pattern(constants.DECREMENT_INCREMENT_TAG, 
-                                    [tokens.tag_op_increment], 
-                                    [tokens.tag_semicolon])
+                              [tokens.tag_parenthesis_right], ignored=[tokens.tag_op_multiply])
         initiation_compound_sp = Pattern(constants.INITIATION_TAG,
                                 [tokens.tag_name_var, tokens.compound_assignment_operator])
         initiation_pointer_sp = Pattern(constants.INITIATION_TAG,
@@ -518,6 +517,16 @@ class StructuralLexicalTransfer:
                                    [tokens.tag_multi_comment])
         output_sp = Pattern(constants.OUTPUT_TAG,
                             [tokens.tag_output_func])
+        post_decrement_sp = Pattern(constants.DECREMENT_INCREMENT_TAG, 
+                                end=[tokens.tag_op_decrement, tokens.tag_semicolon])
+        post_increment_sp = Pattern(constants.DECREMENT_INCREMENT_TAG, 
+                                end=[tokens.tag_op_increment, tokens.tag_semicolon])
+        pre_decrement_sp = Pattern(constants.DECREMENT_INCREMENT_TAG, 
+                                [tokens.tag_op_decrement], 
+                                [tokens.tag_semicolon])
+        pre_increment_sp = Pattern(constants.DECREMENT_INCREMENT_TAG, 
+                                    [tokens.tag_op_increment], 
+                                    [tokens.tag_semicolon])
         preprocessor_sp = Pattern(constants.PREPROCESSOR_TAG,
                                   [tokens.tag_preprocessor, tokens.tag_include_kw],
                                   carryover=False)
@@ -525,13 +534,15 @@ class StructuralLexicalTransfer:
                             [tokens.tag_return_kw])
         single_comment_sp = Pattern(constants.SINGLE_COMMENT_TAG,
                                     [tokens.tag_single_comment])
+        switch_sp = Pattern(constants.SWITCH_TAG,
+                                 [tokens.tag_switch_kw])
 
         #NOTE: function_declaration MUST be checked BEFORE declaration! 
         #Because declaration essentially checks a subset of function_declaration, if declaration are put before it everything will be identified as declaration.
         patterns = [block_start_sp, block_end_sp, preprocessor_sp, define_sp, single_comment_sp, multi_comment_sp, 
                     input_sp, output_sp, return_sp, function_sp, function_call_sp, function_definition_sp, declaration_sp, conditional_sp,
-                    loop_sp, initiation_sp, initiation_compound_sp, initiation_pointer_sp, post_decrement_sp, post_increment_sp, 
-                    pre_decrement_sp, pre_increment_sp]
+                    loop_sp, initiation_sp, break_sp, continue_sp, initiation_compound_sp, initiation_pointer_sp, case_sp, default_case_sp, 
+                    switch_sp, post_decrement_sp, post_increment_sp, pre_decrement_sp, pre_increment_sp]
 
         tags = [token.tag for token in statement]
 
@@ -669,12 +680,22 @@ class StructuralLexicalTransfer:
             return statement
       
         if statement.tag == constants.FUNCTION_TAG:
-            self._func_context = statement[1].token
+            token_pos = 1
+            self._func_context = statement[token_pos].token
+            #If it's star, it's a pointer function, get the next token instead
+            while self._func_context == "*":
+                token_pos += 1
+                self._func_context = statement[token_pos].token
 
         #Build variables dictionary while you're at it
         if statement.tag in [constants.FUNCTION_TAG, constants.FUNCTION_DEFINITION_TAG]:
             datatype = statement[0].tag
-            variable = statement[1].token
+            token_pos = 1
+            variable = statement[token_pos].token
+            #If it's star, it's a pointer function, get the next token instead
+            while variable == "*":
+                token_pos += 1
+                variable = statement[token_pos].token
             self._variables[variable] = datatype
             variable_expected = False
             for token in statement:
