@@ -111,34 +111,39 @@ class PostGenerator:
                     elif token.tag == tokens.tag_sizeof_func:
                         sizeof_lib = True
                         
-
+        line_count = 0
         to_write = []
         if input_lib:
             to_write.append("var readlineSync = require('readline-sync')")
+            line_count += 1
         if output_lib:
             to_write.append("var util = require('util')")
+            line_count += 1
         if sizeof_lib:
             to_write.append("var sizeof = require('sizeof')")
+            line_count += 1
         if rand_lib:
             to_write.append("function rand() {")
             to_write.append("   return Math.floor(Math.random() * Math.floor(32767));")
             to_write.append("}")
+            line_count += 4
 
-
-        return to_write
+        return (line_count, to_write)
 
     def write(self, statements):
         """Writes a list of TaggedStatement into the designated temporary file."""
         #Decides how many spaces the program should give before writing a line, 1 block depth equals 4 spaces.
         block_depth = 0
+        total_lines = 0
         with open(constants.OUTPUT_TEMPFILE_PATH, "w") as output:
 
-            libs = self._requirements(statements)
+            lib_lines, libs = self._requirements(statements)
             for lib in libs:
                 output.write(lib)
                 output.write("\n")
             if libs:
                 output.write("\n")
+            total_lines += lib_lines
 
             for statement in statements:
                 #Reduce spaces when code block closes.
@@ -150,6 +155,7 @@ class PostGenerator:
                     output.write("    " * block_depth)
                     output.write(line)
                     output.write("\n")
+                    total_lines += 1
                     #Add an empty line for each block ends
                     if statement.tag == constants.BLOCK_END_TAG:
                         output.write("\n")        
@@ -160,3 +166,6 @@ class PostGenerator:
 
             #Run main function at the end of the script!
             output.write("main();")
+            total_lines += 1
+
+            return total_lines

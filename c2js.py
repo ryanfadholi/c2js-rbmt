@@ -53,7 +53,10 @@ class C2js:
         self._sltransfer.reset()
         statements = [self._sltransfer.translate(self._postagger.tag(stmt)) 
                       for stmt in self._deformatter.statements()]
-        self._postgenerator.write(statements)
+        rc = self._postgenerator.write(statements)
+
+        source_stmt_count = len(list(self._deformatter.statements()))
+        result_stmt_count = rc
 
         if console_print:
             for statement in statements:
@@ -90,6 +93,10 @@ class C2js:
                 else:
                     count_etc += 1
 
+            #Jumlah baris masukan
+            print(source_stmt_count)
+            #Jumlah baris keluaran
+            print(result_stmt_count)
             #Deklarasi Variabel/Fungsi
             print(count_decl)
             #Inisialisasi/Inisiasi
