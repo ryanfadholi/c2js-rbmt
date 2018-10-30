@@ -24,6 +24,9 @@ class C2js:
         self._postgenerator = postgenerator.PostGenerator()
         self._reformatter = reformatter.Reformatter()
 
+        if not os.path.exists("temp"):
+            os.makedirs("temp")
+
     def load(self, source_path):
         """Loads the given source_path contents to a temporary file."""
         self._deformatter.read(source_path)
@@ -44,6 +47,8 @@ class C2js:
         count_loop = 0
         count_comment = 0
         count_etc = 0
+
+        
 
         if test_mode:
             #suppress notices & warnings from modules
@@ -78,7 +83,7 @@ class C2js:
                     count_func_calls += 1
                 elif statement.tag in [constants.INPUT_TAG, constants.OUTPUT_TAG]:
                     count_io += 1
-                elif statement.tag == [constants.CONDITIONAL_TAG, constants.SWITCH_TAG, constants.CASE_TAG]:
+                elif statement.tag in [constants.CONDITIONAL_TAG, constants.SWITCH_TAG, constants.CASE_TAG]:
                     count_cond += 1
                 elif statement.tag == constants.LOOP_TAG:
                     count_loop += 1
