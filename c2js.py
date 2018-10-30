@@ -24,6 +24,15 @@ class C2js:
         self._postgenerator = postgenerator.PostGenerator()
         self._reformatter = reformatter.Reformatter()
 
+        source_temp_path, _f = os.path.split(constants.INPUT_TEMPFILE_PATH)
+        result_temp_path, _f = os.path.split(constants.OUTPUT_TEMPFILE_PATH)
+        
+        #Create temporary path if not exists
+        if not os.path.exists(source_temp_path):
+            os.makedirs(source_temp_path)
+        if not os.path.exists(result_temp_path):
+            os.makedirs(result_temp_path)
+
     def load(self, source_path):
         """Loads the given source_path contents to a temporary file."""
         self._deformatter.read(source_path)
@@ -81,7 +90,7 @@ class C2js:
                     count_func_calls += 1
                 elif statement.tag in [constants.INPUT_TAG, constants.OUTPUT_TAG]:
                     count_io += 1
-                elif statement.tag == [constants.CONDITIONAL_TAG, constants.SWITCH_TAG, constants.CASE_TAG]:
+                elif statement.tag in [constants.CONDITIONAL_TAG, constants.SWITCH_TAG, constants.CASE_TAG]:
                     count_cond += 1
                 elif statement.tag == constants.LOOP_TAG:
                     count_loop += 1
@@ -124,7 +133,6 @@ class C2js:
 
 
 if __name__ == "__main__":
-    
     parser = argparse.ArgumentParser()
     parser.add_argument("source_path", help="C file to process", nargs='?', default=DEFAULT_SOURCE_FILE, type=str)
     parser.add_argument("result_path", help="Result file destination", nargs='?', default=DEFAULT_RESULT_FILE, type=str)
