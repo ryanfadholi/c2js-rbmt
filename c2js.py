@@ -144,6 +144,6 @@ if __name__ == "__main__":
     instance.load(args.source_path)
 
     do_print = not args.no_print
-    test_mode = args.test_mode
-    instance.process(do_print, test_mode)
+    do_test = args.test_mode
+    instance.process(do_print, do_test)
     instance.save(args.result_path)
