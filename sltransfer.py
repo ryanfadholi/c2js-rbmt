@@ -160,6 +160,7 @@ class StructuralLexicalTransfer:
                 br_count = 0 #bracket counter
                 pr_count = 0 #parenthesis counter
 
+                has_processed = False
                 is_arr_def = False
                 is_ptr_def = False
                 var_passed = False
@@ -200,12 +201,15 @@ class StructuralLexicalTransfer:
                     elif cur_token.tag == tokens.tag_curly_left:
                         is_ptr_def = True
                         break
+                    elif cur_token.tag == tokens.tag_trunc_func:
+                        has_processed = True
+                        break
 
                     ftrace_idx += 1
                 cur_end = ftrace_idx
                 
                 #do nothing if it's array/pointer
-                if is_arr_def or is_ptr_def:
+                if is_arr_def or is_ptr_def or has_processed:
                     pass
                 elif is_round:
                     wrap_start.append(cur_start)
@@ -224,6 +228,7 @@ class StructuralLexicalTransfer:
             while idx in wrap_start:
                 results.extend(trunc_start)
                 wrap_start.remove(idx)
+
         statement.tokens = results
 
     def _helper_output(self, statement):
@@ -508,7 +513,7 @@ class StructuralLexicalTransfer:
         initiation_pointer_sp = Pattern(constants.INITIATION_TAG,
                                         [tokens.tag_op_multiply])
         initiation_sp = Pattern(constants.INITIATION_TAG,
-                                [tokens.tag_name_var, tokens.tag_assign])
+                                [tokens.tag_name_var])
         input_sp = Pattern(constants.INPUT_TAG,
                            [tokens.tag_input_func])
         loop_sp = Pattern(constants.LOOP_TAG,
@@ -530,6 +535,9 @@ class StructuralLexicalTransfer:
         preprocessor_sp = Pattern(constants.PREPROCESSOR_TAG,
                                   [tokens.tag_preprocessor, tokens.tag_include_kw],
                                   carryover=False)
+        random_seed_sp = Pattern(constants.SEED_TAG,
+                                 [tokens.tag_srand_func],
+                                 carryover=False)
         return_sp = Pattern(constants.RETURN_TAG,
                             [tokens.tag_return_kw])
         single_comment_sp = Pattern(constants.SINGLE_COMMENT_TAG,
@@ -537,12 +545,14 @@ class StructuralLexicalTransfer:
         switch_sp = Pattern(constants.SWITCH_TAG,
                                  [tokens.tag_switch_kw])
 
-        #NOTE: function_declaration MUST be checked BEFORE declaration! 
+        #NOTE: 
+        #1. function declaration MUST be checked BEFORE variable declaration
+        #2. function call MUST be checked BEFORE variable initiation 
         #Because declaration essentially checks a subset of function_declaration, if declaration are put before it everything will be identified as declaration.
         patterns = [block_start_sp, block_end_sp, preprocessor_sp, define_sp, single_comment_sp, multi_comment_sp, 
                     input_sp, output_sp, return_sp, function_sp, function_call_sp, function_definition_sp, declaration_sp, conditional_sp,
                     loop_sp, initiation_sp, break_sp, continue_sp, initiation_compound_sp, initiation_pointer_sp, case_sp, default_case_sp, 
-                    switch_sp, post_decrement_sp, post_increment_sp, pre_decrement_sp, pre_increment_sp]
+                    switch_sp, post_decrement_sp, post_increment_sp, pre_decrement_sp, pre_increment_sp, random_seed_sp]
 
         tags = [token.tag for token in statement]
 
@@ -558,6 +568,16 @@ class StructuralLexicalTransfer:
             statement.tag = "unknown"
 
         return statement
+
+    def _preprocess(self, tokens):
+        result = []
+        for token in tokens:
+            preprocess_value = self._preprocessors.get(token.token)
+            if preprocess_value is not None:
+                result.extend(preprocess_value)
+            else:
+                result.append(token)
+        return result
 
     def _translation_dict(self, translations):
         """Converts a list of TranslationItems to a dictionary"""
@@ -620,9 +640,16 @@ class StructuralLexicalTransfer:
             [tokens.tag_math_func, tokens.tag_dot, tokens.tag_sqrt_func],
             [tokens.math_func, tokens.dot, tokens.sqrt_func])
         
+        
+        abs_tl  = TranslationItem(tokens.tag_abs_func,
+            [tokens.tag_math_func, tokens.tag_dot, tokens.tag_abs_func],
+            [tokens.math_func, tokens.dot, tokens.abs_func])
         cos_tl  = TranslationItem(tokens.tag_cos_func,
             [tokens.tag_math_func, tokens.tag_dot, tokens.tag_cos_func],
             [tokens.math_func, tokens.dot, tokens.cos_func])
+        fabs_tl  = TranslationItem(tokens.tag_fabs_func,
+            [tokens.tag_math_func, tokens.tag_dot, tokens.tag_abs_func],
+            [tokens.math_func, tokens.dot, tokens.abs_func])
         sin_tl  = TranslationItem(tokens.tag_sin_func,
             [tokens.tag_math_func, tokens.tag_dot, tokens.tag_sin_func],
             [tokens.math_func, tokens.dot, tokens.sin_func])
@@ -634,12 +661,16 @@ class StructuralLexicalTransfer:
         #NOTE: assign_cb must be put AFTER pointer_cb! Assign_cb assumes that pointer_cb has done its job.
         default_helpers = [comp_add_cb, comp_div_cb, comp_min_cb, comp_mod_cb, comp_mul_cb, input_cb, output_cb, 
                            param_cb, pointer_cb, assign_cb, reference_cb, return_cb]
-        default_translations = [declaration_tl, pow_tl, printf_tl, scanf_tl, sizeof_tl, sqrt_tl, cos_tl, sin_tl, tan_tl]
+        default_translations = [declaration_tl, pow_tl, printf_tl, scanf_tl, sizeof_tl, abs_tl, fabs_tl, sqrt_tl, cos_tl, sin_tl, tan_tl]
         specific_helpers = []
         specific_translations = []
 
         #Start translating!
         statement = self._identify(statement)
+
+        if statement.tag == constants.PREPROCESSOR_TAG:
+            print("Preprocessor")
+            print(statement)
 
         #Add preprocessor if it's define statement
         if statement.tag == constants.DEFINE_TAG:
@@ -648,30 +679,14 @@ class StructuralLexicalTransfer:
             to_replace = statement[3:]
             #Unroll define itself
             if self._preprocessors:
-                result = []
-                for token in to_replace:
-                    preprocess_value = self._preprocessors.get(token.token)
-                    if preprocess_value is not None:
-                        result.extend(preprocess_value)
-                    else:
-                        result.append(token)
-                to_replace = result
+                to_replace = self._preprocess(to_replace)
             self._preprocessors[keyword] = to_replace
 
         #Process preprocessors
-        keyword_replaced = False
         if self._preprocessors:
-            result = []
-            for token in statement:
-                preprocess_value = self._preprocessors.get(token.token)
-                if preprocess_value is not None:
-                    result.extend(preprocess_value)
-                    keyword_replaced = True
-                else:
-                    result.append(token)
-            statement.tokens = result
+            statement.tokens = self._preprocess(list(statement))
             #Try re-iden
-            if statement.tag == constants.UNKNOWN_TAG and keyword_replaced:
+            if statement.tag == constants.UNKNOWN_TAG:
                 statement = self._identify(statement)
 
         #Immediately return if it's unneeded statements (e.g function declaration)

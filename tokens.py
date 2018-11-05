@@ -33,9 +33,13 @@ pow_func = "pow"; tag_pow_func = "power-function"
 sizeof_func = "sizeof"; tag_sizeof_lib = "sizeof-module"; tag_sizeof_func = "sizeof-function"
 sqrt_func = "sqrt"; tag_sqrt_func = "sqrt-function"
 
+abs_func = "abs"; tag_abs_func = "absolute-function"
 cos_func = "cos"; tag_cos_func = "cos-function"
+fabs_func = "fabs"; tag_fabs_func = "float-absolute-function"
 sin_func = "sin"; tag_sin_func = "sin-function"
+srand_func = "srand"; tag_srand_func = "random-seed-function"
 tan_func = "tan"; tag_tan_func = "tan-function"
+
 
 break_kw = "break"; tag_break_kw = "break-keyword"
 case_kw = "case"; tag_case_kw = "switch-case"
@@ -226,10 +230,13 @@ special_functions = {
     tag_input_func : input_func,
     tag_pow_func : pow_func,
     tag_rand_func : rand_func,
+    tag_srand_func : srand_func,
     tag_sizeof_func : sizeof_func,
     tag_sqrt_func : sqrt_func,
     
+    tag_abs_func : abs_func,
     tag_cos_func : cos_func,
+    tag_fabs_func : fabs_func,
     tag_tan_func : tan_func,
     tag_sin_func : sin_func
 }

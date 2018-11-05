@@ -14,7 +14,6 @@ DEFAULT_SOURCE_FILE = "source.c"
 DEFAULT_RESULT_FILE = "result.js"
 
 #TODO: Add math-library checking procedure?
-#TODO: Write dedicated tags() function in tagged_statement that returns tag only to simplify tag-checking?
 
 class C2js:
     def __init__(self):
