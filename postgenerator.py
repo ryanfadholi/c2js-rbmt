@@ -8,6 +8,8 @@ JS_RESERVED = ["catch", "class", "console", "debugger", "delete", "export", "ext
                "function", "import", "in", "instanceof", "let", "new", "null", "super", "this", 
                "throw", "true", "try", "typeof", "util", "var", "with", "yield"]
 
+ADD_TOKEN = TaggedToken(tokens.op_add, tokens.tag_op_add)
+
 class PostGenerator:
     
     def _fix(self, statement):
@@ -30,7 +32,7 @@ class PostGenerator:
                     token.token = self._reformat(token.token)
                 #Add + sign between consecutive strings
                 if is_prev_string:
-                    new_tokens.append(TaggedToken("+", tokens.tag_op_add))
+                    new_tokens.append(ADD_TOKEN)
             #Fix "reserved" token strings
             elif token.tag == tokens.tag_name_var:
                 if token.token in JS_RESERVED:
@@ -74,7 +76,7 @@ class PostGenerator:
         #Define the mappings
         kdigits_three = (["%lli"], 4, "%d")
         kdigits_two = (["%hi", "%li", "%lf"], 3, "%d")
-        kdigits_one = (["%f", "%i"], 2, "%d")
+        kdigits_one = (["%i"], 2, "%d")
         kchar = (["%c"], 2, "%s")
 
         formatting_guides = [kdigits_three, kdigits_two, kdigits_one, kchar]
