@@ -1,6 +1,5 @@
 class Pattern:
     def __init__(self, tag, start=None, end=None, carryover=True, ignored=None):
-        
         #Default arguments
         if start is None:
             start = []

@@ -48,26 +48,6 @@ class Deformatter:
         else:
             return semicolon_pos
 
-    def _while_end(self, text):
-        """
-        Returns an index where the declaration statement ends. Returns -1 if the statement isn't ending yet.
-        Declaration could mean a variable or function declaration,
-        and the function will adapt depending on what it assumes the declaration is.
-        """
-        bracket_end = self._bracket_end(text)
-        semicolon_pos = self._statement_end(";", text)
-
-        for char in text[bracket_end:]:
-            if char == ";":
-                return semicolon_pos
-            elif char == "\n" or char == " ":
-                continue
-            else:
-                #If there's no curly brace or a semicolon comes before it, it's a normal variable declaration.
-                return bracket_end
-
-        return -1
-
     def _else_end(self, text):
         """
         Returns an index where the else statement ends. Supports both "else" and "else if" statements.
@@ -76,9 +56,11 @@ class Deformatter:
         semicolon_pos = self._statement_end(";", text)
 
         if if_token_pos > 0 and if_token_pos < semicolon_pos:
-            return self._bracket_end(text)
-        
-        return self._statement_end("else", text)
+            pos = self._bracket_end(text)
+        else:
+            pos = self._statement_end("else", text)
+
+        return pos
 
     def _exceptions(self, text):
         """
@@ -132,37 +114,23 @@ class Deformatter:
         whitespace_offset = len(text) - len(line)
 
         end_pos = -1
-        #if it's one-line comment or include statement...
-        if (self._starts_with(tkn.single_comment, line)
-            or self._starts_with(tkn.preprocessor, line)):
-            end_pos = self._statement_end('\n', line, do_exception_checking=False)
-        #if it's one line comment...
-        elif self._starts_with(tkn.multi_comment, line):
-            end_pos = self._statement_end('*/', line, do_exception_checking=False)
+
         #If it's string...
-        elif self._starts_with(tkn.string_identifiers, line):
+        if self._starts_with(tkn.string_identifiers, line):
             end_pos = self._string_end(line)
-        #if it's a start of new code block...
-        elif self._starts_with(tkn.curly_left, line):
-            end_pos = self._statement_end('{', line)
-        #if it's the end of a code block...
-        elif self._starts_with(tkn.curly_right, line):
-            end_pos = self._statement_end('}', line)
         #if it's a declaration...
         elif self._starts_with(tkn.datatypes, line):
             end_pos = self._declaration_end(line)
-        #if it's "if" keyword...
-        elif self._starts_with(tkn.if_conditional, line):
+        #if it's "if" or switch or for loop keyword...
+        elif (self._starts_with(tkn.if_conditional, line)
+              or self._starts_with(tkn.switch_kw, line)
+              or self._starts_with(tkn.for_loop, line)):
             end_pos = self._bracket_end(line)
         elif self._starts_with(tkn.else_conditional, line):
             end_pos = self._else_end(line)
-        #if it's switch keyword...
-        elif self._starts_with(tkn.switch_kw, line):
-            end_pos = self._bracket_end(line)
         #if it's case/default keyword...
-        elif self._starts_with(tkn.case_kw, line):
-            end_pos = self._statement_end(":", line)
-        elif self._starts_with(tkn.default_kw, line):
+        elif (self._starts_with(tkn.case_kw, line)
+              or self._starts_with(tkn.default_kw, line)):
             end_pos = self._statement_end(":", line)
         #if it's do loop....
         elif self._starts_with(tkn.dowhile_loop, line):
@@ -170,12 +138,34 @@ class Deformatter:
         #if it's while loop....
         elif self._starts_with(tkn.while_loop, line):
             end_pos = self._while_end(line)
-        #if it's for loop....
-        elif self._starts_with(tkn.for_loop, line):
-            end_pos = self._bracket_end(line)
         #If it isn't everything, default to semicolon
         else:
-            end_pos = self._statement_end(';', line)
+            separator = ";"
+            exception_checking = True
+            #if it's a start of new code block...
+            if self._starts_with(tkn.curly_left, line):
+                separator = "{"
+            #if it's the end of a code block...             
+            elif self._starts_with(tkn.curly_right, line):
+                separator = "}"       
+            #if it's one-line comment or include statement...
+            elif (self._starts_with(tkn.single_comment, line)
+                  or self._starts_with(tkn.preprocessor, line)):
+                separator = '\n'
+                exception_checking = False
+            #if it's one line comment...
+            elif self._starts_with(tkn.multi_comment, line):
+                separator = '*/'
+                exception_checking = False
+            #if it's do loop....
+            elif self._starts_with(tkn.dowhile_loop, line):
+                separator = "do"
+            #if it's case/default keyword...
+            elif (self._starts_with(tkn.case_kw, line)
+                  or self._starts_with(tkn.default_kw, line)):
+                separator = ":"
+            
+            end_pos = self._statement_end(separator, line, exception_checking)
 
         cut_pos = whitespace_offset + end_pos if end_pos > -1 else -1
         return cut_pos
@@ -337,6 +327,26 @@ class Deformatter:
 
         substmts.append(text)
         return map(lambda text: text.strip(), substmts)
+        
+    def _while_end(self, text):
+        """
+        Returns an index where the declaration statement ends. Returns -1 if the statement isn't ending yet.
+        Declaration could mean a variable or function declaration,
+        and the function will adapt depending on what it assumes the declaration is.
+        """
+        bracket_end = self._bracket_end(text)
+        semicolon_pos = self._statement_end(";", text)
+
+        for char in text[bracket_end:]:
+            if char == ";":
+                return semicolon_pos
+            elif char == "\n" or char == " ":
+                continue
+            else:
+                #If there's no curly brace or a semicolon comes before it, it's a normal variable declaration.
+                return bracket_end
+
+        return -1
 
     def lines(self):
         """Reads temporary file per-line."""
