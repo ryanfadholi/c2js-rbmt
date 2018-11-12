@@ -648,9 +648,9 @@ class StructuralLexicalTransfer:
 
         #Add specific-header bound translations
         if constants.STDLIB_HEADER in self._headers:
-            default_translations.extend([ABS_TL, FABS_TL]) 
+            default_translations.extend([ABS_TL]) 
         if constants.MATH_HEADER in self._headers:
-            default_translations.extend([COS_TL, POW_TL, SIN_TL, SQRT_TL, TAN_TL])
+            default_translations.extend([COS_TL, FABS_TL, POW_TL, SIN_TL, SQRT_TL, TAN_TL])
 
         specific_helpers = []
         specific_translations = []
