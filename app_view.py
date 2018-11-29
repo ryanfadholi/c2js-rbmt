@@ -28,6 +28,7 @@ class C2jsView(QMainWindow):
         self._save_button = QPushButton(SAVE_BUTTON_LABEL)
         btnrow = QHBoxLayout()
         txtrow = QHBoxLayout()
+        detailsrow = QHBoxLayout()
 
         #set empty widget as the "base" layout
         self.setCentralWidget(main_layout)
@@ -35,14 +36,18 @@ class C2jsView(QMainWindow):
         #Set both textedits and its properties
         self.source_text = QPlainTextEdit()
         self.result_text = QPlainTextEdit()
+        self.details_text = QPlainTextEdit()
         #Set their size (w * h)
         self.source_text.setMinimumSize(TEXTFIELD_WIDTH, TEXTFIELD_HEIGHT)
         self.result_text.setMinimumSize(TEXTFIELD_WIDTH, TEXTFIELD_HEIGHT)
+        self.details_text.setMinimumSize(TEXTFIELD_WIDTH * 2, TEXTFIELD_HEIGHT / 4)
         #Disable edits and line wrapping
         self.source_text.setReadOnly(True)
         self.result_text.setReadOnly(True)
+        self.details_text.setReadOnly(True)
         self.source_text.setLineWrapMode(QPlainTextEdit.NoWrap)
-        self.source_text.setLineWrapMode(QPlainTextEdit.NoWrap)
+        self.result_text.setLineWrapMode(QPlainTextEdit.NoWrap)
+        self.details_text.setLineWrapMode(QPlainTextEdit.NoWrap)
 
         #Setup the buttons, disable the save_button first
         self._open_button.clicked.connect(self.open)
@@ -59,11 +64,13 @@ class C2jsView(QMainWindow):
         txtrow.addWidget(self.source_text)
         txtrow.addWidget(self.result_text)
 
+        detailsrow.addWidget(self.details_text)
+
         #Stack both rows, texts below buttons
         vbox = QVBoxLayout()
         vbox.addLayout(btnrow)
         vbox.addLayout(txtrow)
-
+        vbox.addLayout(detailsrow)
         #Set the stacked rows as the layout
         main_layout.setLayout(vbox)
 
@@ -88,7 +95,21 @@ class C2jsView(QMainWindow):
             self.statusBar().showMessage(f"{filename} succesfully loaded. Processing...")
 
             #Process
-            self._c2js.process()
+            hasil = self._c2js.process(test_mode=True)
+            details_text = ""
+            details_text += f"LOC-S: {hasil[0]}\n"
+            details_text += f"LOC-T: {hasil[1]}\n"
+            details_text += f"\n"
+            details_text += f"Deklarasi Variabel/Fungsi: {hasil[2]}\n"
+            details_text += f"Inisialisasi/Inisiasi: {hasil[3]}\n"
+            details_text += f"Pemanggilan Fungsi: {hasil[4]}\n"
+            details_text += f"Masukan/Keluaran: {hasil[5]}\n"
+            details_text += f"Kondisional: {hasil[6]}\n"
+            details_text += f"Pengulangan: {hasil[7]}\n"
+            details_text += f"Komentar: {hasil[8]}\n"
+            details_text += f"Lain-lain: {hasil[9]}\n"
+
+            self.details_text.setPlainText(details_text)
             with open(constants.OUTPUT_TEMPFILE_PATH, 'r') as output:
                 data = output.read()
                 self.result_text.setPlainText(data)

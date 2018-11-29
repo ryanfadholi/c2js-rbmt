@@ -39,8 +39,10 @@ class C2js:
         Processes the contents of the designated temporary file
         (Must be prepared first by the load() method)
         The results are then saved into another designated temporary file.
+    
+        If test_mode is set to True, returns stats of the translated file.
+        Else it returns 0 if no errors happen.
         """
-
         #Test values
         count_decl = 0
         count_init = 0
@@ -51,27 +53,15 @@ class C2js:
         count_comment = 0
         count_etc = 0
 
-        if test_mode:
-            #suppress notices & warnings from modules
-            sys.stdout = open(os.devnull, 'w')
-            console_print = False
-
         self._sltransfer.reset()
         statements = [self._sltransfer.translate(self._postagger.tag(stmt)) 
                       for stmt in self._deformatter.statements()]
-        rc = self._postgenerator.write(statements)
+        results = self._postgenerator.write(statements)
 
         source_stmt_count = len(list(self._deformatter.statements()))
-        result_stmt_count = rc
-
-        if console_print:
-            for statement in statements:
-                print(statement)
+        result_stmt_count = results
 
         if test_mode:
-            #re-enable console output
-            sys.stdout = sys.__stdout__
-
             for statement in statements:
                 if statement.tag == constants.DECLARATION_TAG:
                     count_decl += 1
@@ -99,26 +89,28 @@ class C2js:
                 else:
                     count_etc += 1
 
-            #Jumlah baris masukan
-            print(source_stmt_count)
-            #Jumlah baris keluaran
-            print(result_stmt_count)
-            #Deklarasi Variabel/Fungsi
-            print(count_decl)
-            #Inisialisasi/Inisiasi
-            print(count_init)
-            #Pemanggilan Fungsi
-            print(count_func_calls)
-            #Masukan/Keluaran
-            print(count_io)
-            #Kondisional
-            print(count_cond)
-            #Pengulangan
-            print(count_loop)
-            #Komentar
-            print(count_comment)
-            #Lain-lain
-            print(count_etc)
+        translation_details = (
+                    source_stmt_count, #Jumlah baris masukan
+                    result_stmt_count, #Jumlah baris keluaran
+                    count_decl, #Deklarasi Variabel/Fungsi
+                    count_init, #Inisialisasi/Inisiasi
+                    count_func_calls, #Pemanggilan Fungsi
+                    count_io, #Masukan/Keluaran
+                    count_cond, #Kondisional
+                    count_loop, #Pengulangan
+                    count_comment, #Komentar
+                    count_etc #Lain-lain
+        )
+
+        if console_print:
+            if test_mode:
+                for detail in translation_details:
+                    print(detail)
+            else:
+                for statement in statements:
+                    print(statement) 
+
+        return translation_details if test_mode else 0
 
     def save(self, output_path):
         """

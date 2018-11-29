@@ -360,7 +360,7 @@ class Deformatter:
         Reads file and rewrites it
         into the designated temporary file path.
         """
-
+        
         with open(filepath, "r") as file_input:
             
             raw_input = file_input.read()
