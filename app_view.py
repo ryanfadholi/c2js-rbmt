@@ -1,7 +1,7 @@
 import sys
 import os
-from PyQt5.QtWidgets import (QApplication,  QFileDialog, QHBoxLayout, QLabel, QMainWindow, 
-    QPlainTextEdit, QPushButton, QSizePolicy, QVBoxLayout, QWidget)
+from PyQt5.QtWidgets import (QApplication,  QFileDialog, QHBoxLayout, QLabel, 
+    QMainWindow, QPlainTextEdit, QPushButton, QSizePolicy, QVBoxLayout, QWidget)
 
 import c2js 
 import constants
@@ -28,6 +28,7 @@ class C2jsView(QMainWindow):
         self._save_button = QPushButton(SAVE_BUTTON_LABEL)
         btnrow = QHBoxLayout()
         txtrow = QHBoxLayout()
+        linecountrow = QHBoxLayout()
         detailsrow = QHBoxLayout()
 
         #set empty widget as the "base" layout
@@ -49,6 +50,9 @@ class C2jsView(QMainWindow):
         self.result_text.setLineWrapMode(QPlainTextEdit.NoWrap)
         self.details_text.setLineWrapMode(QPlainTextEdit.NoWrap)
 
+        source_count = QLabel(" Statement count: -")
+        result_count = QLabel(" Statement count: -")
+
         #Setup the buttons, disable the save_button first
         self._open_button.clicked.connect(self.open)
         self._save_button.clicked.connect(self.save)
@@ -64,12 +68,18 @@ class C2jsView(QMainWindow):
         txtrow.addWidget(self.source_text)
         txtrow.addWidget(self.result_text)
 
+        linecountrow.addWidget(source_count)
+        linecountrow.addStretch(1)
+        linecountrow.addWidget(result_count)
+        linecountrow.addStretch(1)
+        linecountrow.setContentsMargins(0,0,0,40)
         detailsrow.addWidget(self.details_text)
 
         #Stack both rows, texts below buttons
         vbox = QVBoxLayout()
         vbox.addLayout(btnrow)
         vbox.addLayout(txtrow)
+        vbox.addLayout(linecountrow)
         vbox.addLayout(detailsrow)
         #Set the stacked rows as the layout
         main_layout.setLayout(vbox)
