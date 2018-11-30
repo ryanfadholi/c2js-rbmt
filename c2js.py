@@ -28,21 +28,21 @@ class C2js:
         if not os.path.exists(source_temp_path):
             os.makedirs(source_temp_path)
         if not os.path.exists(result_temp_path):
-            os.makedirs(result_temp_path)
+            os.makedirs(result_temp_path)   
 
-    def load(self, source_path):
-        """Loads the given source_path contents to a temporary file."""
+    def process(self, source_path, console_print=False, test_mode=False):
+        """
+        Translates the contents of a file pointed by source_path parameter.
+    
+        If both console_print and test_mode is set to True, prints translation statistics.
+        If console_print is set to True and test_mode is set to False, 
+        prints all translated statements.
+        
+        If test_mode is set to True, returns translation statistics.
+        Else it returns 0.
+        """
         self._deformatter.read(source_path)
 
-    def process(self, console_print=False, test_mode=False):
-        """
-        Processes the contents of the designated temporary file
-        (Must be prepared first by the load() method)
-        The results are then saved into another designated temporary file.
-    
-        If test_mode is set to True, returns stats of the translated file.
-        Else it returns 0 if no errors happen.
-        """
         #Test values
         count_decl = 0
         count_init = 0
@@ -129,9 +129,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     instance = C2js()
-    instance.load(args.source_path)
-
     do_print = not args.no_print
     do_test = args.test_mode
-    instance.process(do_print, do_test)
+    instance.process(args.source_path, do_print, do_test)
     instance.save(args.result_path)

@@ -1,6 +1,6 @@
 import sys
 import os
-from PyQt5.QtWidgets import (QApplication,  QFileDialog, QHBoxLayout, QMainWindow, 
+from PyQt5.QtWidgets import (QApplication,  QFileDialog, QHBoxLayout, QLabel, QMainWindow, 
     QPlainTextEdit, QPushButton, QSizePolicy, QVBoxLayout, QWidget)
 
 import c2js 
@@ -87,15 +87,14 @@ class C2jsView(QMainWindow):
         _path, filename = os.path.split(filepath)
 
         if filename:
-            #Loads file
-            self._c2js.load(filepath)
-            with open(constants.INPUT_TEMPFILE_PATH, 'r') as output:
-                data = output.read()
-                self.source_text.setPlainText(data)
             self.statusBar().showMessage(f"{filename} succesfully loaded. Processing...")
 
             #Process
-            hasil = self._c2js.process(test_mode=True)
+            hasil = self._c2js.process(filepath, test_mode=True)
+            with open(constants.INPUT_TEMPFILE_PATH, 'r') as output:
+                data = output.read()
+                self.source_text.setPlainText(data)
+
             details_text = ""
             details_text += f"LOC-S: {hasil[0]}\n"
             details_text += f"LOC-T: {hasil[1]}\n"
