@@ -11,6 +11,8 @@ INVALID_PATH_MESSAGE = "Invalid path found, operation cancelled."
 OPEN_BUTTON_LABEL = "Open"
 SAVE_BUTTON_LABEL = "Save"
 
+BASELABEL_LINE_COUNT = "Statement count:"
+
 TEXTFIELD_WIDTH = 450
 TEXTFIELD_HEIGHT = 600
 
@@ -41,7 +43,7 @@ class C2jsView(QMainWindow):
         #Set their size (w * h)
         self.source_text.setMinimumSize(TEXTFIELD_WIDTH, TEXTFIELD_HEIGHT)
         self.result_text.setMinimumSize(TEXTFIELD_WIDTH, TEXTFIELD_HEIGHT)
-        self.details_text.setMinimumSize(TEXTFIELD_WIDTH * 2, TEXTFIELD_HEIGHT / 4)
+        self.details_text.setMinimumSize(TEXTFIELD_WIDTH * 2, TEXTFIELD_HEIGHT / 5)
         #Disable edits and line wrapping
         self.source_text.setReadOnly(True)
         self.result_text.setReadOnly(True)
@@ -50,8 +52,8 @@ class C2jsView(QMainWindow):
         self.result_text.setLineWrapMode(QPlainTextEdit.NoWrap)
         self.details_text.setLineWrapMode(QPlainTextEdit.NoWrap)
 
-        source_count = QLabel(" Statement count: -")
-        result_count = QLabel(" Statement count: -")
+        self.source_count = QLabel(f"{BASELABEL_LINE_COUNT} -")
+        self.result_count = QLabel(f"{BASELABEL_LINE_COUNT} -")
 
         #Setup the buttons, disable the save_button first
         self._open_button.clicked.connect(self.open)
@@ -68,9 +70,9 @@ class C2jsView(QMainWindow):
         txtrow.addWidget(self.source_text)
         txtrow.addWidget(self.result_text)
 
-        linecountrow.addWidget(source_count)
+        linecountrow.addWidget(self.source_count)
         linecountrow.addStretch(1)
-        linecountrow.addWidget(result_count)
+        linecountrow.addWidget(self.result_count)
         linecountrow.addStretch(1)
         linecountrow.setContentsMargins(0,0,0,40)
         detailsrow.addWidget(self.details_text)
@@ -105,24 +107,25 @@ class C2jsView(QMainWindow):
                 data = output.read()
                 self.source_text.setPlainText(data)
 
+            self.result_count.setText(f"Statement count: <b>{hasil[0]}</b>")
+            self.source_count.setText(f"Statement count: <b>{hasil[0]}</b>")
+            
             details_text = ""
-            details_text += f"LOC-S: {hasil[0]}\n"
-            details_text += f"LOC-T: {hasil[1]}\n"
-            details_text += f"\n"
-            details_text += f"Deklarasi Variabel/Fungsi: {hasil[2]}\n"
-            details_text += f"Inisialisasi/Inisiasi: {hasil[3]}\n"
-            details_text += f"Pemanggilan Fungsi: {hasil[4]}\n"
-            details_text += f"Masukan/Keluaran: {hasil[5]}\n"
-            details_text += f"Kondisional: {hasil[6]}\n"
-            details_text += f"Pengulangan: {hasil[7]}\n"
-            details_text += f"Komentar: {hasil[8]}\n"
-            details_text += f"Lain-lain: {hasil[9]}\n"
+            details_text += f"Deklarasi Variabel/Fungsi\t: {hasil[2]}\n"
+            details_text += f"Inisialisasi/Inisiasi\t: {hasil[3]}\n"
+            details_text += f"Pemanggilan Fungsi\t: {hasil[4]}\n"
+            details_text += f"Masukan/Keluaran\t: {hasil[5]}\n"
+            details_text += f"Kondisional\t\t: {hasil[6]}\n"
+            details_text += f"Pengulangan\t\t: {hasil[7]}\n"
+            details_text += f"Komentar\t\t: {hasil[8]}\n"
+            details_text += f"Lain-lain\t\t: {hasil[9]}\n"
 
             self.details_text.setPlainText(details_text)
             with open(constants.OUTPUT_TEMPFILE_PATH, 'r') as output:
                 data = output.read()
                 self.result_text.setPlainText(data)
             self.statusBar().showMessage(f"{filename} succesfully translated. Press Save to create the Javascript file.")
+            
             
             #Enable the save button.
             self._save_button.setEnabled(True)
