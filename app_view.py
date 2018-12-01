@@ -33,7 +33,7 @@ BASELABEL_ORDER = [BASELABEL_LINE_COUNT,
                 BASELABEL_ETC]
 
 TEXTFIELD_WIDTH = 450
-TEXTFIELD_HEIGHT = 600
+TEXTFIELD_HEIGHT = 400
 
 class C2jsView(QMainWindow):
     
@@ -51,6 +51,8 @@ class C2jsView(QMainWindow):
         txtrow = QHBoxLayout()
         linecountrow = QHBoxLayout()
         detailsrow = QHBoxLayout()
+        detailsleftcol = QVBoxLayout()
+        detailsrightcol = QVBoxLayout()
 
         #set empty widget as the "base" layout
         self.setCentralWidget(main_layout)
@@ -62,7 +64,6 @@ class C2jsView(QMainWindow):
         #Set their size (w * h)
         self.source_text.setMinimumSize(TEXTFIELD_WIDTH, TEXTFIELD_HEIGHT)
         self.result_text.setMinimumSize(TEXTFIELD_WIDTH, TEXTFIELD_HEIGHT)
-        self.details_text.setMinimumSize(TEXTFIELD_WIDTH * 2, TEXTFIELD_HEIGHT / 5)
         #Disable edits and line wrapping
         self.source_text.setReadOnly(True)
         self.result_text.setReadOnly(True)
@@ -93,6 +94,16 @@ class C2jsView(QMainWindow):
             self.comment_count,
             self.etc_count]
 
+        detailsleftcol.addWidget(self.decl_count)
+        detailsleftcol.addWidget(self.init_count)
+        detailsleftcol.addWidget(self.func_count)
+        detailsleftcol.addWidget(self.io_count)
+
+        detailsrightcol.addWidget(self.cond_count)
+        detailsrightcol.addWidget(self.loop_count)
+        detailsrightcol.addWidget(self.comment_count)
+        detailsrightcol.addWidget(self.etc_count)
+
         for label, text in zip(self.count_order, BASELABEL_ORDER):
             label.setText(f"{text} -")
 
@@ -111,12 +122,24 @@ class C2jsView(QMainWindow):
         txtrow.addWidget(self.source_text)
         txtrow.addWidget(self.result_text)
 
+        detailsleftcol.addWidget(self.decl_count)
+        detailsleftcol.addWidget(self.init_count)
+        detailsleftcol.addWidget(self.func_count)
+        detailsleftcol.addWidget(self.io_count)
+
+        detailsrightcol.addWidget(self.cond_count)
+        detailsrightcol.addWidget(self.loop_count)
+        detailsrightcol.addWidget(self.comment_count)
+        detailsrightcol.addWidget(self.etc_count)
+
+        detailsrow.addLayout(detailsleftcol)
+        detailsrow.addLayout(detailsrightcol)
+
         linecountrow.addWidget(self.source_count)
         linecountrow.addStretch(1)
         linecountrow.addWidget(self.result_count)
         linecountrow.addStretch(1)
         linecountrow.setContentsMargins(0,0,0,25)
-        detailsrow.addWidget(self.details_text)
 
         #Stack both rows, texts below buttons
         vbox = QVBoxLayout()
