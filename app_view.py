@@ -12,14 +12,14 @@ OPEN_BUTTON_LABEL = "Open"
 SAVE_BUTTON_LABEL = "Save"
 
 BASELABEL_LINE_COUNT = "Statement count:"
-BASELABEL_DECL = "Deklarasi Variabel/Fungsi\t:"
-BASELABEL_INIT = "Inisialisasi/Inisiasi\t:"
-BASELABEL_FUNC = "Pemanggilan Fungsi\t:"
-BASELABEL_IO = "Masukan/Keluaran\t:"
-BASELABEL_COND = "Kondisional\t\t:"
-BASELABEL_LOOP = "Pengulangan\t\t:"
-BASELABEL_COMMENT = "Komentar\t\t:"
-BASELABEL_ETC = "Lain-lain\t\t:"
+BASELABEL_DECL = "Deklarasi Variabel/Fungsi:"
+BASELABEL_INIT = "Inisialisasi/Inisiasi:"
+BASELABEL_FUNC = "Pemanggilan Fungsi:"
+BASELABEL_IO = "Masukan/Keluaran:"
+BASELABEL_COND = "Kondisional:"
+BASELABEL_LOOP = "Pengulangan:"
+BASELABEL_COMMENT = "Komentar:"
+BASELABEL_ETC = "Lain-lain:"
 
 BASELABEL_ORDER = [BASELABEL_LINE_COUNT, 
                 BASELABEL_LINE_COUNT,
@@ -32,7 +32,7 @@ BASELABEL_ORDER = [BASELABEL_LINE_COUNT,
                 BASELABEL_COMMENT,
                 BASELABEL_ETC]
 
-TEXTFIELD_WIDTH = 450
+TEXTFIELD_WIDTH = 400
 TEXTFIELD_HEIGHT = 400
 
 class C2jsView(QMainWindow):
@@ -60,18 +60,17 @@ class C2jsView(QMainWindow):
         #Set both textedits and its properties
         self.source_text = QPlainTextEdit()
         self.result_text = QPlainTextEdit()
-        self.details_text = QPlainTextEdit()
         #Set their size (w * h)
         self.source_text.setMinimumSize(TEXTFIELD_WIDTH, TEXTFIELD_HEIGHT)
         self.result_text.setMinimumSize(TEXTFIELD_WIDTH, TEXTFIELD_HEIGHT)
         #Disable edits and line wrapping
         self.source_text.setReadOnly(True)
         self.result_text.setReadOnly(True)
-        self.details_text.setReadOnly(True)
         self.source_text.setLineWrapMode(QPlainTextEdit.NoWrap)
         self.result_text.setLineWrapMode(QPlainTextEdit.NoWrap)
-        self.details_text.setLineWrapMode(QPlainTextEdit.NoWrap)
 
+        #Initialize each translation details label as empty QLabel,
+        #or it'll be impossible to use them inside an array.
         self.source_count = QLabel("")
         self.result_count = QLabel("") 
         self.decl_count = QLabel("")
@@ -83,27 +82,21 @@ class C2jsView(QMainWindow):
         self.comment_count = QLabel("")
         self.etc_count = QLabel("")
 
-        self.count_order = [self.source_count,
-            self.result_count,
-            self.decl_count,
-            self.init_count,
-            self.func_count,
-            self.io_count,
-            self.cond_count,
-            self.loop_count,
-            self.comment_count,
-            self.etc_count]
+        #Store everything inside an array for easier processing.
+        #Make sure the string (listed inside BASELABEL_ORDER) and the QLabel matches.
+        self.count_order = [
+                            self.source_count, 
+                            self.result_count,
+                            self.decl_count,
+                            self.init_count,
+                            self.func_count,
+                            self.io_count,
+                            self.cond_count,
+                            self.loop_count,
+                            self.comment_count,
+                            self.etc_count]
 
-        detailsleftcol.addWidget(self.decl_count)
-        detailsleftcol.addWidget(self.init_count)
-        detailsleftcol.addWidget(self.func_count)
-        detailsleftcol.addWidget(self.io_count)
-
-        detailsrightcol.addWidget(self.cond_count)
-        detailsrightcol.addWidget(self.loop_count)
-        detailsrightcol.addWidget(self.comment_count)
-        detailsrightcol.addWidget(self.etc_count)
-
+        #Set each label
         for label, text in zip(self.count_order, BASELABEL_ORDER):
             label.setText(f"{text} -")
 
@@ -122,6 +115,12 @@ class C2jsView(QMainWindow):
         txtrow.addWidget(self.source_text)
         txtrow.addWidget(self.result_text)
 
+        linecountrow.addWidget(self.source_count)
+        linecountrow.addStretch(1)
+        linecountrow.addWidget(self.result_count)
+        linecountrow.addStretch(1)
+        linecountrow.setContentsMargins(0,0,0,25)
+
         detailsleftcol.addWidget(self.decl_count)
         detailsleftcol.addWidget(self.init_count)
         detailsleftcol.addWidget(self.func_count)
@@ -135,17 +134,13 @@ class C2jsView(QMainWindow):
         detailsrow.addLayout(detailsleftcol)
         detailsrow.addLayout(detailsrightcol)
 
-        linecountrow.addWidget(self.source_count)
-        linecountrow.addStretch(1)
-        linecountrow.addWidget(self.result_count)
-        linecountrow.addStretch(1)
-        linecountrow.setContentsMargins(0,0,0,25)
-
         #Stack both rows, texts below buttons
         vbox = QVBoxLayout()
         vbox.addLayout(btnrow)
         vbox.addLayout(txtrow)
         vbox.addLayout(linecountrow)
+        details_label = QLabel("<b>Translated Statements:</b>")
+        vbox.addWidget(details_label)
         vbox.addLayout(detailsrow)
         #Set the stacked rows as the layout
         main_layout.setLayout(vbox)
@@ -173,18 +168,7 @@ class C2jsView(QMainWindow):
 
             for label, text, count in zip(self.count_order, BASELABEL_ORDER, hasil):
                 label.setText(f"{text} <b>{count}</b>")
-            
-            details_text = ""
-            details_text += f"Deklarasi Variabel/Fungsi\t: {hasil[2]}\n"
-            details_text += f"Inisialisasi/Inisiasi\t: {hasil[3]}\n"
-            details_text += f"Pemanggilan Fungsi\t: {hasil[4]}\n"
-            details_text += f"Masukan/Keluaran\t: {hasil[5]}\n"
-            details_text += f"Kondisional\t\t: {hasil[6]}\n"
-            details_text += f"Pengulangan\t\t: {hasil[7]}\n"
-            details_text += f"Komentar\t\t: {hasil[8]}\n"
-            details_text += f"Lain-lain\t\t: {hasil[9]}\n"
 
-            self.details_text.setPlainText(details_text)
             with open(constants.OUTPUT_TEMPFILE_PATH, 'r') as output:
                 data = output.read()
                 self.result_text.setPlainText(data)
