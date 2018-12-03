@@ -119,10 +119,7 @@ TAN_TL = TranslationItem(tokens.tag_tan_func, [MATH_FUNC_TOKEN, DOT_TOKEN, TAN_F
 class StructuralLexicalTransfer:
 
     def __init__(self):
-        self._func_context = None
-        self._headers = []
-        self._preprocessors = {}
-        self._variables = {}
+        self.reset()
 
     def _callback_dict(self, callbacks):
         """Converts a list of CallbackPairs to a dictionary, with its trigger as keys and its function as the values"""
@@ -137,9 +134,11 @@ class StructuralLexicalTransfer:
         return result
 
     def _capture_last_variable(self, input_tokens):
+        "Returns the variable name token of a variable"
         return self._capture_variable_tokens(input_tokens)[0].token
 
     def _capture_variable_tokens(self, input_tokens):
+        "Returns an array of tokens that made up a single variable."
         bracket_depth = 0
         results = []
         
@@ -285,6 +284,7 @@ class StructuralLexicalTransfer:
         self._helper_assign(statement)
 
     def _helper_declaration(self, statement):
+        """Fixes declaration expressions/statements"""
         is_lefthand = True
         is_prefilled_value = False
         prefilled_depth = 0
@@ -326,7 +326,6 @@ class StructuralLexicalTransfer:
                 if prefilled_depth == 0:
                     is_prefilled_value = False
             
-
         statement.tokens = result
 
     def _helper_output(self, statement):
@@ -514,6 +513,7 @@ class StructuralLexicalTransfer:
         statement.tokens = result
 
     def _helper_return(self, statement):
+        """Wraps returned value in trunc() function if it's inside an int function"""
         trunc_start = [MATH_FUNC_TOKEN, DOT_TOKEN, TRUNC_FUNC_TOKEN, PARENTHESIS_LEFT_TOKEN]
         trunc_end = [PARENTHESIS_RIGHT_TOKEN]
 
@@ -592,6 +592,7 @@ class StructuralLexicalTransfer:
         return statement
 
     def _preprocess(self, tokens):
+        """Replaces keywords with its defined macro"""
         result = []
         for token in tokens:
             preprocess_value = self._preprocessors.get(token.token)

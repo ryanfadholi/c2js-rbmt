@@ -209,21 +209,6 @@ class POSTagger:
                     
         return result_tokens
 
-    def tokenize(self, statement):
-        """
-        Tokenizes C statement given as parameter into tagging-ready tokens.
-        """
-
-        #If there's quote in the statement, or it's a comment statement, set as True.
-        is_ws_sensitive = (self._has_quote(statement) or 
-                            self._starts_with([tkn.single_comment, tkn.multi_comment], statement))        
-        tokens = self._split(statement, preserve_whitespace=is_ws_sensitive)
-
-        if is_ws_sensitive or self._has_dot(statement):
-            tokens = self._rebuild(tokens)
-
-        return tokens
-
     def tag(self, statement):
         """Tokenizes and tags each token from the statement. Returns a TaggedStatement object"""
 
@@ -269,4 +254,18 @@ class POSTagger:
         
         return matched_tokens
 
+    def tokenize(self, statement):
+        """
+        Tokenizes C statement given as parameter into tagging-ready tokens.
+        """
+
+        #If there's quote in the statement, or it's a comment statement, set as True.
+        is_ws_sensitive = (self._has_quote(statement) or 
+                            self._starts_with([tkn.single_comment, tkn.multi_comment], statement))        
+        tokens = self._split(statement, preserve_whitespace=is_ws_sensitive)
+
+        if is_ws_sensitive or self._has_dot(statement):
+            tokens = self._rebuild(tokens)
+
+        return tokens
     
