@@ -32,7 +32,7 @@ class C2js:
 
     def process(self, source_path, console_print=False, test_mode=False):
         """
-        Translates the contents of a file pointed by source_path parameter.
+        Translates the contents of a file pointed by source_path.
     
         If both console_print and test_mode is set to True, prints translation statistics.
         If console_print is set to True and test_mode is set to False, 
@@ -122,8 +122,8 @@ class C2js:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("source_path", help="C file to process", nargs='?', default=DEFAULT_SOURCE_FILE, type=str)
-    parser.add_argument("result_path", help="Result file destination", nargs='?', default=DEFAULT_RESULT_FILE, type=str)
+    parser.add_argument("source_path", help="C file to process", type=str)
+    parser.add_argument("result_path", help="Result file destination", nargs='?', default=None, type=str)
     parser.add_argument("-np", "--no_print", help="Disable statement print", action="store_true")
     parser.add_argument('-t', "--test_mode", help="Turn on test mode", action="store_true")
     args = parser.parse_args()
@@ -132,4 +132,7 @@ if __name__ == "__main__":
     do_print = not args.no_print
     do_test = args.test_mode
     instance.process(args.source_path, do_print, do_test)
+    if args.result_path is None:
+        path, _ext = os.path.splitext(args.source_path)
+        args.result_path = path + ".js"
     instance.save(args.result_path)
